@@ -1,0 +1,330 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Custom Fields | Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/business-custom-fields.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Custom Fields</h1>
+            <p class="text-muted">Manage the information you collect from clients during booking</p>
+        </div>
+        <div>
+            <button id="addFieldBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                <i class="fas fa-plus me-2"></i>Add Field
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Custom Fields Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Client Information Fields</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="fieldsActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="fieldsActionsDropdown">
+                            <li><a class="dropdown-item" href="#" id="bulkEditBtn"><i class="fas fa-edit me-2"></i>Bulk Edit</a></li>
+                            <li><a class="dropdown-item" href="#" id="reorderFieldsBtn"><i class="fas fa-sort me-2"></i>Reorder Fields</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" id="resetFieldsBtn"><i class="fas fa-undo me-2"></i>Reset to Industry Defaults</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="customFieldsTable">
+                            <thead>
+                                <tr>
+                                    <th class="ps-4">Field Name</th>
+                                    <th>Type</th>
+                                    <th>Required</th>
+                                    <th>Display Order</th>
+                                    <th class="text-end pe-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if custom_fields %}
+                                    {% for field in custom_fields %}
+                                    <tr data-field-id="{{ field.id }}">
+                                        <td class="ps-4">
+                                            <div class="d-flex align-items-center">
+                                                <div class="field-icon me-3">
+                                                    {% if field.field_type == 'text' %}
+                                                    <i class="fas fa-font"></i>
+                                                    {% elif field.field_type == 'number' %}
+                                                    <i class="fas fa-hashtag"></i>
+                                                    {% elif field.field_type == 'select' %}
+                                                    <i class="fas fa-list"></i>
+                                                    {% elif field.field_type == 'date' %}
+                                                    <i class="fas fa-calendar"></i>
+                                                    {% elif field.field_type == 'time' %}
+                                                    <i class="fas fa-clock"></i>
+                                                    {% elif field.field_type == 'datetime' %}
+                                                    <i class="fas fa-calendar-alt"></i>
+                                                    {% elif field.field_type == 'boolean' %}
+                                                    <i class="fas fa-check-square"></i>
+                                                    {% elif field.field_type == 'email' %}
+                                                    <i class="fas fa-envelope"></i>
+                                                    {% elif field.field_type == 'phone' %}
+                                                    <i class="fas fa-phone"></i>
+                                                    {% elif field.field_type == 'url' %}
+                                                    <i class="fas fa-link"></i>
+                                                    {% elif field.field_type == 'textarea' %}
+                                                    <i class="fas fa-align-left"></i>
+                                                    {% else %}
+                                                    <i class="fas fa-question"></i>
+                                                    {% endif %}
+                                                </div>
+                                                <div>
+                                                    <h6 class="mb-0">{{ field.name }}</h6>
+                                                    <small class="text-muted">{{ field.help_text|default:"No help text" }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ field.get_field_type_display }}</span>
+                                        </td>
+                                        <td>
+                                            {% if field.required %}
+                                            <span class="badge bg-primary">Required</span>
+                                            {% else %}
+                                            <span class="badge bg-secondary">Optional</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ field.display_order }}</td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-outline-primary edit-field-btn" data-field-id="{{ field.id }}">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger delete-field-btn" data-field-id="{{ field.id }}">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5">
+                                            <div class="empty-state">
+                                                <div class="empty-state-icon">
+                                                    <i class="fas fa-clipboard-list"></i>
+                                                </div>
+                                                <h5>No custom fields added yet</h5>
+                                                <p class="text-muted">Start by adding fields to collect information from your clients</p>
+                                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addFieldModal">
+                                                    <i class="fas fa-plus me-2"></i>Add Field
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Cards -->
+        <div class="col-lg-4">
+            <!-- Industry Default Fields Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Industry Default Fields</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-3">These fields are recommended for your industry and help you collect essential information.</p>
+                    
+                    {% if industry_fields %}
+                        <ul class="list-group list-group-flush">
+                            {% for field in industry_fields %}
+                            <li class="list-group-item px-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-0">{{ field.name }}</h6>
+                                        <small class="text-muted">{{ field.get_field_type_display }}</small>
+                                    </div>
+                                    {% if field.required %}
+                                    <span class="badge bg-primary">Required</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Optional</span>
+                                    {% endif %}
+                                </div>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="alert alert-info">
+                            No default fields defined for your industry yet.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Field Types Guide Card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Field Types Guide</h5>
+                </div>
+                <div class="card-body">
+                    <div class="field-type-guide">
+                        <div class="field-type-item">
+                            <div class="field-type-icon">
+                                <i class="fas fa-font"></i>
+                            </div>
+                            <div class="field-type-info">
+                                <h6>Text</h6>
+                                <p class="small text-muted">Single line text input</p>
+                            </div>
+                        </div>
+                        <div class="field-type-item">
+                            <div class="field-type-icon">
+                                <i class="fas fa-hashtag"></i>
+                            </div>
+                            <div class="field-type-info">
+                                <h6>Number</h6>
+                                <p class="small text-muted">Numeric input only</p>
+                            </div>
+                        </div>
+                        <div class="field-type-item">
+                            <div class="field-type-icon">
+                                <i class="fas fa-list"></i>
+                            </div>
+                            <div class="field-type-info">
+                                <h6>Select</h6>
+                                <p class="small text-muted">Dropdown with options</p>
+                            </div>
+                        </div>
+                        <div class="field-type-item">
+                            <div class="field-type-icon">
+                                <i class="fas fa-calendar"></i>
+                            </div>
+                            <div class="field-type-info">
+                                <h6>Date</h6>
+                                <p class="small text-muted">Date picker</p>
+                            </div>
+                        </div>
+                        <div class="field-type-item">
+                            <div class="field-type-icon">
+                                <i class="fas fa-align-left"></i>
+                            </div>
+                            <div class="field-type-info">
+                                <h6>Text Area</h6>
+                                <p class="small text-muted">Multi-line text input</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Field Modal -->
+<div class="modal fade" id="addFieldModal" tabindex="-1" aria-labelledby="addFieldModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addFieldModalLabel">Add Custom Field</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addFieldForm" method="post" action="{% url 'business:add_custom_field' %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="fieldName" class="form-label">Field Name</label>
+                        <input type="text" class="form-control" id="fieldName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="fieldType" class="form-label">Field Type</label>
+                        <select class="form-select" id="fieldType" name="field_type" required>
+                            <option value="text">Text</option>
+                            <option value="number">Number</option>
+                            <option value="select">Select (Dropdown)</option>
+                            <option value="date">Date</option>
+                            <option value="time">Time</option>
+                            <option value="datetime">Date and Time</option>
+                            <option value="boolean">Yes/No</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone Number</option>
+                            <option value="url">URL</option>
+                            <option value="textarea">Text Area</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Select Options (only shown for select type) -->
+                    <div class="mb-3" id="selectOptionsContainer" style="display: none;">
+                        <label for="selectOptions" class="form-label">Options (one per line)</label>
+                        <textarea class="form-control" id="selectOptions" name="options" rows="3" placeholder="Option 1&#10;Option 2&#10;Option 3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="fieldPlaceholder" class="form-label">Placeholder Text</label>
+                        <input type="text" class="form-control" id="fieldPlaceholder" name="placeholder">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fieldHelpText" class="form-label">Help Text</label>
+                        <input type="text" class="form-control" id="fieldHelpText" name="help_text">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fieldDisplayOrder" class="form-label">Display Order</label>
+                        <input type="number" class="form-control" id="fieldDisplayOrder" name="display_order" min="0" value="0">
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="fieldRequired" name="required" checked>
+                        <label class="form-check-label" for="fieldRequired">Required</label>
+                    </div>
+                    <div class="form-check form-switch mb-3">
+                        <input class="form-check-input" type="checkbox" id="fieldActive" name="is_active" checked>
+                        <label class="form-check-label" for="fieldActive">Active</label>
+                    </div>
+                    <!-- Hidden field for edit mode -->
+                    <input type="hidden" id="fieldId" name="field_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Field</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteFieldModal" tabindex="-1" aria-labelledby="deleteFieldModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteFieldModalLabel">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this field? This action cannot be undone.</p>
+                <form id="deleteFieldForm" method="post" action="{% url 'business:delete_custom_field' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="field_id" id="deleteFieldId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/business-custom-fields.js' %}"></script>
+{% endblock %}

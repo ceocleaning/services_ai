@@ -1,10 +1,10 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse, HttpResponseRedirect
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
 from django.contrib import messages
 from django.db import transaction
+from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 import json
 
@@ -179,13 +179,9 @@ def business_pricing(request):
     # Get all services for this business
     services = ServiceOffering.objects.filter(business=business).order_by('name')
     
-    # Get all packages for this business
-    packages = ServicePackage.objects.filter(business=business).order_by('name')
-    
     context = {
         'business': business,
-        'services': services,
-        'packages': packages
+        'services': services
     }
     
     return render(request, 'business/pricing.html', context)
@@ -331,39 +327,47 @@ def delete_service(request):
     return redirect('business:pricing')
 
 
+# Package functionality has been removed as packages are not offered at the moment
+
+
+# Import custom fields views
+from .views_custom_fields import (
+    custom_fields,
+    add_custom_field,
+    update_custom_field,
+    delete_custom_field,
+    get_custom_field_details,
+    reset_custom_fields,
+    reorder_custom_fields
+)
+
+
 @login_required
-@require_http_methods(["POST"])
-def add_package(request):
+def get_service_details(request, service_id):
     """
-    Add a new package deal to the business
-    Handles form submission from the pricing page
+    API endpoint to get service details for editing
+    Returns JSON response with service data
     """
     # Check if user has a business
     if not hasattr(request.user, 'business'):
-        messages.warning(request, 'Please register your business first.')
-        return redirect('business:register')
+        return JsonResponse({'error': 'Please register your business first'}, status=403)
     
     business = request.user.business
     
     try:
-        # Create new package
-        package = ServicePackage.objects.create(
-            business=business,
-            name=request.POST.get('name'),
-            description=request.POST.get('description', ''),
-            price=request.POST.get('price'),
-            savings=request.POST.get('savings', 0),
-            is_active='is_active' in request.POST
-        )
+        # Get service and verify it belongs to this business
+        service = get_object_or_404(ServiceOffering, id=service_id, business=business)
         
-        # Add services to package
-        service_ids = request.POST.getlist('services')
-        if service_ids:
-            services = ServiceOffering.objects.filter(id__in=service_ids, business=business)
-            package.services.set(services)
-        
-        messages.success(request, f'Package "{package.name}" added successfully!')
+        # Return service data as JSON
+        return JsonResponse({
+            'id': str(service.id),
+            'name': service.name,
+            'description': service.description or '',
+            'price': float(service.price),
+            'duration': service.duration,
+            'icon': service.icon,
+            'color': service.color,
+            'is_active': service.is_active
+        })
     except Exception as e:
-        messages.error(request, f'An error occurred: {str(e)}')
-    
-    return redirect('business:pricing')
+        return JsonResponse({'error': str(e)}, status=400)

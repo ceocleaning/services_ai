@@ -1,6 +1,7 @@
 from django.urls import path
 from . import views
 
+
 app_name = 'business'
 
 urlpatterns = [
@@ -15,11 +16,21 @@ urlpatterns = [
     path('notifications/', views.notification_preferences, name='notifications'),
     path('upgrade/', views.upgrade_plan, name='upgrade'),
     
+    # Custom fields management
+    path('custom-fields/', views.custom_fields, name='custom_fields'),
+    path('custom-field/add/', views.add_custom_field, name='add_custom_field'),
+    path('custom-field/update/', views.update_custom_field, name='update_custom_field'),
+    path('custom-field/delete/', views.delete_custom_field, name='delete_custom_field'),
+    path('custom-field/<int:field_id>/details/', views.get_custom_field_details, name='get_custom_field_details'),
+    path('custom-fields/reset/', views.reset_custom_fields, name='reset_custom_fields'),
+    path('custom-fields/reorder/', views.reorder_custom_fields, name='reorder_custom_fields'),
+    
     # Service management
     path('service/add/', views.add_service, name='add_service'),
     path('service/update/', views.update_service, name='update_service'),
     path('service/delete/', views.delete_service, name='delete_service'),
-    path('package/add/', views.add_package, name='add_package'),
+    path('service/<uuid:service_id>/details/', views.get_service_details, name='get_service_details'),
+    # Package functionality removed
     
     # API endpoints
     path('api/industries/', views.get_industries, name='api_industries'),

@@ -1,18 +1,14 @@
 /**
  * Business Pricing JavaScript for Services AI
- * Handles service and package management functionality
+ * Handles service management functionality
  */
 
 document.addEventListener('DOMContentLoaded', function() {
     // Elements
     const addServiceForm = document.getElementById('addServiceForm');
-    const addPackageForm = document.getElementById('addPackageForm');
     const deleteServiceForm = document.getElementById('deleteServiceForm');
     const deleteServiceId = document.getElementById('deleteServiceId');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    const packageServiceChecks = document.querySelectorAll('.package-service-check');
-    const packagePrice = document.getElementById('packagePrice');
-    const packageSavings = document.getElementById('packageSavings');
     
     // Service icon preview
     const serviceIcon = document.getElementById('serviceIcon');
@@ -39,17 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateIconPreview();
     }
     
-    // Calculate package savings
-    if (packageServiceChecks.length > 0 && packagePrice && packageSavings) {
-        packageServiceChecks.forEach(check => {
-            check.addEventListener('change', calculatePackageSavings);
-        });
-        
-        packagePrice.addEventListener('input', calculatePackageSavings);
-        
-        // Initial calculation
-        calculatePackageSavings();
-    }
+    // Package functionality has been removed
     
     // Delete service confirmation
     const deleteServiceBtns = document.querySelectorAll('.delete-service-btn');
@@ -194,37 +180,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // Calculate package savings
-    function calculatePackageSavings() {
-        let totalServicePrice = 0;
-        
-        // Sum up the prices of selected services
-        packageServiceChecks.forEach(check => {
-            if (check.checked) {
-                // Extract price from the label
-                const priceText = check.nextElementSibling.querySelector('span:last-child').textContent;
-                const price = parseFloat(priceText.replace('$', ''));
-                if (!isNaN(price)) {
-                    totalServicePrice += price;
-                }
-            }
-        });
-        
-        // Calculate savings
-        const packagePriceValue = parseFloat(packagePrice.value) || 0;
-        const savings = totalServicePrice - packagePriceValue;
-        
-        // Update savings field
-        if (packageSavings) {
-            packageSavings.value = savings > 0 ? savings.toFixed(2) : '0.00';
-        }
-    }
+    // Package functionality has been removed
     
     // Fetch service details for editing
     function fetchServiceDetails(serviceId) {
-        // In a real implementation, this would be an AJAX call to get service details
-        // For now, we'll simulate it with a modal show
+        // Show loading state
         const modal = new bootstrap.Modal(document.getElementById('addServiceModal'));
+        modal.show();
         
         // Update modal title to indicate editing
         const modalTitle = document.getElementById('addServiceModalLabel');
@@ -247,6 +209,32 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 document.getElementById('editServiceId').value = serviceId;
             }
+            
+            // Fetch service details via AJAX
+            fetch(`/business/service/${serviceId}/details/`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Populate form fields with service data
+                    document.getElementById('serviceName').value = data.name;
+                    document.getElementById('serviceDescription').value = data.description;
+                    document.getElementById('servicePrice').value = data.price;
+                    document.getElementById('serviceDuration').value = data.duration;
+                    document.getElementById('serviceIcon').value = data.icon;
+                    document.getElementById('serviceColor').value = data.color;
+                    document.getElementById('serviceActive').checked = data.is_active;
+                    
+                    // Update icon preview
+                    updateIconPreview();
+                })
+                .catch(error => {
+                    console.error('Error fetching service details:', error);
+                    alert('Error loading service details. Please try again.');
+                });
         }
         
         // In a real implementation, you would populate the form with service data here

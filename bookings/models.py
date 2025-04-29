@@ -278,12 +278,14 @@ class Booking(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='bookings')
-    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='bookings')
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='bookings', null=True, blank=True)
     service_type = models.ForeignKey(ServiceType, on_delete=models.SET_NULL, null=True, related_name='bookings')
     staff_members = models.ManyToManyField(StaffMember, through='BookingStaffAssignment', related_name='assigned_bookings')
     status = models.CharField(max_length=20, choices=BookingStatus.choices, default=BookingStatus.PENDING)
-    start_time = models.DateTimeField()
-    end_time = models.DateTimeField()
+    booking_date = models.DateField()
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+
     location_type = models.CharField(max_length=20, choices=(
         ('onsite', 'On-site (Client Location)'),
         ('business', 'Business Location'),
@@ -291,8 +293,10 @@ class Booking(models.Model):
     ), default='business')
     location_details = models.TextField(blank=True, null=True)
     notes = models.TextField(blank=True, null=True)
+
     cancellation_reason = models.TextField(blank=True, null=True)
     reminder_sent = models.BooleanField(default=False)
+    
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
