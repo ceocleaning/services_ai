@@ -1,0 +1,139 @@
+from django.contrib import admin
+from django.utils.html import format_html
+from .models import (
+    Industry, 
+    Business, 
+    IndustryField, 
+    BusinessCustomField, 
+    IndustryPrompt,
+    BusinessConfiguration
+)
+
+
+class IndustryFieldInline(admin.TabularInline):
+    model = IndustryField
+    extra = 1
+    fields = ('name', 'field_type', 'required', 'display_order', 'is_active')
+
+
+class IndustryPromptInline(admin.TabularInline):
+    model = IndustryPrompt
+    extra = 0
+    fields = ('name', 'version', 'is_active')
+
+
+@admin.register(Industry)
+class IndustryAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug', 'description_short', 'is_active', 'created_at')
+    list_filter = ('is_active', 'created_at')
+    search_fields = ('name', 'description')
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = [IndustryFieldInline, IndustryPromptInline]
+    
+    def description_short(self, obj):
+        if obj.description and len(obj.description) > 50:
+            return f"{obj.description[:50]}..."
+        return obj.description
+    description_short.short_description = 'Description'
+
+
+class BusinessCustomFieldInline(admin.TabularInline):
+    model = BusinessCustomField
+    extra = 0
+    fields = ('name', 'field_type', 'required', 'display_order', 'is_active')
+
+
+class BusinessConfigurationInline(admin.StackedInline):
+    model = BusinessConfiguration
+    can_delete = False
+    verbose_name_plural = 'Configuration'
+
+
+@admin.register(Business)
+class BusinessAdmin(admin.ModelAdmin):
+    list_display = ('name', 'industry', 'email', 'phone_number', 'is_active', 'created_at')
+    list_filter = ('industry', 'is_active', 'created_at')
+    search_fields = ('name', 'email', 'phone_number')
+    readonly_fields = ('id',)
+    inlines = [BusinessConfigurationInline, BusinessCustomFieldInline]
+    fieldsets = (
+        ('Basic Information', {
+            'fields': ('id', 'name', 'industry', 'description', 'is_active')
+        }),
+        ('Contact Information', {
+            'fields': ('email', 'phone_number', 'website')
+        }),
+        ('Address', {
+            'fields': ('address', 'city', 'state', 'zip_code'),
+            'classes': ('collapse',)
+        }),
+        ('Branding', {
+            'fields': ('logo',),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(IndustryField)
+class IndustryFieldAdmin(admin.ModelAdmin):
+    list_display = ('name', 'industry', 'field_type', 'required', 'display_order', 'is_active')
+    list_filter = ('industry', 'field_type', 'required', 'is_active')
+    search_fields = ('name', 'industry__name')
+    list_editable = ('display_order', 'is_active')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(BusinessCustomField)
+class BusinessCustomFieldAdmin(admin.ModelAdmin):
+    list_display = ('name', 'business', 'field_type', 'required', 'display_order', 'is_active')
+    list_filter = ('business__industry', 'field_type', 'required', 'is_active')
+    search_fields = ('name', 'business__name')
+    list_editable = ('display_order', 'is_active')
+    prepopulated_fields = {'slug': ('name',)}
+
+
+@admin.register(IndustryPrompt)
+class IndustryPromptAdmin(admin.ModelAdmin):
+    list_display = ('name', 'industry', 'version', 'is_active', 'created_at', 'updated_at')
+    list_filter = ('industry', 'is_active', 'created_at')
+    search_fields = ('name', 'industry__name', 'prompt_text')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        (None, {
+            'fields': ('industry', 'name', 'description', 'version', 'is_active')
+        }),
+        ('Prompt Content', {
+            'fields': ('prompt_text',),
+            'classes': ('wide',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(BusinessConfiguration)
+class BusinessConfigurationAdmin(admin.ModelAdmin):
+    list_display = ('business', 'sms_enabled', 'voice_enabled', 'follow_up_attempts')
+    list_filter = ('sms_enabled', 'voice_enabled')
+    search_fields = ('business__name',)
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Business', {
+            'fields': ('business',)
+        }),
+        ('Webhook Configuration', {
+            'fields': ('webhook_secret', 'lead_notification_email')
+        }),
+        ('Communication Settings', {
+            'fields': ('sms_enabled', 'voice_enabled', 'twilio_phone_number')
+        }),
+        ('Follow-up Configuration', {
+            'fields': ('initial_response_delay', 'follow_up_attempts', 'follow_up_interval')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )

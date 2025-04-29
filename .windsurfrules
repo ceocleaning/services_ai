@@ -1,0 +1,72 @@
+# AI Development Guidelines for Industry-Specific Appointment Assistant
+
+## General Development Rules
+
+### Architectural Principles
+1. **Modular First**: All components must be designed with modularity in mind. Every industry, field type, and integration should be treated as a plugin.
+2. **Separation of Concerns**: Clearly separate business logic, data access, presentation, and third-party integrations.
+3. **DRY (Don't Repeat Yourself)**: Create reusable components and utilities. Avoid code duplication across industries.
+4. **Progressive Enhancement**: Ensure core functionality works without JavaScript, then enhance with JS capabilities.
+5. **Error Handling**: Implement comprehensive error handling at all levels - API calls, database operations, third-party services.
+
+### Code Style & Organization
+1. **Consistent Formatting**: Follow PEP 8 for Python and standard style guides for JavaScript.
+2. **Meaningful Naming**: Use descriptive names for variables, functions, classes, and modules that reveal their purpose.
+3. **Documentation**: Include docstrings for all functions, classes, and modules explaining purpose, parameters, and return values.
+5. **Directory Structure**: Organize files logically by feature/module rather than by file type.
+
+
+## Backend Development Rules
+
+### Django Architecture
+1. **App Organization**: We have Django apps for:
+   - bookings - For booking management
+   - invoices - For invoice management
+   - leads - For lead management
+   - ai_agent - For AI agent management
+   - retell_agent - For retell agent management
+   - accounts - For user account management
+   - business - For business management
+   - core - For core functionality like Landing Page, Contact us pages etc
+
+2. **Models Design**:
+   - Use abstract base models for shared functionality
+   - Implement industry-specific models through inheritance
+   - Use ForeignKey relationships appropriately for data integrity
+3. **Plugin System**:
+   - Implement a registry pattern for industry plugins
+   - Auto-discover plugins at startup
+   - Allow hot-swapping industry configurations
+
+### API & Data Handling
+1. **Webhook Security**: Implement validation, rate limiting, and authentication for webhook endpoints.
+2. **Data Validation**: Validate all input data before processing.
+3. **Query Optimization**: Use `select_related` and `prefetch_related` to minimize database queries.
+4. **Custom Managers**: Create model managers for frequently used queries.
+5. **JSON Handling**: Use Django's built-in JSON fields for flexible data storage when appropriate.
+
+### Django Q2 Task Management
+1. **Task Isolation**: Each background task should be independent and idempotent when possible.
+2. **Failure Recovery**: Implement retry logic and failure tracking for critical tasks.
+3. **Scheduled Tasks**: Use scheduled tasks for follow-ups, reminders, and periodic maintenance.
+4. **Task Monitoring**: Log start/completion of tasks and track execution time.
+5. **Prioritization**: Implement task prioritization based on business rules.
+
+### AI Integration
+1. **Prompt Management**: Store industry-specific prompts in the database for easy updates.
+2. **Context Building**: Create helper functions to build context from lead data for AI.
+3. **Response Parsing**: Create robust parsers for structuring AI responses.
+4. **Fallback Mechanisms**: Implement fallbacks when AI services are unavailable or responses are inadequate.
+5. **Prompt Versioning**: Track prompt versions and their effectiveness.
+
+### Twilio Integration
+1. **Abstraction Layer**: Create an abstract communication service that Twilio implements.
+2. **Webhook Handlers**: Implement handlers for Twilio status callbacks and responses.
+3. **Number Management**: Create utilities for managing phone number pools.
+4. **Message Templates**: Store templates in the database with variable substitution.
+
+
+### UI
+1. - All custom css will be added in static/css/ folder with respective to html file
+2. - All custom js will be added in static/js/ folder with respective to html file
+3. - All Images and SVGs will be used from online sources
