@@ -145,28 +145,6 @@ class BusinessCustomField(models.Model):
         super().save(*args, **kwargs)
 
 
-class IndustryPrompt(models.Model):
-    """
-    Industry-specific AI prompts for generating responses.
-    """
-    industry = models.ForeignKey(Industry, on_delete=models.CASCADE, related_name='prompts')
-    name = models.CharField(max_length=100)
-    description = models.TextField(blank=True, null=True)
-    prompt_text = models.TextField()
-    version = models.CharField(max_length=20, default='1.0')
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Industry Prompt"
-        verbose_name_plural = "Industry Prompts"
-        ordering = ['-version', 'name']
-
-    def __str__(self):
-        return f"{self.industry.name} - {self.name} (v{self.version})"
-
-
 class BusinessConfiguration(models.Model):
     """
     Business-specific configuration settings.
@@ -185,3 +163,39 @@ class BusinessConfiguration(models.Model):
 
     def __str__(self):
         return f"Configuration for {self.business.name}"
+
+
+class ServiceOffering(models.Model):
+    """
+    Represents a service offered by a business.
+    This is a simplified model for managing service offerings directly.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_offerings')
+    name = models.CharField(max_length=100)
+    identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service (e.g., number_of_bedrooms)")
+    description = models.TextField(blank=True, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    duration = models.PositiveIntegerField(help_text="Duration in minutes")
+    icon = models.CharField(max_length=50, default="concierge-bell", help_text="FontAwesome icon name")
+    color = models.CharField(max_length=20, default="#6366f1", help_text="Color code for the service icon")
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Service Offering"
+        verbose_name_plural = "Service Offerings"
+        ordering = ['name']
+    
+    def __str__(self):
+        return f"{self.business.name} - {self.name}"
+    
+    def save(self, *args, **kwargs):
+        if not self.identifier:
+            # Convert name to snake_case for identifier
+            self.identifier = slugify(self.name).replace('-', '_')
+        super().save(*args, **kwargs)
+
+
+# ServicePackage model removed as packages are not offered at the moment

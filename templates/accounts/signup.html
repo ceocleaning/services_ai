@@ -1,0 +1,147 @@
+{% extends 'common/auth_base.html' %}
+{% load static %}
+
+{% block title %}Sign Up - Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/auth.css' %}">
+{% endblock %}
+
+{% block auth_content %}
+<div class="auth-card-header">
+    <h2 class="fw-bold mb-2">Create Account</h2>
+    <p class="text-secondary">Join Services AI and transform your business</p>
+</div>
+
+<div class="auth-card-body">
+    <form method="post" action="{% url 'accounts:signup' %}" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+        
+        <!-- Full Name -->
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="username" name="username" placeholder="Username" required>
+            <label for="username">Username</label>
+            <div class="invalid-feedback">
+                Please enter your username.
+            </div>
+        </div>
+        
+        <!-- Email -->
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
+            <label for="email">Email address</label>
+            <div class="invalid-feedback">
+                Please enter a valid email address.
+            </div>
+        </div>
+        
+
+        <!-- Password -->
+        <div class="form-floating mb-3 position-relative">
+            <input type="password" class="form-control" id="password" name="password" placeholder="Password" required minlength="8">
+            <label for="password">Password</label>
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                <i class="fas fa-eye"></i>
+            </button>
+            <div class="invalid-feedback">
+                Password must be at least 8 characters long.
+            </div>
+        </div>
+        
+        <!-- Password Strength Meter -->
+        <div class="password-strength-meter">
+            <div class="password-strength-meter-bar"></div>
+        </div>
+        <div class="password-strength-text small"></div>
+        
+        <!-- Confirm Password -->
+        <div class="form-floating mb-4 position-relative">
+            <input type="password" class="form-control" id="confirmPassword" name="confirm_password" placeholder="Confirm Password" required>
+            <label for="confirmPassword">Confirm Password</label>
+            <button type="button" class="password-toggle" aria-label="Toggle password visibility">
+                <i class="fas fa-eye"></i>
+            </button>
+            <div class="invalid-feedback">
+                Passwords do not match.
+            </div>
+        </div>
+        
+        <!-- Display Django Messages -->
+        {% if messages %}
+        <div class="alert alert-danger mb-4">
+            <ul class="mb-0 ps-3">
+                {% for message in messages %}
+                <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+        
+        <!-- Terms Agreement -->
+        <div class="form-check mb-4">
+            <input class="form-check-input" type="checkbox" id="termsAgreement" name="terms_agreement" required>
+            <label class="form-check-label" for="termsAgreement">
+                I agree to the <a href="/terms" class="auth-link">Terms of Service</a> and <a href="/privacy" class="auth-link">Privacy Policy</a>
+            </label>
+            <div class="invalid-feedback">
+                You must agree to the terms to continue.
+            </div>
+        </div>
+        
+        <!-- Submit Button -->
+        <button type="submit" class="btn btn-primary auth-btn">
+            <span>Create Account</span>
+        </button>
+    </form>
+    
+    <div class="auth-divider">or</div>
+    
+    <!-- Social Login Options -->
+    <div class="social-login-options">
+        <a href="#" class="social-login-btn">
+            <i class="fab fa-google"></i>
+            <span>Sign up with Google</span>
+        </a>
+        <a href="#" class="social-login-btn">
+            <i class="fab fa-microsoft"></i>
+            <span>Sign up with Microsoft</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block auth_secondary_actions %}
+<div class="auth-secondary-actions">
+    <p class="mb-0">
+        Already have an account? <a href="{% url 'accounts:login' %}" class="auth-link">Log in</a>
+    </p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        
+        // Check if passwords match when confirm password is changed
+        if (confirmPasswordInput && passwordInput) {
+            confirmPasswordInput.addEventListener('input', function() {
+                const match = passwordsMatch(passwordInput.value, this.value);
+                updatePasswordMatchFeedback(this, match);
+            });
+            
+            passwordInput.addEventListener('input', function() {
+                if (confirmPasswordInput.value) {
+                    const match = passwordsMatch(this.value, confirmPasswordInput.value);
+                    updatePasswordMatchFeedback(confirmPasswordInput, match);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

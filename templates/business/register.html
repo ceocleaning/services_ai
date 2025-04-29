@@ -1,0 +1,217 @@
+{% extends 'common/auth_base.html' %}
+{% load static %}
+
+{% block title %}Register Your Business - Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/business-registration.css' %}">
+{% endblock %}
+
+{% block auth_content %}
+<div class="business-registration business-registration-container">
+    <h2 class="auth-title text-center mb-4">Register Your Business</h2>
+    
+    <!-- Progress Steps -->
+    <div class="progress-container mb-4">
+        <div class="progress" style="height: 4px;">
+            <div class="progress-bar" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <div class="step-indicators d-flex justify-content-between">
+            <div class="step active" data-step="1">
+                <div class="step-circle">1</div>
+                <div class="step-label">Business Info</div>
+            </div>
+            <div class="step" data-step="2">
+                <div class="step-circle">2</div>
+                <div class="step-label">Industry</div>
+            </div>
+            <div class="step" data-step="3">
+                <div class="step-circle">3</div>
+                <div class="step-label">Contact</div>
+            </div>
+            <div class="step" data-step="4">
+                <div class="step-circle">4</div>
+                <div class="step-label">Complete</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Registration Form -->
+    <form id="businessRegistrationForm" method="POST" class="needs-validation" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="current_step" id="current_step" value="1">
+        
+        <!-- Step 1: Business Information -->
+        <div class="form-step" id="step1">
+            <div class="mb-3">
+                <label for="business_name" class="form-label">Business Name <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="business_name" name="business_name" required>
+                <div class="invalid-feedback">Please enter your business name.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="business_description" class="form-label">Business Description</label>
+                <textarea class="form-control" id="business_description" name="business_description" rows="3"></textarea>
+                <div class="form-text">Briefly describe what your business does.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="website" class="form-label">Website</label>
+                <input type="url" class="form-control" id="website" name="website" placeholder="https://example.com">
+                <div class="invalid-feedback">Please enter a valid URL.</div>
+            </div>
+            
+            <div class="d-flex justify-content-end">
+                <button type="button" class="btn btn-primary next-step">Next <i class="fas fa-arrow-right ms-1"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 2: Industry Selection -->
+        <div class="form-step" id="step2" style="display: none;">
+            <div class="mb-4">
+                <label for="industry" class="form-label">Select Your Industry <span class="text-danger">*</span></label>
+                <select class="form-select" id="industry" name="industry" required>
+                    <option value="" selected disabled>Choose your industry...</option>
+                    <!-- Industry options will be loaded dynamically -->
+                </select>
+                <div class="invalid-feedback">Please select your industry.</div>
+                <div class="form-text mt-2">
+                    <i class="fas fa-info-circle me-1 text-info"></i>
+                    Select the industry that best describes your business. Industry-specific fields will be available when creating bookings.
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary prev-step"><i class="fas fa-arrow-left me-1"></i> Previous</button>
+                <button type="button" class="btn btn-primary next-step">Next <i class="fas fa-arrow-right ms-1"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Contact Information -->
+        <div class="form-step" id="step3" style="display: none;">
+            <div class="mb-3">
+                <label for="phone_number" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" id="phone_number" name="phone_number" required>
+                <div class="invalid-feedback">Please enter a valid phone number.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Business Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" id="email" name="email" required>
+                <div class="invalid-feedback">Please enter a valid email address.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="address" class="form-label">Address</label>
+                <textarea class="form-control" id="address" name="address" rows="2"></textarea>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="city" class="form-label">City</label>
+                    <input type="text" class="form-control" id="city" name="city">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="state" class="form-label">State</label>
+                    <input type="text" class="form-control" id="state" name="state">
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="zip_code" class="form-label">ZIP Code</label>
+                    <input type="text" class="form-control" id="zip_code" name="zip_code">
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="button" class="btn btn-outline-secondary prev-step"><i class="fas fa-arrow-left me-1"></i> Previous</button>
+                <button type="button" class="btn btn-primary next-step">Next <i class="fas fa-arrow-right ms-1"></i></button>
+            </div>
+        </div>
+        
+        <!-- Step 4: Review & Submit -->
+        <div class="form-step" id="step4" style="display: none;">
+            <div class="review-header mb-4">
+                <h4 class="mb-2"><i class="fas fa-clipboard-check me-2 text-primary"></i>Review Your Information</h4>
+                <p class="text-muted">Please review your business details before completing registration.</p>
+            </div>
+            
+            <div class="review-container">
+                <!-- Review data will be populated here dynamically -->
+                <div class="review-data"></div>
+                
+                <!-- Edit buttons -->
+                <div class="review-actions mt-3 text-end">
+                    <button type="button" class="btn btn-sm btn-outline-primary edit-info" data-step="1">
+                        <i class="fas fa-pen me-1"></i> Edit Business Info
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary edit-info ms-2" data-step="2">
+                        <i class="fas fa-pen me-1"></i> Edit Industry
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-primary edit-info ms-2" data-step="3">
+                        <i class="fas fa-pen me-1"></i> Edit Contact Info
+                    </button>
+                </div>
+            </div>
+            
+            <div class="terms-section mt-4 p-3">
+                <div class="mb-3 form-check">
+                    <input type="checkbox" class="form-check-input" id="terms_agree" name="terms_agree" required>
+                    <label class="form-check-label" for="terms_agree">I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a> <span class="text-danger">*</span></label>
+                    <div class="invalid-feedback">You must agree to the terms and conditions.</div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-secondary prev-step"><i class="fas fa-arrow-left me-1"></i> Previous</button>
+                <button type="submit" class="btn btn-success" id="submit_button">
+                    <i class="fas fa-check-circle me-1"></i> Complete Registration
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Terms and Conditions Modal -->
+<div class="modal fade" id="termsModal" tabindex="-1" aria-labelledby="termsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="termsModalLabel">Terms and Conditions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6>1. Acceptance of Terms</h6>
+                <p>By registering your business with Services AI, you agree to these terms and conditions.</p>
+                
+                <h6>2. Service Description</h6>
+                <p>Services AI provides an AI-powered appointment scheduling and management system for businesses.</p>
+                
+                <h6>3. User Responsibilities</h6>
+                <p>You are responsible for maintaining the confidentiality of your account information and for all activities that occur under your account.</p>
+                
+                <h6>4. Privacy Policy</h6>
+                <p>Your use of Services AI is also governed by our Privacy Policy.</p>
+                
+                <h6>5. Modifications to Service</h6>
+                <p>Services AI reserves the right to modify or discontinue the service at any time.</p>
+                
+                <h6>6. Termination</h6>
+                <p>Services AI may terminate your access to the service, without cause or notice.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal" id="agreeTerms">I Agree</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block auth_secondary_actions %}
+<div class="text-center mt-3">
+    <p class="text-secondary">Already registered? <a href="{% url 'accounts:login' %}" class="text-decoration-none">Log in to your account</a></p>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/business-registration.js' %}"></script>
+{% endblock %}

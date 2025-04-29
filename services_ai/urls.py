@@ -26,6 +26,10 @@ urlpatterns = [
     path('invoices/', include('invoices.urls')),
     path('leads/', include('leads.urls')),
     path('retell-agent/', include('retell_agent.urls')),
+    path('business/', include('business.urls')),
+    path('', include('core.urls')),
+    path('accounts/', include('accounts.urls')),
+    path('dashboard/', include('dashboard.urls')),
 ]
 
 # Serve media files in development

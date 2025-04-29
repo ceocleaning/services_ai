@@ -5,7 +5,6 @@ from .models import (
     Business, 
     IndustryField, 
     BusinessCustomField, 
-    IndustryPrompt,
     BusinessConfiguration
 )
 
@@ -16,11 +15,6 @@ class IndustryFieldInline(admin.TabularInline):
     fields = ('name', 'field_type', 'required', 'display_order', 'is_active')
 
 
-class IndustryPromptInline(admin.TabularInline):
-    model = IndustryPrompt
-    extra = 0
-    fields = ('name', 'version', 'is_active')
-
 
 @admin.register(Industry)
 class IndustryAdmin(admin.ModelAdmin):
@@ -28,7 +22,7 @@ class IndustryAdmin(admin.ModelAdmin):
     list_filter = ('is_active', 'created_at')
     search_fields = ('name', 'description')
     prepopulated_fields = {'slug': ('name',)}
-    inlines = [IndustryFieldInline, IndustryPromptInline]
+    inlines = [IndustryFieldInline]
     
     def description_short(self, obj):
         if obj.description and len(obj.description) > 50:
@@ -90,27 +84,6 @@ class BusinessCustomFieldAdmin(admin.ModelAdmin):
     search_fields = ('name', 'business__name')
     list_editable = ('display_order', 'is_active')
     prepopulated_fields = {'slug': ('name',)}
-
-
-@admin.register(IndustryPrompt)
-class IndustryPromptAdmin(admin.ModelAdmin):
-    list_display = ('name', 'industry', 'version', 'is_active', 'created_at', 'updated_at')
-    list_filter = ('industry', 'is_active', 'created_at')
-    search_fields = ('name', 'industry__name', 'prompt_text')
-    readonly_fields = ('created_at', 'updated_at')
-    fieldsets = (
-        (None, {
-            'fields': ('industry', 'name', 'description', 'version', 'is_active')
-        }),
-        ('Prompt Content', {
-            'fields': ('prompt_text',),
-            'classes': ('wide',)
-        }),
-        ('Timestamps', {
-            'fields': ('created_at', 'updated_at'),
-            'classes': ('collapse',)
-        }),
-    )
 
 
 @admin.register(BusinessConfiguration)

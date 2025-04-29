@@ -1,0 +1,321 @@
+/* Auth CSS for Services AI Authentication Pages
+   Following the design system from UI.md */
+
+/* Auth Background */
+.auth-body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--gray-darkest);
+    position: relative;
+}
+
+.auth-background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 30%, rgba(79, 70, 229, 0.15) 0%, rgba(0, 0, 0, 0) 50%),
+        radial-gradient(circle at 80% 70%, rgba(12, 165, 233, 0.15) 0%, rgba(0, 0, 0, 0) 50%);
+    z-index: 0;
+}
+
+.auth-background::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+    opacity: 0.03;
+    z-index: -1;
+}
+
+/* Auth Header */
+.auth-header {
+    position: relative;
+    z-index: 1;
+}
+
+.auth-header .primary-icon {
+    font-size: 2rem;
+    color: var(--primary-indigo);
+    filter: drop-shadow(0 0 8px rgba(79, 70, 229, 0.6));
+}
+
+.auth-header .brand-text {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary-indigo) 0%, var(--secondary-teal) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 2px 10px rgba(79, 70, 229, 0.3);
+    letter-spacing: -0.5px;
+}
+
+/* Auth Main */
+.auth-main {
+    flex: 1;
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+}
+
+/* Auth Card */
+.auth-card {
+    background-color: var(--gray-dark);
+    border-radius: 1rem;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: linear-gradient(90deg, var(--primary-indigo), var(--secondary-teal));
+}
+
+.auth-card-header {
+    padding: 2rem 2rem 1rem;
+    text-align: center;
+    position: relative;
+}
+
+.auth-card-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    width: 80%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+}
+
+.auth-card-body {
+    padding: 2rem;
+}
+
+/* Auth Form Elements */
+.form-floating {
+    margin-bottom: 1.5rem;
+}
+
+.form-floating > .form-control {
+    background-color: var(--gray-darkest);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    height: calc(3.5rem + 2px);
+    padding: 1.5rem 1rem 0.5rem;
+}
+
+.form-floating > .form-control:focus {
+    border-color: var(--primary-indigo-medium-light);
+    box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+}
+
+.form-floating > label {
+    padding: 1rem;
+    color: var(--color-text-secondary);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-control:not(:placeholder-shown) ~ label {
+    transform: scale(0.85) translateY(-0.75rem) translateX(0.15rem);
+    color: var(--primary-indigo-medium-light);
+}
+
+.form-check-input {
+    background-color: var(--gray-darkest);
+    border: 1px solid rgba(33, 65, 114, 0.2);
+}
+
+.form-check-input:checked {
+    background-color: var(--primary-indigo);
+    border-color: var(--primary-indigo);
+}
+
+/* Auth Button */
+.auth-btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-weight: 500;
+    margin-top: 0.5rem;
+}
+
+.auth-btn.btn-primary {
+    background-color: var(--primary-indigo);
+    border-color: var(--primary-indigo);
+}
+
+.auth-btn.btn-primary:hover, .auth-btn.btn-primary:focus {
+    background-color: var(--primary-indigo-medium-dark);
+    border-color: var(--primary-indigo-dark);
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+}
+
+/* Auth Divider */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--color-text-secondary);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.auth-divider::before {
+    margin-right: 1rem;
+}
+
+.auth-divider::after {
+    margin-left: 1rem;
+}
+
+/* Social Login Buttons */
+.social-login-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    background-color: var(--gray-darkest);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.social-login-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-primary);
+}
+
+.social-login-btn i {
+    margin-right: 0.75rem;
+    font-size: 1.25rem;
+}
+
+/* Auth Secondary Actions */
+.auth-secondary-actions {
+    text-align: center;
+    margin-top: 1.5rem;
+}
+
+.auth-link {
+    color: var(--primary-indigo-medium-light);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.auth-link:hover {
+    color: var(--primary-indigo-light);
+    text-decoration: underline;
+}
+
+/* Auth Footer */
+.auth-footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Password Strength Meter */
+.password-strength-meter {
+    height: 5px;
+    background-color: var(--gray-darkest);
+    margin-top: -1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.password-strength-meter-bar {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.password-strength-text {
+    font-size: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+/* Strength levels */
+.strength-weak .password-strength-meter-bar {
+    width: 25%;
+    background-color: var(--error);
+}
+
+.strength-medium .password-strength-meter-bar {
+    width: 50%;
+    background-color: var(--warning);
+}
+
+.strength-good .password-strength-meter-bar {
+    width: 75%;
+    background-color: var(--info);
+}
+
+.strength-strong .password-strength-meter-bar {
+    width: 100%;
+    background-color: var(--success);
+}
+
+/* Password Visibility Toggle */
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    z-index: 5;
+}
+
+.password-toggle:hover {
+    color: var(--primary-indigo-medium-light);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    .auth-card-header,
+    .auth-card-body {
+        padding: 1.5rem;
+    }
+}
+
+/* Animation for auth card */
+.auth-card {
+    animation: fadeInUp 0.5s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
