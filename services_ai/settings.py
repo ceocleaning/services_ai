@@ -147,3 +147,6 @@ STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
 STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 
 BASE_URL = 'https://42a9-154-198-84-177.ngrok-free.app'
+
+# OPENAI
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')

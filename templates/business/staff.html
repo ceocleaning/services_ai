@@ -1,0 +1,299 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Staff Management | Services AI{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/business-staff.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-1">Staff Management</h1>
+            <p class="text-muted">Manage your team members and their availability</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#manageRolesModal">
+                <i class="fas fa-tags me-2"></i>Manage Roles
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                <i class="fas fa-plus me-2"></i>Add Staff Member
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Staff Members Cards -->
+        <div class="col-12">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Team Members</h5>
+                    <span class="badge bg-primary">{{ staff_members|length }} Members</span>
+                </div>
+                <div class="card-body">
+                    {% if staff_members %}
+                    <div class="row">
+                        {% for staff in staff_members %}
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card staff-card h-100">
+                                <div class="card-body text-center">
+                                    <div class="staff-avatar mb-3">
+                                        {% if staff.profile_image %}
+                                        <img src="{{ staff.profile_image.url }}" alt="{{ staff.get_full_name }}" class="rounded-circle">
+                                        {% else %}
+                                        <div class="avatar-placeholder">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        {% endif %}
+                                        <span class="status-indicator {% if staff.is_active %}active{% else %}inactive{% endif %}"></span>
+                                    </div>
+                                    <h5 class="card-title mb-1">{{ staff.get_full_name }}</h5>
+                                    <p class="text-muted small mb-2">
+                                        {% for role in staff.roles.all %}
+                                        {% if not forloop.first %} | {% endif %}
+                                        {{ role.name }}
+                                        {% endfor %}
+                                    </p>
+                                    <p class="card-text small mb-3">
+                                        <i class="fas fa-envelope me-1"></i> {{ staff.email }}
+                                        {% if staff.phone %}
+                                        <br><i class="fas fa-phone me-1"></i> {{ staff.phone }}
+                                        {% endif %}
+                                    </p>
+                                    <div class="staff-card-footer">
+                                        <a href="{% url 'business:staff_detail' staff.id %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-user-cog me-1"></i> Manage
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            {% with booking_count=staff.booking_assignments.count %}
+                                            {{ booking_count }} Booking{{ booking_count|pluralize }}
+                                            {% endwith %}
+                                        </small>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input toggle-staff-status" type="checkbox" 
+                                                   id="staffStatus{{ staff.id }}" 
+                                                   data-staff-id="{{ staff.id }}" 
+                                                   {% if staff.is_active %}checked{% endif %}>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <div class="mb-4">
+                            <i class="fas fa-users fa-4x text-muted"></i>
+                        </div>
+                        <h5>No Staff Members Yet</h5>
+                        <p class="text-muted">Add your first team member to start managing your staff</p>
+                        <button type="button" class="btn btn-primary mt-2" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                            <i class="fas fa-plus me-2"></i>Add Staff Member
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1" aria-labelledby="addStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header">
+                <h5 class="modal-title" id="addStaffModalLabel">Add New Staff Member</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="addStaffForm" method="post" action="{% url 'business:add_staff' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="firstName" name="first_name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="lastName" name="last_name" required>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="roles" class="form-label">Roles <span class="text-danger">*</span></label>
+                            <select class="form-select" id="roles" name="roles" multiple required>
+                                {% for role in staff_roles %}
+                                <option value="{{ role.id }}">{{ role.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple roles</small>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="profileImage" class="form-label">Profile Image</label>
+                            <input type="file" class="form-control" id="profileImage" name="profile_image" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <label for="bio" class="form-label">Bio</label>
+                            <textarea class="form-control" id="bio" name="bio" rows="3"></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="isActive" name="is_active" checked>
+                                <label class="form-check-label" for="isActive">
+                                    Active
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-transparent">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Staff Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Roles Modal -->
+<div class="modal fade" id="manageRolesModal" tabindex="-1" aria-labelledby="manageRolesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header card-header">
+                <h5 class="modal-title" id="manageRolesModalLabel">Manage Staff Roles</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <form id="addRoleForm" method="post" action="{% url 'business:add_staff_role' %}" class="mb-4">
+                            {% csrf_token %}
+                            <div class="input-group">
+                                <input type="text" class="form-control" name="role_name" placeholder="Enter new role name" required>
+                                <input type="text" class="form-control" name="role_description" placeholder="Description (optional)">
+                                <button type="submit" class="btn btn-primary">Add Role</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Role Name</th>
+                                <th>Description</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if staff_roles %}
+                                {% for role in staff_roles %}
+                                <tr>
+                                    <td>{{ role.name }}</td>
+                                    <td>{{ role.description|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge {% if role.is_active %}bg-success{% else %}bg-danger{% endif %}">
+                                            {% if role.is_active %}Active{% else %}Inactive{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-outline-primary edit-role-btn" 
+                                                data-role-id="{{ role.id }}" 
+                                                data-role-name="{{ role.name }}" 
+                                                data-role-description="{{ role.description|default:'' }}"
+                                                data-role-active="{{ role.is_active|yesno:'true,false' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger delete-role-btn" 
+                                                data-role-id="{{ role.id }}" 
+                                                data-role-name="{{ role.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No roles defined yet. Add your first role above.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-transparent">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Role Modal -->
+<div class="modal fade" id="editRoleModal" tabindex="-1" aria-labelledby="editRoleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header card-header">
+                <h5 class="modal-title" id="editRoleModalLabel">Edit Staff Role</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="editRoleForm" method="post" action="{% url 'business:update_staff_role' %}">
+                {% csrf_token %}
+                <input type="hidden" id="editRoleId" name="role_id">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="editRoleName" class="form-label">Role Name</label>
+                        <input type="text" class="form-control" id="editRoleName" name="role_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRoleDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editRoleDescription" name="role_description" rows="3"></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="editRoleActive" name="is_active">
+                        <label class="form-check-label" for="editRoleActive">
+                            Active
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-footer bg-transparent">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/business-staff.js' %}"></script>
+{% endblock %}

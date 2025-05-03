@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice from {{ business_name }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #4a6cf7;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-top: none;
+            border-radius: 0 0 5px 5px;
+        }
+        .invoice-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .business-details {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: #777;
+        }
+        .button {
+            display: inline-block;
+            background-color: #4a6cf7;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Invoice from {{ business_name }}</h1>
+    </div>
+    <div class="content">
+        <p>Dear {{ client_name }},</p>
+        
+        <p>Please find below the details of your invoice from {{ business_name }}.</p>
+        
+        <div class="invoice-details">
+            <h3>Invoice Details:</h3>
+            <p><strong>Invoice Number:</strong> {{ invoice_number }}</p>
+            <p><strong>Booking:</strong> {{ booking_name }}</p>
+            <p><strong>Status:</strong> {{ invoice_status }}</p>
+            <p><strong>Due Date:</strong> {{ invoice_due_date|date:"F j, Y" }}</p>
+        </div>
+        
+        <p>To view the complete invoice details or make a payment, please log in to your account or contact us directly.</p>
+        
+        <div class="business-details">
+            <h3>Contact Information:</h3>
+            <p><strong>Business:</strong> {{ business_name }}</p>
+            <p><strong>Phone:</strong> {{ business_phone }}</p>
+            <p><strong>Email:</strong> {{ business_email }}</p>
+        </div>
+        
+        <p>If you have any questions regarding this invoice, please don't hesitate to contact us.</p>
+        
+        <p>Thank you for your business!</p>
+        
+        <p>Best regards,<br>{{ business_name }} Team</p>
+    </div>
+    <div class="footer">
+        <p>This is an automated invoice notification. You can reply directly to this email if you have any questions.</p>
+    </div>
+</body>
+</html>

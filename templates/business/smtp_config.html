@@ -1,0 +1,272 @@
+{% extends "common/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}SMTP Configuration - {{ business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <ol class="breadcrumb m-0">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard:index' %}">Dashboard</a></li>
+                        <li class="breadcrumb-item active">SMTP Configuration</li>
+                    </ol>
+                </div>
+                <h4 class="page-title">SMTP Configuration</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title mb-3">Email Sending Configuration</h4>
+                    
+                    {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <p class="text-muted">
+                        Configure your SMTP settings to send emails to your customers. These settings will be used for sending appointment confirmations, reminders, and other notifications.
+                    </p>
+                    
+                    <form action="{% url 'business:update_smtp_config' %}" method="POST" id="smtp-form">
+                        {% csrf_token %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="host" class="form-label">SMTP Host <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="host" name="host" required 
+                                        placeholder="e.g., smtp.gmail.com" value="{{ smtp_config.host|default:'' }}">
+                                    <small class="form-text text-muted">The hostname of your SMTP server.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="port" class="form-label">SMTP Port <span class="text-danger">*</span></label>
+                                    <input type="number" class="form-control" id="port" name="port" required 
+                                        placeholder="e.g., 587" value="{{ smtp_config.port|default:'' }}">
+                                    <small class="form-text text-muted">Common ports: 25, 465 (SSL), 587 (TLS)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">SMTP Username <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="username" name="username" required 
+                                        placeholder="e.g., your.email@gmail.com" value="{{ smtp_config.username|default:'' }}">
+                                    <small class="form-text text-muted">Usually your email address.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="password" class="form-label">SMTP Password <span class="text-danger">*</span></label>
+                                    <input type="password" class="form-control" id="password" name="password" required 
+                                        placeholder="Your password or app password" value="{{ smtp_config.password|default:'' }}">
+                                    <small class="form-text text-muted">For Gmail, you may need to use an app password.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="from_email" class="form-label">From Email <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="from_email" name="from_email" required 
+                                        placeholder="e.g., Your Name <your.email@gmail.com>" value="{{ smtp_config.from_email|default:'' }}">
+                                    <small class="form-text text-muted">The email address that will appear in the From field.</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="reply_to" class="form-label">Reply-To Email <span class="text-danger">*</span></label>
+                                    <input type="email" class="form-control" id="reply_to" name="reply_to" required 
+                                        placeholder="e.g., your.email@gmail.com" value="{{ smtp_config.reply_to|default:'' }}">
+                                    <small class="form-text text-muted">Email address where replies will be sent.</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary me-2">Save Configuration</button>
+                                <button type="button" id="test-smtp" class="btn btn-info">Test Configuration</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title mb-3">SMTP Configuration Help</h4>
+                    <div class="accordion" id="smtpHelpAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                                    Gmail SMTP Settings
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#smtpHelpAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li><strong>SMTP Host:</strong> smtp.gmail.com</li>
+                                        <li><strong>SMTP Port:</strong> 587 (TLS) or 465 (SSL)</li>
+                                        <li><strong>Username:</strong> Your Gmail address</li>
+                                        <li><strong>Password:</strong> Your Gmail password or app password</li>
+                                        <li><strong>From Email:</strong> Your Name &lt;your.gmail@gmail.com&gt;</li>
+                                        <li><strong>Reply-To:</strong> your.gmail@gmail.com</li>
+                                    </ul>
+                                    <p><strong>Note:</strong> For Gmail, you may need to enable "Less secure app access" or create an "App Password" if you have 2-factor authentication enabled.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    Outlook/Office 365 SMTP Settings
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#smtpHelpAccordion">
+                                <div class="accordion-body">
+                                    <ul>
+                                        <li><strong>SMTP Host:</strong> smtp.office365.com</li>
+                                        <li><strong>SMTP Port:</strong> 587</li>
+                                        <li><strong>Username:</strong> Your Outlook/Office 365 email address</li>
+                                        <li><strong>Password:</strong> Your Outlook/Office 365 password</li>
+                                        <li><strong>From Email:</strong> Your Name &lt;your.email@outlook.com&gt;</li>
+                                        <li><strong>Reply-To:</strong> your.email@outlook.com</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Test SMTP Configuration
+        const testButton = document.getElementById('test-smtp');
+        if (testButton) {
+            testButton.addEventListener('click', function() {
+                // Check if form is filled out
+                let formValid = true;
+                const requiredInputs = document.querySelectorAll('#smtp-form input[required]');
+                
+                requiredInputs.forEach(function(input) {
+                    if (input.value === '') {
+                        formValid = false;
+                    }
+                });
+                
+                if (!formValid) {
+                    alert('Please fill out all required fields before testing.');
+                    return;
+                }
+                
+                // Disable button and show loading
+                const btn = testButton;
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Testing...';
+                
+                // Get form data
+                const host = document.getElementById('host').value;
+                const port = document.getElementById('port').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const fromEmail = document.getElementById('from_email').value;
+                const replyTo = document.getElementById('reply_to').value;
+                const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                
+                // Create form data object
+                const formData = new FormData();
+                formData.append('csrfmiddlewaretoken', csrfToken);
+                formData.append('host', host);
+                formData.append('port', port);
+                formData.append('username', username);
+                formData.append('password', password);
+                formData.append('from_email', fromEmail);
+                formData.append('reply_to', replyTo);
+                
+                // Send test email using fetch API
+                fetch('{% url "business:test_smtp_config" %}', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Create success message
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'alert alert-success alert-dismissible fade show';
+                        messageDiv.role = 'alert';
+                        messageDiv.innerHTML = `
+                            <strong>Success!</strong> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert at the top of the form
+                        const form = document.getElementById('smtp-form');
+                        form.parentNode.insertBefore(messageDiv, form);
+                    } else {
+                        // Create error message
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'alert alert-danger alert-dismissible fade show';
+                        messageDiv.role = 'alert';
+                        messageDiv.innerHTML = `
+                            <strong>Error!</strong> ${data.message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        `;
+                        
+                        // Insert at the top of the form
+                        const form = document.getElementById('smtp-form');
+                        form.parentNode.insertBefore(messageDiv, form);
+                    }
+                    btn.disabled = false;
+                    btn.innerHTML = 'Test Configuration';
+                })
+                .catch(error => {
+                    // Create error message
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'alert alert-danger alert-dismissible fade show';
+                    messageDiv.role = 'alert';
+                    messageDiv.innerHTML = `
+                        <strong>Error!</strong> An error occurred while testing the SMTP configuration.
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+                    
+                    // Insert at the top of the form
+                    const form = document.getElementById('smtp-form');
+                    form.parentNode.insertBefore(messageDiv, form);
+                    
+                    btn.disabled = false;
+                    btn.innerHTML = 'Test Configuration';
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

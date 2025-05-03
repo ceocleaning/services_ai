@@ -67,6 +67,10 @@
 }
 
 
+.form-control{
+    background-color: var(--gray-dark);
+    color: var(--gray-light);
+}
 
 /* Dark Mode Theme Variables */
 [data-bs-theme="dark"] {
@@ -191,7 +195,7 @@ small, .text-small {
 }
 
 .btn-outline-primary {
-    color: var(--primary-indigo);
+    color: var(--gray-medium);
     border-color: var(--primary-indigo);
 }
 

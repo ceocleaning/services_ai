@@ -22,6 +22,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const bookingDateInput = document.getElementById('booking_date');
     const locationTypeSelect = document.getElementById('location_type');
     const locationDetailsInput = document.getElementById('location_details');
+    // Staff selection elements
+    const staffMemberSelect = document.getElementById('staff_member_id');
+    const staffAvailabilityMessage = document.getElementById('staff-availability-message');
+    const alternateTimeslotsContainer = document.getElementById('alternate-timeslots-container');
+    const alternateTimeslots = document.getElementById('alternate-timeslots');
 
     // State variables
     let selectedServiceId = null;
@@ -29,6 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let serviceItems = [];
     let selectedItems = {};
     let totalPrice = 0;
+    let availabilityCheckTimeout = null;
 
     // Service selection change handler
     if (serviceTypeSelect) {
@@ -59,6 +65,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Update summary
                 updateBookingSummary();
+                
+                // Check staff availability if date and time are set
+                if (bookingDateInput.value && startTimeInput.value && endTimeInput.value) {
+                    checkStaffAvailability();
+                }
             } else {
                 serviceDetailsDiv.classList.add('d-none');
                 // Service items section remains visible, just update content
@@ -67,13 +78,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 basePrice = 0;
                 totalPrice = 0;
                 updateTotalPrice();
+                
+                // Reset staff selection
+                resetStaffSelection();
             }
         });
     }
 
     // Date and time change handlers
     if (bookingDateInput && startTimeInput) {
-        bookingDateInput.addEventListener('change', updateBookingSummary);
+        bookingDateInput.addEventListener('change', function() {
+            updateBookingSummary();
+            // Check staff availability when date changes
+            if (selectedServiceId && startTimeInput.value && endTimeInput.value) {
+                checkStaffAvailability();
+            }
+        });
+        
         startTimeInput.addEventListener('change', function() {
             if (selectedServiceId) {
                 const selectedOption = serviceTypeSelect.options[serviceTypeSelect.selectedIndex];
@@ -81,8 +102,20 @@ document.addEventListener('DOMContentLoaded', function() {
                 calculateEndTime(this.value, duration);
             }
             updateBookingSummary();
+            
+            // Check staff availability when time changes
+            if (selectedServiceId && bookingDateInput.value && endTimeInput.value) {
+                checkStaffAvailability();
+            }
         });
-        endTimeInput.addEventListener('change', updateBookingSummary);
+        
+        endTimeInput.addEventListener('change', function() {
+            updateBookingSummary();
+            // Check staff availability when end time changes
+            if (selectedServiceId && bookingDateInput.value && startTimeInput.value) {
+                checkStaffAvailability();
+            }
+        });
     }
 
     // Location change handlers
@@ -139,6 +172,166 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error fetching service items:', error);
                 serviceItemsContainer.innerHTML = '<div class="alert alert-danger">Error loading service items</div>';
             });
+    }
+
+    // Check staff availability based on selected date, time, and service
+    function checkStaffAvailability() {
+        // Clear any pending timeout
+        if (availabilityCheckTimeout) {
+            clearTimeout(availabilityCheckTimeout);
+        }
+        
+        // Set a short timeout to prevent too many API calls when user is still making changes
+        availabilityCheckTimeout = setTimeout(() => {
+            // Reset staff selection
+            resetStaffSelection();
+            
+            // Show loading indicator
+            staffAvailabilityMessage.innerHTML = '<div class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Loading...</span></div> Checking staff availability...';
+            
+            // Get the selected date, time, and service
+            const date = bookingDateInput.value;
+            const startTime = startTimeInput.value;
+            const endTime = endTimeInput.value;
+            
+            if (!date || !startTime || !endTime || !selectedServiceId) {
+                staffAvailabilityMessage.textContent = 'Please select date, time, and service to check staff availability.';
+                return;
+            }
+            
+            // Get the duration from the selected service
+            let duration = 60; // Default duration
+            if (selectedServiceId) {
+                const selectedOption = serviceTypeSelect.options[serviceTypeSelect.selectedIndex];
+                if (selectedOption && selectedOption.dataset.duration) {
+                    duration = parseInt(selectedOption.dataset.duration);
+                }
+            }
+            
+            // Make API call to check availability
+            const url = `/bookings/api/check-availability/?date=${date}&time=${startTime}&duration_minutes=${duration}`;
+            
+            console.log("Checking availability with URL:", url);
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.is_available) {
+                        // Staff is available, populate the dropdown
+                        populateStaffDropdown(data.available_staff);
+                        staffAvailabilityMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Staff available for this time slot</span>';
+                        alternateTimeslotsContainer.classList.add('d-none');
+                    } else {
+                        // No staff available, show alternate timeslots
+                        staffAvailabilityMessage.innerHTML = `<span class="text-danger"><i class="fas fa-exclamation-circle"></i> ${data.reason}</span>`;
+                        
+                        if (data.alternate_slots && data.alternate_slots.length > 0) {
+                            renderAlternateTimeslots(data.alternate_slots);
+                            alternateTimeslotsContainer.classList.remove('d-none');
+                        } else {
+                            alternateTimeslotsContainer.classList.add('d-none');
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking staff availability:', error);
+                    staffAvailabilityMessage.innerHTML = '<span class="text-danger"><i class="fas fa-exclamation-circle"></i> Error checking staff availability</span>';
+                });
+        }, 500); // 500ms delay
+    }
+    
+    // Reset staff selection
+    function resetStaffSelection() {
+        // Clear staff dropdown
+        while (staffMemberSelect.options.length > 1) {
+            staffMemberSelect.remove(1);
+        }
+        staffMemberSelect.value = '';
+        staffAvailabilityMessage.textContent = '';
+        alternateTimeslotsContainer.classList.add('d-none');
+    }
+    
+    // Populate staff dropdown with available staff
+    function populateStaffDropdown(staffList) {
+        // Clear existing options except the default one
+        while (staffMemberSelect.options.length > 1) {
+            staffMemberSelect.remove(1);
+        }
+        
+        if (staffList && staffList.length > 0) {
+            staffList.forEach(staff => {
+                const option = document.createElement('option');
+                option.value = staff.id;
+                option.textContent = staff.name;
+                staffMemberSelect.appendChild(option);
+            });
+            
+            // Select the first staff member by default
+            if (staffMemberSelect.options.length > 1) {
+                staffMemberSelect.selectedIndex = 1;
+            }
+        }
+    }
+    
+    // Render alternate timeslots
+    function renderAlternateTimeslots(slots) {
+        if (!slots || slots.length === 0) {
+            alternateTimeslots.innerHTML = '<div class="alert alert-info">No alternate timeslots available</div>';
+            return;
+        }
+        
+        let html = '<div class="list-group">';
+        slots.forEach(slot => {
+            const date = new Date(slot.date).toLocaleDateString();
+            const startTime = formatTime(slot.time);
+            const endTime = formatTime(slot.end_time);
+            
+            html += `
+                <button type="button" class="list-group-item list-group-item-action alternate-slot" 
+                    data-date="${slot.date}" 
+                    data-time="${slot.time}" 
+                    data-end-time="${slot.end_time}"
+                    data-staff-id="${slot.staff.id}"
+                    data-staff-name="${slot.staff.name}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="far fa-calendar-alt me-2"></i> ${date}, ${startTime} - ${endTime}
+                        </div>
+                        <div>
+                            <span class="badge bg-info text-dark">Staff: ${slot.staff.name}</span>
+                        </div>
+                    </div>
+                </button>
+            `;
+        });
+        html += '</div>';
+        
+        alternateTimeslots.innerHTML = html;
+        
+        // Add event listeners to alternate timeslot buttons
+        document.querySelectorAll('.alternate-slot').forEach(button => {
+            button.addEventListener('click', function() {
+                // Update form with selected timeslot
+                bookingDateInput.value = this.dataset.date;
+                startTimeInput.value = this.dataset.time;
+                endTimeInput.value = this.dataset.endTime;
+                
+                // Update staff selection
+                populateStaffDropdown([{
+                    id: this.dataset.staffId,
+                    name: this.dataset.staffName
+                }]);
+                
+                // Update availability message
+                staffAvailabilityMessage.innerHTML = '<span class="text-success"><i class="fas fa-check-circle"></i> Staff available for this time slot</span>';
+                
+                // Hide alternate timeslots
+                alternateTimeslotsContainer.classList.add('d-none');
+                
+                // Update booking summary
+                updateBookingSummary();
+            });
+        });
     }
 
     // Render service items in the container

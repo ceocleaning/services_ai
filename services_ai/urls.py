@@ -25,7 +25,7 @@ urlpatterns = [
     path('bookings/', include('bookings.urls')),
     path('invoices/', include('invoices.urls')),
     path('leads/', include('leads.urls')),
-    path('retell-agent/', include('retell_agent.urls')),
+    path('voice-agent/', include('retell_agent.urls')),
     path('business/', include('business.urls')),
     path('', include('core.urls')),
     path('accounts/', include('accounts.urls')),

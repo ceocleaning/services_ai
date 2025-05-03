@@ -5,10 +5,11 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db import models
 from business.models import ServiceOffering, BusinessCustomField, ServiceItem, ServiceOfferingItem, Industry, IndustryField
-from .models import Booking, BookingField, BookingServiceItem, BookingStatus
+from .models import Booking, BookingField, BookingServiceItem, BookingStatus, StaffMember, BookingStaffAssignment
 from leads.models import Lead
 from django.utils import timezone
 import json
+from .availability import check_timeslot_availability
 
 # Create your views here.
 @login_required
@@ -90,6 +91,7 @@ def create_booking(request):
         location_type = request.POST.get('location_type')
         location_details = request.POST.get('location_details')
         notes = request.POST.get('notes')
+        staff_member_id = request.POST.get('staff_member_id')
         
         # Client information
         client_name = request.POST.get('client_name')
@@ -111,6 +113,8 @@ def create_booking(request):
             errors.append('Client email is required.')
         if not client_phone:
             errors.append('Client phone is required.')
+        if not staff_member_id:
+            errors.append('Staff member selection is required.')
             
         if errors:
             for err in errors:
@@ -156,6 +160,23 @@ def create_booking(request):
             email=client_email,
             phone_number=client_phone
         )
+
+        # Create staff assignment
+        try:
+            staff_member = StaffMember.objects.get(id=staff_member_id, business=business)
+            BookingStaffAssignment.objects.create(
+                booking=booking,
+                staff_member=staff_member,
+                is_primary=True
+            )
+        except StaffMember.DoesNotExist:
+            # If staff member doesn't exist, delete the booking and show error
+            booking.delete()
+            messages.error(request, 'Selected staff member not found.')
+            return render(request, 'bookings/create_booking.html', {
+                'service_offerings': service_offerings,
+                'custom_fields': custom_fields,
+            })
 
         # Save custom fields
         for field in custom_fields:
@@ -393,3 +414,52 @@ def get_leads(request):
             'source': lead.source
         } for lead in leads]
         return JsonResponse({'leads': lead_data})
+
+@login_required
+def check_availability(request):
+    """
+    API endpoint to check if a timeslot is available for booking
+    and provide alternate timeslots if not available.
+    
+    Required parameters:
+    - date: Date string in format 'YYYY-MM-DD'
+    - time: Time string in format 'HH:MM'
+    
+    Optional parameters:
+    - duration_minutes: Duration of the appointment in minutes (default: 60)
+    - service_offering_id: ID of the service offering
+    - staff_member_id: ID of a specific staff member to check
+    """
+    business = getattr(request.user, 'business', None)
+    if not business:
+        return JsonResponse({'error': 'Business not found'}, status=404)
+    
+    # Get parameters from request
+    date_str = request.GET.get('date')
+    time_str = request.GET.get('time')
+    duration_minutes = request.GET.get('duration_minutes', 60)
+    service_offering_id = request.GET.get('service_offering_id')
+    staff_member_id = request.GET.get('staff_member_id')
+    
+    # Validate required parameters
+    if not date_str or not time_str:
+        return JsonResponse({'error': 'Date and time are required parameters'}, status=400)
+    
+    try:
+        duration_minutes = int(duration_minutes)
+    except ValueError:
+        return JsonResponse({'error': 'Duration must be a valid integer'}, status=400)
+    
+    # Check availability
+    availability_result = check_timeslot_availability(
+        business.id,
+        date_str,
+        time_str,
+        duration_minutes,
+        service_offering_id,
+        staff_member_id
+    )
+
+    print("Availability result:", availability_result)
+    
+    return JsonResponse(availability_result)

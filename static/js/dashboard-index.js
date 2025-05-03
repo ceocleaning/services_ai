@@ -4,14 +4,6 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Update current date in a more readable format
-    const currentDateElement = document.getElementById('currentDate');
-    if (currentDateElement) {
-        const now = new Date();
-        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-        currentDateElement.textContent = now.toLocaleDateString('en-US', options);
-    }
-    
     // Setup edit buttons in the review section if they exist
     const editButtons = document.querySelectorAll('.edit-info');
     editButtons.forEach(button => {

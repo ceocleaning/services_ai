@@ -301,3 +301,28 @@ class ServiceItem(models.Model):
         elif self.price_type == 'per_unit':
             return self.price_value * quantity
         return Decimal('0.00')
+
+
+
+
+# SMTPConfig
+
+class SMTPConfig(models.Model):
+    business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='smtp_config')
+    host = models.CharField(max_length=255)
+    port = models.PositiveIntegerField()
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    reply_to = models.EmailField()
+    from_email = models.CharField(max_length=255)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "SMTP Configuration"
+        verbose_name_plural = "SMTP Configurations"
+        ordering = ['business']
+    
+    def __str__(self):
+        return f"SMTP Config for {self.business.name}"
+    

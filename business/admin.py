@@ -5,7 +5,8 @@ from .models import (
     Business, 
     IndustryField, 
     BusinessCustomField, 
-    BusinessConfiguration
+    BusinessConfiguration,
+    SMTPConfig
 )
 
 
@@ -101,6 +102,26 @@ class BusinessConfigurationAdmin(admin.ModelAdmin):
         }),
         ('Follow-up Configuration', {
             'fields': ('initial_response_delay',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+
+@admin.register(SMTPConfig)
+class SMTPConfigAdmin(admin.ModelAdmin):
+    list_display = ('business', 'host', 'port', 'username', 'reply_to', 'from_email')
+    list_filter = ('business',)
+    search_fields = ('business__name', 'host', 'port', 'username', 'reply_to', 'from_email')
+    readonly_fields = ('created_at', 'updated_at')
+    fieldsets = (
+        ('Business', {
+            'fields': ('business',)
+        }),
+        ('SMTP Settings', {
+            'fields': ('host', 'port', 'username', 'password', 'reply_to', 'from_email')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),

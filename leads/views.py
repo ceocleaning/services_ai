@@ -12,32 +12,14 @@ import json
 import logging
 import uuid
 from .webhook_processors import get_processor, autodiscover_processors, register_processor
-# Import webhook processors directly
-from .webhook_processors.zoho import ZohoWebhookProcessor
-try:
-    from .webhook_processors.hubspot import HubSpotWebhookProcessor
-    from .webhook_processors.salesforce import SalesforceWebhookProcessor
-    from .webhook_processors.pipedrive import PipedriveWebhookProcessor
-    from .webhook_processors.monday import MondayWebhookProcessor
-except ImportError:
-    print("Some webhook processors could not be imported")
+
 
 logger = logging.getLogger(__name__)
 
 # Auto-discover webhook processors
 autodiscover_processors()
 
-# Direct registration of webhook processors
-print("Directly registering webhook processors...")
-register_processor('zoho', ZohoWebhookProcessor)
-try:
-    register_processor('hubspot', HubSpotWebhookProcessor)
-    register_processor('salesforce', SalesforceWebhookProcessor)
-    register_processor('pipedrive', PipedriveWebhookProcessor)
-    register_processor('monday', MondayWebhookProcessor)
-    print("All webhook processors registered directly")
-except NameError:
-    print("Some webhook processors could not be registered")
+
 
 @login_required
 def index(request):

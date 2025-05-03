@@ -79,15 +79,21 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/ai_agent/" class="nav-link {% if '/ai_agent/' in request.path %}active{% endif %}">
+                        <a href="/ai-agent/" class="nav-link {% if '/ai_agent/' in request.path %}active{% endif %}">
                             <i class="fas fa-robot"></i>
                             <span>AI Agent</span>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="/retell_agent/" class="nav-link {% if '/retell_agent/' in request.path %}active{% endif %}">
+                        <a href="/voice-agent/" class="nav-link {% if '/voice-agent/' in request.path %}active{% endif %}">
                             <i class="fas fa-phone-alt"></i>
                             <span>Voice Agent</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'business:staff' %}" class="nav-link {% if '/staff/' in request.path %}active{% endif %}">
+                            <i class="fas fa-user"></i>
+                            <span>Staff</span>
                         </a>
                     </li>
                     <li class="nav-header">Settings</li>
@@ -242,31 +248,6 @@
                 toastElList.forEach(toastEl => {
                     const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 5000 });
                     toast.show();
-                });
-            }
-            
-            // Sidebar toggle functionality
-            const sidebar = document.getElementById('sidebar');
-            const sidebarCollapse = document.getElementById('sidebarCollapse');
-            const sidebarCollapseSmall = document.getElementById('sidebarCollapseSmall');
-            
-            if (sidebarCollapse) {
-                sidebarCollapse.addEventListener('click', () => {
-                    document.body.classList.toggle('sidebar-collapsed');
-                });
-            }
-            
-            if (sidebarCollapseSmall) {
-                sidebarCollapseSmall.addEventListener('click', () => {
-                    document.body.classList.remove('sidebar-mobile-open');
-                });
-            }
-            
-            // Mobile sidebar toggle
-            const mobileToggle = document.querySelector('.sidebar-toggle.d-lg-none');
-            if (mobileToggle) {
-                mobileToggle.addEventListener('click', () => {
-                    document.body.classList.toggle('sidebar-mobile-open');
                 });
             }
         });

@@ -57,6 +57,28 @@
                     </div>
                 </div>
                 
+                <!-- Staff Selection Section -->
+                <div class="row">
+                    <div class="col-12 mb-3">
+                        <label for="staff_member_id" class="form-label">Select Staff Member</label>
+                        <select name="staff_member_id" id="staff_member_id" class="form-select" required>
+                            <option value="">Select a staff member</option>
+                            <!-- Staff options will be populated via JavaScript -->
+                        </select>
+                        <div id="staff-availability-message" class="form-text mt-2"></div>
+                        
+                        <!-- Alternate Timeslots Section -->
+                        <div id="alternate-timeslots-container" class="mt-3 d-none">
+                            <div class="alert alert-warning">
+                                <h6>No staff available at selected time. Consider these alternatives:</h6>
+                                <div id="alternate-timeslots" class="mt-2">
+                                    <!-- Alternate timeslots will be populated via JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="row">
                     <!-- Location -->
                     <div class="col-md-6 mb-3">

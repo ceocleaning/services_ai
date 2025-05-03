@@ -1,12 +1,13 @@
 {% extends 'common/dashboard_base.html' %}
 {% load static %}
+{% load booking_filters %}
 
 {% block title %}{{ title }}{% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
     <!-- Booking Header -->
-    <div class="card mb-4">
+    <div class="card mb-4" style="z-index: 1050;">
         <div class="card-header text-white d-flex justify-content-between align-items-center">
             <div>
                 <h5 class="mb-0">Booking Details</h5>
@@ -36,7 +37,8 @@
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="#" onclick="window.print(); return false;"><i class="fas fa-print me-2"></i> Print Details</a></li>
                     <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i> Send Reminder</a></li>
-                </ul>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
@@ -172,7 +174,7 @@
                 </div>
             </div>
             
-            <!-- Service Items - Improved Design -->
+            <!-- Service Items - Dark Theme Design -->
             <div class="card mb-4 service-details-card">
                 <div class="card-header text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Service Details</h5>
@@ -180,113 +182,120 @@
                 </div>
                 <div class="card-body">
                     <!-- Service Summary -->
-                    <div class="service-summary mb-4">
+                    <div class="service-summary mb-4 p-3 rounded bg-dark text-white">
                         <div class="row align-items-center">
-                            <div class="col-md-8">
-                                <h4 class="service-title">{{ booking.service_offering.name }}</h4>
+                            <div class="col-md-6">
+                                <h4 class="service-title fw-bold text-primary">{{ booking.service_offering.name }}</h4>
                                 {% if booking.service_offering.description %}
-                                    <p class="text-muted">{{ booking.service_offering.description }}</p>
+                                    <p class="text-white-50 mb-0">{{ booking.service_offering.description }}</p>
                                 {% endif %}
                             </div>
-                            <div class="col-md-4 text-md-end">
+                            <div class="col-md-6 text-md-end">
                                 <div class="price-tag">
-                                    <span class="currency">$</span>
-                                    <span class="amount">{{ total_price }}</span>
+                                    <span class="fs-4 fw-bold text-success">${{ total_price }}</span>
                                 </div>
-                                <div class="small text-muted">Total Price</div>
+                                <div class="small text-white-50">Total Price</div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Service Items List -->
                     <div class="service-items-list">
-                        <h6 class="fw-bold mb-3 border-bottom pb-2">Service Breakdown</h6>
+                        <h6 class="fw-bold mb-3 border-bottom pb-2 text-white">Service Breakdown</h6>
                         
                         <!-- Base Service -->
-                        <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded text-white">
-                            <div class="service-item-details">
-                                <div class="d-flex align-items-center">
-                                    <div class="service-icon me-3 bg-primary text-white">
-                                        <i class="fas fa-concierge-bell"></i>
-                                    </div>
-                                    <div>
-                                        <h6 class="mb-0">{{ booking.service_offering.name }}</h6>
-                                        <span class="badge bg-primary">Base Service</span>
-                                        {% if booking.service_offering.description %}
-                                            <p class="small text-white-50 mb-0 mt-1">{{ booking.service_offering.description }}</p>
-                                        {% endif %}
+                        <div class="service-item mb-3 p-3 rounded bg-dark text-white border-start border-primary border-4">
+                            <div class="row align-items-center">
+                                <div class="col-md-6">
+                                    <div class="d-flex align-items-center">
+                                        <div class="service-icon me-3 bg-primary text-white rounded-circle p-2">
+                                            <i class="fas fa-concierge-bell"></i>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-0 fw-bold">{{ booking.service_offering.name }}</h6>
+                                            <span class="badge bg-primary">Base Service</span>
+                                            {% if booking.service_offering.description %}
+                                                <p class="small text-white-50 mb-0 mt-1">{{ booking.service_offering.description }}</p>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div class="service-item-pricing text-end">
-                                <div class="fw-bold">${{ booking.service_offering.price }}</div>
-                                <div class="small text-white-50">Qty: 1</div>
+                                <div class="col-md-6 text-md-end">
+                                    <div class="fw-bold text-primary">${{ booking.service_offering.price }}</div>
+                                    <div class="small text-white-50">Qty: 1</div>
+                                </div>
                             </div>
                         </div>
                         
                         <!-- Additional Service Items -->
                         {% for item in service_items %}
-                            <div class="service-item base-service d-flex justify-content-between align-items-start mb-3 p-3 rounded text-white{% if item.service_item.is_optional %} optional-service{% endif %}">
-                                <div class="service-item-details">
-                                    <div class="d-flex align-items-center">
-                                        <div class="service-icon me-3 {% if item.service_item.is_optional %}bg-secondary{% else %}bg-info{% endif %} text-white">
-                                            <i class="fas fa-plus"></i>
-                                        </div>
-                                        <div>
-                                            <h6 class="mb-0">{{ item.service_item.name }}</h6>
-                                            {% if not item.service_item.is_optional %}
-                                                <span class="badge bg-info">Required</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary">Optional</span>
-                                            {% endif %}
-                                            {% if item.service_item.description %}
-                                                <p class="small text-white-50 mb-0 mt-1">{{ item.service_item.description }}</p>
-                                            {% endif %}
-                                            {% if item.service_item.duration_minutes > 0 %}
-                                                <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
-                                            {% endif %}
+                            <div class="service-item mb-3 p-3 rounded bg-dark text-white border-start border-info border-4">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="service-icon me-3 bg-info text-white rounded-circle p-2">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-bold">{{ item.service_item.name }}</h6>
+                                                {% if item.service_item.duration_minutes > 0 %}
+                                                    <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
+                                                {% endif %}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="service-item-pricing text-end">
-                                    <div class="fw-bold">${{ item.price_at_booking }}</div>
-                                    <div class="small text-white-50">Qty: {{ item.quantity }}</div>
-                                    <div class="item-total small text-info">Total: ${{ item.price_at_booking|floatformat:2 }}</div>
+                                    <div class="col-md-6 d-flex justify-content-end align-items-center gap-5">
+                                        <div class="fw-bold text-info">
+                                            ${{ item.price_at_booking|divide:item.quantity }}
+                                        </div>
+                                        <div class="small text-white-50">Qty: {{ item.quantity }}</div>
+                                        {% if item.quantity > 1 %}
+                                            <div class="item-total small fw-bold text-success">Total: ${{ item.price_at_booking|floatformat:2 }}</div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
                         {% endfor %}
                         
                         <!-- Price Summary -->
-                        <div class="price-summary mt-4 p-3 rounded bg-info text-white">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span>Base Price:</span>
-                                <span>${{ booking.service_offering.price }}</span>
-                            </div>
-                            {% if service_items %}
-                                <div class="d-flex justify-content-between mb-2">
-                                    <span>Additional Items:</span>
-                                    <span>${{ service_items_total }}</span>
+                        <div class="price-summary mt-4 p-3 rounded bg-secondary bg-opacity-25 text-white">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <span>Base Price:</span>
+                                        <span>${{ booking.service_offering.price }}</span>
+                                    </div>
+                                    {% if service_items %}
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span>Additional Items:</span>
+                                            <span>${{ service_items_total }}</span>
+                                        </div>
+                                    {% endif %}
+                                    <div class="d-flex justify-content-between fw-bold mt-md-0 mt-3 pt-2 border-top border-secondary">
+                                        <span class="fs-5">Total:</span>
+                                        <span class="fs-5 text-success">${{ total_price }}</span>
+                                    </div>
                                 </div>
-                            {% endif %}
-                            <div class="d-flex justify-content-between fw-bold mt-2 pt-2 border-top border-secondary">
-                                <span>Total:</span>
-                                <span class="text-info">${{ total_price }}</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
             
-            <!-- Staff Assignments -->
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Assigned Staff -->
             {% if booking.staff_assignments.all %}
                 <div class="card mb-4">
                     <div class="card-header text-white">
                         <h5 class="mb-0">Assigned Staff</h5>
                     </div>
-                    <div class="card-body">
-                        <div class="row">
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
                             {% for assignment in booking.staff_assignments.all %}
-                                <div class="col-md-6 mb-3">
+                                <a href="{% url 'business:staff_detail' assignment.staff_member.id %}" class="list-group-item list-group-item-action">
                                     <div class="d-flex align-items-center">
                                         {% if assignment.staff_member.profile_image %}
                                             <img src="{{ assignment.staff_member.profile_image.url }}" alt="{{ assignment.staff_member.get_full_name }}" class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;">
@@ -301,27 +310,21 @@
                                                 {% for role in assignment.staff_member.roles.all %}
                                                     {{ role.name }}{% if not forloop.last %}, {% endif %}
                                                 {% endfor %}
-                                                {% if assignment.is_primary %}
-                                                    <span class="badge bg-primary ms-2">Primary</span>
-                                                {% endif %}
                                             </p>
                                         </div>
                                     </div>
                                     {% if assignment.assignment_notes %}
-                                        <div class="mt-2 ms-5 ps-3 border-start">
-                                            <small class="text-muted">{{ assignment.assignment_notes }}</small>
+                                        <div class="mt-2 small text-muted">
+                                            <i class="fas fa-comment-alt me-1"></i> {{ assignment.assignment_notes }}
                                         </div>
                                     {% endif %}
-                                </div>
+                                </a>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
             {% endif %}
-        </div>
-        
-        <!-- Sidebar -->
-        <div class="col-lg-4">
+            
             <!-- Timeline -->
             <div class="card mb-4">
                 <div class="card-header text-white">
@@ -342,6 +345,19 @@
                                         <p class="text-muted mb-0 small">
                                             {{ event.timestamp|date:"M d, Y" }} at {{ event.timestamp|time:"g:i A" }}
                                         </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% empty %}
+                            <div class="list-group-item">
+                                <div class="d-flex align-items-center">
+                                    <div class="timeline-icon me-3">
+                                        <div class="icon-circle bg-secondary text-white">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-1">No events found</h6>
                                     </div>
                                 </div>
                             </div>

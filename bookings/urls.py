@@ -11,4 +11,5 @@ urlpatterns = [
     # API endpoints
     path('api/service-items/<uuid:service_id>/', views.get_service_items, name='get_service_items'),
     path('api/leads/', views.get_leads, name='get_leads'),
+    path('api/check-availability/', views.check_availability, name='check_availability'),
 ]

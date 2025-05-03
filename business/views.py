@@ -8,8 +8,12 @@ from django.http import HttpResponse, JsonResponse, HttpResponseRedirect
 from django.urls import reverse
 import json
 from decimal import Decimal
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import datetime
 
-from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem, CRM_CHOICES
+from .models import Business, Industry, IndustryField, BusinessConfiguration, ServiceOffering, ServiceItem, CRM_CHOICES, SMTPConfig
 
 
 @login_required
@@ -643,3 +647,870 @@ def update_business_configuration(request):
         messages.error(request, f'An error occurred: {str(e)}')
     
     return redirect('business:configuration')
+
+# Staff Management Views
+@login_required
+def staff_management(request):
+    """
+    Render the staff management page
+    Shows all staff members for the business
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    # Get all staff members for this business
+    from bookings.models import StaffMember, StaffRole
+    staff_members = StaffMember.objects.filter(business=business)
+    staff_roles = StaffRole.objects.filter(business=business, is_active=True)
+    
+    context = {
+        'business': business,
+        'staff_members': staff_members,
+        'staff_roles': staff_roles,
+    }
+    
+    return render(request, 'business/staff.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def add_staff(request):
+    """
+    Add a new staff member
+    Handles form submission from the staff management page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        from bookings.models import StaffMember, StaffRole, StaffAvailability, AVAILABILITY_TYPE, WEEKDAY_CHOICES
+        from datetime import time
+        
+        # Get form data
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone', '')
+        bio = request.POST.get('bio', '')
+        is_active = 'is_active' in request.POST
+        
+        # Validate required fields
+        if not first_name or not last_name or not email:
+            messages.error(request, 'First name, last name, and email are required.')
+            return redirect('business:staff')
+        
+        # Create staff member
+        staff = StaffMember.objects.create(
+            business=business,
+            first_name=first_name,
+            last_name=last_name,
+            email=email,
+            phone=phone,
+            bio=bio,
+            is_active=is_active
+        )
+        
+        # Handle profile image if provided
+        if 'profile_image' in request.FILES:
+            staff.profile_image = request.FILES['profile_image']
+            staff.save()
+        
+        # Add roles
+        role_ids = request.POST.getlist('roles')
+        if role_ids:
+            roles = StaffRole.objects.filter(id__in=role_ids, business=business)
+            staff.roles.set(roles)
+        
+        # Create default weekly availabilities (9am-5pm, Monday-Friday)
+        for day_num, _ in WEEKDAY_CHOICES.choices:
+            # Skip weekends (5=Saturday, 6=Sunday)
+            is_weekend = day_num in [5, 6]
+            
+            StaffAvailability.objects.create(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.WEEKLY,
+                weekday=day_num,
+                start_time=time(9, 0),  # 9:00 AM
+                end_time=time(17, 0),   # 5:00 PM
+                off_day=is_weekend      # Mark weekends as off by default
+            )
+        
+        messages.success(request, f'Staff member {staff.get_full_name()} added successfully with default availability schedule!')
+    except Exception as e:
+        messages.error(request, f'Error adding staff member: {str(e)}')
+    
+    return redirect('business:staff')
+
+@login_required
+def staff_detail(request, staff_id):
+    """
+    Render the staff detail page
+    Shows staff information, availability, and assigned bookings
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffRole, StaffAvailability, WEEKDAY_CHOICES, AVAILABILITY_TYPE
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    # Get all roles for this business
+    all_roles = StaffRole.objects.filter(business=business, is_active=True)
+    
+    # Get staff availability
+    weekly_availabilities = StaffAvailability.objects.filter(
+        staff_member=staff,
+        availability_type=AVAILABILITY_TYPE.WEEKLY
+    ).order_by('weekday', 'start_time')
+    
+    specific_availabilities = StaffAvailability.objects.filter(
+        staff_member=staff,
+        availability_type=AVAILABILITY_TYPE.SPECIFIC,
+        off_day=False
+    ).order_by('specific_date', 'start_time')
+    
+    specific_off_days = StaffAvailability.objects.filter(
+        staff_member=staff,
+        availability_type=AVAILABILITY_TYPE.SPECIFIC,
+        off_day=True
+    ).order_by('specific_date')
+    
+    # Get weekly off days (days with no availability set)
+    weekly_off_days = []
+    for avail in weekly_availabilities:
+        if avail.off_day and avail.weekday not in weekly_off_days:
+            weekly_off_days.append(avail.weekday)
+    
+    # Get assigned bookings
+    from bookings.models import BookingStaffAssignment
+    assigned_bookings = BookingStaffAssignment.objects.filter(
+        staff_member=staff
+    ).select_related('booking', 'booking__lead', 'booking__service_offering').order_by('-booking__start_time')
+    
+    context = {
+        'business': business,
+        'staff': staff,
+        'all_roles': all_roles,
+        'weekly_availabilities': weekly_availabilities,
+        'specific_availabilities': specific_availabilities,
+        'specific_off_days': specific_off_days,
+        'weekly_off_days': weekly_off_days,
+        'assigned_bookings': assigned_bookings,
+        'weekday_choices': WEEKDAY_CHOICES.choices,
+    }
+    
+    return render(request, 'business/staff_detail.html', context)
+
+@login_required
+@require_http_methods(["POST"])
+def update_staff(request, staff_id):
+    """
+    Update staff member information
+    Handles form submission from the staff detail page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffRole
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    try:
+        # Update staff information
+        staff.first_name = request.POST.get('first_name')
+        staff.last_name = request.POST.get('last_name')
+        staff.email = request.POST.get('email')
+        staff.phone = request.POST.get('phone', '')
+        staff.bio = request.POST.get('bio', '')
+        staff.is_active = 'is_active' in request.POST
+        
+        # Handle profile image if provided
+        if 'profile_image' in request.FILES:
+            staff.profile_image = request.FILES['profile_image']
+        
+        staff.save()
+        
+        # Update roles
+        role_ids = request.POST.getlist('roles')
+        if role_ids:
+            roles = StaffRole.objects.filter(id__in=role_ids, business=business)
+            staff.roles.set(roles)
+        else:
+            staff.roles.clear()
+        
+        messages.success(request, f'Staff member {staff.get_full_name()} updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating staff member: {str(e)}')
+    
+    return redirect('business:staff_detail', staff_id=staff_id)
+
+@login_required
+@require_http_methods(["POST"])
+def update_staff_status(request):
+    """
+    Update staff member active status via AJAX
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        return JsonResponse({
+            'success': False,
+            'message': 'Please register your business first.'
+        })
+    
+    business = request.user.business
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        staff_id = data.get('staff_id')
+        is_active = data.get('is_active')
+        
+        from bookings.models import StaffMember
+        
+        # Get staff member, ensuring it belongs to this business
+        staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+        
+        # Update status
+        staff.is_active = is_active
+        staff.save(update_fields=['is_active', 'updated_at'])
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Staff status updated successfully!'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+@login_required
+@require_http_methods(["POST"])
+def add_staff_availability(request, staff_id):
+    """
+    Add new availability for a staff member
+    Handles form submission from the staff detail page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
+    from django.utils.dateparse import parse_time, parse_date
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    try:
+        # Get form data
+        availability_type = request.POST.get('availability_type')
+        start_time = parse_time(request.POST.get('start_time'))
+        end_time = parse_time(request.POST.get('end_time'))
+        off_day = 'off_day' in request.POST
+        
+        # Create availability based on type
+        if availability_type == 'weekly':
+            weekday = int(request.POST.get('weekday'))
+            
+            # Check if an availability already exists for this weekday and is not an off day
+            existing_availabilities = StaffAvailability.objects.filter(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.WEEKLY,
+                weekday=weekday
+            )
+            
+            if existing_availabilities.exists() and not off_day:
+                messages.warning(request, f'An availability for this weekday already exists. Please edit the existing one instead.')
+                return redirect('business:staff_detail', staff_id=staff_id)
+            
+            # If it's an off day, we can have multiple (or replace existing)
+            if off_day:
+                # If marking as off day, remove any existing availabilities for this day
+                existing_availabilities.delete()
+            
+            StaffAvailability.objects.create(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.WEEKLY,
+                weekday=weekday,
+                start_time=start_time,
+                end_time=end_time,
+                off_day=off_day
+            )
+            
+            messages.success(request, 'Weekly availability added successfully!')
+        elif availability_type == 'specific':
+            specific_date = parse_date(request.POST.get('specific_date'))
+            
+            # Check if an availability already exists for this date and is not an off day
+            existing_availabilities = StaffAvailability.objects.filter(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.SPECIFIC,
+                specific_date=specific_date
+            )
+            
+            if existing_availabilities.exists() and not off_day:
+                messages.warning(request, f'An availability for this date already exists. Please edit the existing one instead.')
+                return redirect('business:staff_detail', staff_id=staff_id)
+            
+            # If it's an off day, we can have multiple (or replace existing)
+            if off_day:
+                # If marking as off day, remove any existing availabilities for this date
+                existing_availabilities.delete()
+            
+            StaffAvailability.objects.create(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.SPECIFIC,
+                specific_date=specific_date,
+                start_time=start_time,
+                end_time=end_time,
+                off_day=off_day
+            )
+            
+            messages.success(request, 'Specific date availability added successfully!')
+        else:
+            messages.error(request, 'Invalid availability type.')
+    except Exception as e:
+        messages.error(request, f'Error adding availability: {str(e)}')
+    
+    return redirect('business:staff_detail', staff_id=staff_id)
+
+@login_required
+@require_http_methods(["POST"])
+def update_staff_availability(request, staff_id):
+    """
+    Update an existing staff availability
+    Handles form submission from the staff detail page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffAvailability
+    from django.utils.dateparse import parse_time, parse_date
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    try:
+        # Get form data
+        availability_id = request.POST.get('availability_id')
+        start_time = parse_time(request.POST.get('start_time'))
+        end_time = parse_time(request.POST.get('end_time'))
+        off_day = 'off_day' in request.POST
+        
+        # Get the availability
+        availability = get_object_or_404(StaffAvailability, id=availability_id, staff_member=staff)
+        
+        # Update availability
+        availability.start_time = start_time
+        availability.end_time = end_time
+        availability.off_day = off_day
+        
+        # If it's a specific date availability, update the date
+        if availability.availability_type == 'specific' and 'specific_date' in request.POST:
+            availability.specific_date = parse_date(request.POST.get('specific_date'))
+        
+        availability.save()
+        
+        messages.success(request, 'Availability updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating availability: {str(e)}')
+    
+    return redirect('business:staff_detail', staff_id=staff_id)
+
+@login_required
+@require_http_methods(["POST"])
+def delete_staff_availability(request):
+    """
+    Delete staff availability via AJAX
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        return JsonResponse({
+            'success': False,
+            'message': 'Please register your business first.'
+        })
+    
+    business = request.user.business
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        availability_id = data.get('availability_id')
+        
+        from bookings.models import StaffAvailability
+        
+        # Get availability, ensuring it belongs to this business
+        availability = get_object_or_404(StaffAvailability, id=availability_id, staff_member__business=business)
+        
+        # Delete availability
+        availability.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'Availability deleted successfully!'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+@login_required
+@require_http_methods(["POST"])
+def add_staff_off_day(request, staff_id):
+    """
+    Add a specific off day for a staff member
+    Handles form submission from the staff detail page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
+    from django.utils.dateparse import parse_date
+    from datetime import time
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    try:
+        # Get form data
+        off_day_date = parse_date(request.POST.get('off_day_date'))
+        reason = request.POST.get('reason', '')
+        
+        # Create off day availability
+        StaffAvailability.objects.create(
+            staff_member=staff,
+            availability_type=AVAILABILITY_TYPE.SPECIFIC,
+            specific_date=off_day_date,
+            start_time=time(0, 0),  # Midnight
+            end_time=time(23, 59),  # End of day
+            off_day=True,
+            notes=reason
+        )
+        
+        messages.success(request, 'Off day added successfully!')
+    except Exception as e:
+        messages.error(request, f'Error adding off day: {str(e)}')
+    
+    return redirect('business:staff_detail', staff_id=staff_id)
+
+@login_required
+@require_http_methods(["POST"])
+def update_weekly_off_days(request, staff_id):
+    """
+    Update weekly off days for a staff member
+    Handles form submission from the staff detail page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    from bookings.models import StaffMember, StaffAvailability, AVAILABILITY_TYPE
+    
+    # Get staff member, ensuring it belongs to this business
+    staff = get_object_or_404(StaffMember, id=staff_id, business=business)
+    
+    try:
+        # Get selected off days
+        selected_off_days = [int(day) for day in request.POST.getlist('weekly_off_days')]
+        
+        # Delete existing weekly off days
+        StaffAvailability.objects.filter(
+            staff_member=staff,
+            availability_type=AVAILABILITY_TYPE.WEEKLY,
+            off_day=True
+        ).delete()
+        
+        # Create new weekly off days
+        for day in selected_off_days:
+            StaffAvailability.objects.create(
+                staff_member=staff,
+                availability_type=AVAILABILITY_TYPE.WEEKLY,
+                weekday=day,
+                start_time=time(0, 0),  # Midnight
+                end_time=time(23, 59),  # End of day
+                off_day=True
+            )
+        
+        messages.success(request, 'Weekly off days updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating weekly off days: {str(e)}')
+    
+    return redirect('business:staff_detail', staff_id=staff_id)
+
+# Staff Role Management Views
+@login_required
+@require_http_methods(["POST"])
+def add_staff_role(request):
+    """
+    Add a new staff role
+    Handles form submission from the staff management page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        from bookings.models import StaffRole
+        
+        # Get form data
+        role_name = request.POST.get('role_name')
+        role_description = request.POST.get('role_description', '')
+        
+        # Validate required fields
+        if not role_name:
+            messages.error(request, 'Role name is required.')
+            return redirect('business:staff')
+        
+        # Create staff role
+        StaffRole.objects.create(
+            business=business,
+            name=role_name,
+            description=role_description,
+            is_active=True
+        )
+        
+        messages.success(request, f'Staff role "{role_name}" added successfully!')
+    except Exception as e:
+        messages.error(request, f'Error adding staff role: {str(e)}')
+    
+    return redirect('business:staff')
+
+@login_required
+@require_http_methods(["POST"])
+def update_staff_role(request):
+    """
+    Update an existing staff role
+    Handles form submission from the staff management page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        from bookings.models import StaffRole
+        
+        # Get form data
+        role_id = request.POST.get('role_id')
+        role_name = request.POST.get('role_name')
+        role_description = request.POST.get('role_description', '')
+        is_active = 'is_active' in request.POST
+        
+        # Validate required fields
+        if not role_id or not role_name:
+            messages.error(request, 'Role ID and name are required.')
+            return redirect('business:staff')
+        
+        # Get role, ensuring it belongs to this business
+        role = get_object_or_404(StaffRole, id=role_id, business=business)
+        
+        # Update role
+        role.name = role_name
+        role.description = role_description
+        role.is_active = is_active
+        role.save()
+        
+        messages.success(request, f'Staff role "{role_name}" updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating staff role: {str(e)}')
+    
+    return redirect('business:staff')
+
+@login_required
+@require_http_methods(["POST"])
+def delete_staff_role(request):
+    """
+    Delete a staff role via AJAX
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        return JsonResponse({
+            'success': False,
+            'message': 'Please register your business first.'
+        })
+    
+    business = request.user.business
+    
+    try:
+        # Parse JSON data from request body
+        data = json.loads(request.body)
+        role_id = data.get('role_id')
+        
+        from bookings.models import StaffRole
+        
+        # Get role, ensuring it belongs to this business
+        role = get_object_or_404(StaffRole, id=role_id, business=business)
+        
+        # Check if role is in use
+        if role.staff_members.exists():
+            return JsonResponse({
+                'success': False,
+                'message': f'Cannot delete role "{role.name}" because it is assigned to staff members. Remove the role from all staff members first.'
+            })
+        
+        # Store name for success message
+        role_name = role.name
+        
+        # Delete role
+        role.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Staff role "{role_name}" deleted successfully!'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
+
+@login_required
+def smtp_config(request):
+    """
+    Render the SMTP configuration page
+    Shows SMTP settings for email sending
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    # Get or initialize SMTP config
+    smtp_config = None
+    try:
+        smtp_config = SMTPConfig.objects.get(business=business)
+    except SMTPConfig.DoesNotExist:
+        pass
+    
+    context = {
+        'business': business,
+        'smtp_config': smtp_config,
+    }
+    
+    return render(request, 'business/smtp_config.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_smtp_config(request):
+    """
+    Update SMTP configuration settings
+    Handles form submission from the SMTP configuration page
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    try:
+        # Get form data
+        host = request.POST.get('host')
+        port = request.POST.get('port')
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        reply_to = request.POST.get('reply_to')
+        from_email = request.POST.get('from_email')
+        
+        # Validate required fields
+        if not host or not port or not username or not password or not reply_to or not from_email:
+            messages.error(request, 'All fields are required.')
+            return redirect('business:smtp_config')
+        
+        # Convert port to integer
+        try:
+            port = int(port)
+        except ValueError:
+            messages.error(request, 'Port must be a number.')
+            return redirect('business:smtp_config')
+        
+        # Update or create SMTP config
+        smtp_config, created = SMTPConfig.objects.update_or_create(
+            business=business,
+            defaults={
+                'host': host,
+                'port': port,
+                'username': username,
+                'password': password,
+                'reply_to': reply_to,
+                'from_email': from_email,
+            }
+        )
+        
+        messages.success(request, 'SMTP configuration updated successfully!')
+    except Exception as e:
+        messages.error(request, f'Error updating SMTP configuration: {str(e)}')
+    
+    return redirect('business:smtp_config')
+
+
+@login_required
+@require_http_methods(["POST"])
+def test_smtp_config(request):
+    """
+    Test SMTP configuration by sending a test email
+    Returns JSON response with success/error message
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        return JsonResponse({
+            'success': False,
+            'message': 'Please register your business first.'
+        })
+    
+    business = request.user.business
+    
+    try:
+        # Check if this is an API request with JSON data
+        if request.content_type == 'application/json':
+            try:
+                data = json.loads(request.body)
+                # Use provided SMTP settings or get from database
+                host = data.get('host')
+                port = data.get('port')
+                username = data.get('username')
+                password = data.get('password')
+                from_email = data.get('from_email')
+                reply_to = data.get('reply_to')
+                test_email = data.get('test_email', business.email)
+                
+                # If any field is missing, try to get from database
+                if not all([host, port, username, password, from_email, reply_to]):
+                    try:
+                        smtp_config = SMTPConfig.objects.get(business=business)
+                        host = host or smtp_config.host
+                        port = port or smtp_config.port
+                        username = username or smtp_config.username
+                        password = password or smtp_config.password
+                        from_email = from_email or smtp_config.from_email
+                        reply_to = reply_to or smtp_config.reply_to
+                    except SMTPConfig.DoesNotExist:
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'SMTP configuration not found and incomplete data provided.'
+                        })
+            except json.JSONDecodeError:
+                # Not a JSON request, continue with form data
+                data = None
+        else:
+            # Get data from form submission
+            data = None
+            host = request.POST.get('host')
+            port = request.POST.get('port')
+            username = request.POST.get('username')
+            password = request.POST.get('password')
+            from_email = request.POST.get('from_email')
+            reply_to = request.POST.get('reply_to')
+            test_email = business.email
+        
+        # If no data provided, try to get from database
+        if not all([host, port, username, password, from_email, reply_to]):
+            try:
+                smtp_config = SMTPConfig.objects.get(business=business)
+                host = host or smtp_config.host
+                port = port or smtp_config.port
+                username = username or smtp_config.username
+                password = password or smtp_config.password
+                from_email = from_email or smtp_config.from_email
+                reply_to = reply_to or smtp_config.reply_to
+            except SMTPConfig.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'message': 'SMTP configuration not found and incomplete data provided.'
+                })
+        
+        # Convert port to integer if it's a string
+        if isinstance(port, str):
+            port = int(port)
+        
+        # Create test email
+        msg = MIMEMultipart()
+        msg['From'] = from_email
+        msg['To'] = test_email
+        msg['Subject'] = 'Test Email from Services AI'
+        msg['Reply-To'] = reply_to
+        
+        # Email body
+        body = f"""
+        <html>
+        <body>
+            <h2>Test Email from Services AI</h2>
+            <p>This is a test email from your Services AI SMTP configuration.</p>
+            <p>If you received this email, your SMTP configuration is working correctly.</p>
+            <p><strong>Business:</strong> {business.name}</p>
+            <p><strong>SMTP Host:</strong> {host}</p>
+            <p><strong>From Email:</strong> {from_email}</p>
+            <p><strong>Reply-To:</strong> {reply_to}</p>
+            <p><strong>Time Sent:</strong> {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        </body>
+        </html>
+        """
+        
+        msg.attach(MIMEText(body, 'html'))
+        
+        # Connect to SMTP server and send email
+        server = smtplib.SMTP(host, port)
+        server.starttls()  # Start TLS encryption
+        server.login(username, password)
+        server.send_message(msg)
+        server.quit()
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'Test email sent successfully to {test_email}!'
+        })
+    except smtplib.SMTPAuthenticationError:
+        return JsonResponse({
+            'success': False,
+            'message': 'SMTP authentication failed. Please check your username and password.'
+        })
+    except smtplib.SMTPConnectError:
+        return JsonResponse({
+            'success': False,
+            'message': 'Failed to connect to the SMTP server. Please check your host and port.'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'An error occurred: {str(e)}'
+        })
