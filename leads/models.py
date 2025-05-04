@@ -71,7 +71,8 @@ class Lead(models.Model):
     
 
     def save(self, *args, **kwargs):
-        self.id = generate_id('lead_')
+        if not self.id:
+            self.id = generate_id('lead_')
         super().save(*args, **kwargs)
 
 
@@ -135,7 +136,8 @@ class LeadCommunication(models.Model):
         return f"{self.lead} - {self.get_comm_type_display()} ({self.get_direction_display()})"
     
     def save(self, *args, **kwargs):
-        self.id = generate_id('comm_')
+        if not self.id:
+            self.id = generate_id('comm_')
         super().save(*args, **kwargs)
 
 

@@ -92,6 +92,7 @@ def get_payment_intent(request, invoice_id):
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
+@csrf_exempt
 def get_setup_intent(request, invoice_id):
     """
     API endpoint to create a setup intent and return the client secret
@@ -114,6 +115,15 @@ def get_setup_intent(request, invoice_id):
         try:
             data = json.loads(request.body)
             
+            # Log the received data for debugging
+            print(f"Received setup intent data: {data}")
+            
+            # Validate required fields
+            if 'setup_intent_id' not in data or 'payment_method_id' not in data:
+                return JsonResponse({
+                    'error': 'Missing required fields: setup_intent_id or payment_method_id'
+                }, status=400)
+            
             # Process the setup success
             success = processor.process_setup_success(invoice, data)
             
@@ -122,7 +132,12 @@ def get_setup_intent(request, invoice_id):
             else:
                 return JsonResponse({'error': 'Failed to process setup intent'}, status=500)
             
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON data'}, status=400)
         except Exception as e:
+            import traceback
+            print(f"Error processing setup intent: {str(e)}")
+            print(traceback.format_exc())
             return JsonResponse({'error': str(e)}, status=500)
     
     # Handle GET request for creating a setup intent
@@ -136,6 +151,9 @@ def get_setup_intent(request, invoice_id):
         return JsonResponse(response)
         
     except Exception as e:
+        import traceback
+        print(f"Error creating setup intent: {str(e)}")
+        print(traceback.format_exc())
         return JsonResponse({'error': str(e)}, status=500)
 
 def capture_authorized_payment(request, invoice_id):

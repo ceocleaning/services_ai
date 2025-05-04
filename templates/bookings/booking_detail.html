@@ -249,7 +249,7 @@
                                             ${{ item.price_at_booking|divide:item.quantity }}
                                         </div>
                                         <div class="small text-white-50">Qty: {{ item.quantity }}</div>
-                                        {% if item.quantity > 1 %}
+                                        {% if item.quantity >= 1 %}
                                             <div class="item-total small fw-bold text-success">Total: ${{ item.price_at_booking|floatformat:2 }}</div>
                                         {% endif %}
                                     </div>

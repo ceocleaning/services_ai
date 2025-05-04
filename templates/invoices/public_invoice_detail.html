@@ -1,3 +1,4 @@
+{% load booking_filters %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -328,7 +329,7 @@
                                                         {% endif %}
                                                     </td>
                                                     <td class="text-center">{{ item.quantity }}</td>
-                                                    <td class="text-end">${{ item.price_at_booking }}</td>
+                                                    <td class="text-end">${{ item.price_at_booking|divide:item.quantity }}</td>
                                                     <td class="text-end">${{ item.price_at_booking|floatformat:2 }}</td>
                                                 </tr>
                                             {% endfor %}
@@ -404,6 +405,7 @@
 
                     <!-- Payment Options -->
                     {% if balance_due > 0 and invoice.status != 'cancelled' %}
+                        {% if not request.user.is_authenticated or invoice.booking.business.user != request.user %}
                         <div class="card mb-4">
                             <div class="card-header">
                                 <h5 class="mb-0">Payment Options</h5>
@@ -429,6 +431,7 @@
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                     {% endif %}
                 </div>
             </div>
@@ -564,6 +567,7 @@
             
             let paymentType = 'instant';
             let clientSecret = '';
+            let customerId = '';
             
             // Handle authorize toggle change
             if (authorizeToggle) {
@@ -580,6 +584,9 @@
             
             if (paymentBtn) {
                 paymentBtn.addEventListener('click', function() {
+                    // Clear previous errors
+                    document.getElementById('card-errors').textContent = '';
+                    
                     if (paymentType === 'instant') {
                         modalTitle.textContent = 'Make Payment';
                         paymentDescription.textContent = 'Please enter your payment details below to complete your payment.';
@@ -587,12 +594,21 @@
                         
                         // Get client secret for payment intent
                         fetch('{% url "invoices:get_payment_intent" invoice.id %}')
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Failed to create payment intent');
+                                }
+                                return response.json();
+                            })
                             .then(data => {
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
                                 clientSecret = data.client_secret;
                             })
                             .catch(error => {
                                 console.error('Error:', error);
+                                document.getElementById('card-errors').textContent = error.message || 'Failed to create payment intent. Please try again.';
                             });
                     } else {
                         modalTitle.textContent = 'Authorize Payment';
@@ -601,12 +617,23 @@
                         
                         // Get client secret for setup intent
                         fetch('{% url "invoices:get_setup_intent" invoice.id %}')
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('Failed to create setup intent');
+                                }
+                                return response.json();
+                            })
                             .then(data => {
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
                                 clientSecret = data.client_secret;
+                                customerId = data.customer_id;
+                                console.log('Setup intent created with customer ID:', customerId);
                             })
                             .catch(error => {
                                 console.error('Error:', error);
+                                document.getElementById('card-errors').textContent = error.message || 'Failed to create setup intent. Please try again.';
                             });
                     }
                 });
@@ -615,6 +642,15 @@
             // Handle form submission
             paymentForm.addEventListener('submit', function(event) {
                 event.preventDefault();
+                
+                // Clear previous errors
+                document.getElementById('card-errors').textContent = '';
+                
+                // Check if client secret is available
+                if (!clientSecret) {
+                    document.getElementById('card-errors').textContent = 'Payment setup is not complete. Please try again.';
+                    return;
+                }
                 
                 // Disable the submit button to prevent multiple submissions
                 submitButton.disabled = true;
@@ -626,26 +662,23 @@
                 const name = document.getElementById('name').value;
                 const email = document.getElementById('email').value;
                 
+                // Create billing details object
+                const billingDetails = {
+                    name: name,
+                    email: email
+                };
+                
                 if (paymentType === 'instant') {
                     // Handle payment intent confirmation
                     stripe.confirmCardPayment(clientSecret, {
                         payment_method: {
                             card: cardElement,
-                            billing_details: {
-                                name: name,
-                                email: email
-                            }
+                            billing_details: billingDetails
                         }
                     }).then(function(result) {
                         if (result.error) {
                             // Show error to customer
-                            const errorElement = document.getElementById('card-errors');
-                            errorElement.textContent = result.error.message;
-                            
-                            // Reset UI
-                            submitButton.disabled = false;
-                            formContainer.style.display = 'block';
-                            processingDiv.style.display = 'none';
+                            handlePaymentError(result.error.message);
                         } else {
                             // Payment successful - Create payment record on server
                             fetch('{% url "invoices:get_payment_intent" invoice.id %}', {
@@ -659,13 +692,21 @@
                                     amount: {{ balance_due|floatformat:2 }}
                                 })
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(data => {
+                                        throw new Error(data.error || 'Failed to record payment');
+                                    });
+                                }
+                                return response.json();
+                            })
                             .then(data => {
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
+                                
                                 // Payment record created successfully
-                                processingDiv.style.display = 'none';
-                                successDiv.style.display = 'block';
-                                successTitle.textContent = 'Payment Successful!';
-                                successMessage.textContent = 'Your payment has been processed successfully.';
+                                showSuccessMessage('Payment Successful!', 'Your payment has been processed successfully.');
                                 
                                 // Reload the page after 3 seconds to show updated payment status
                                 setTimeout(function() {
@@ -674,15 +715,16 @@
                             })
                             .catch(error => {
                                 console.error('Error creating payment record:', error);
-                                // Still show success to user since payment was processed by Stripe
-                                processingDiv.style.display = 'none';
-                                successDiv.style.display = 'block';
-                                successTitle.textContent = 'Payment Successful!';
-                                successMessage.textContent = 'Your payment has been processed successfully.';
+                                
+                                // Show a warning that payment was processed but recording failed
+                                showSuccessMessage(
+                                    'Payment Processed', 
+                                    'Your payment was processed by Stripe, but we encountered an issue recording it in our system. Please contact support if your payment does not appear shortly.'
+                                );
                                 
                                 setTimeout(function() {
                                     window.location.reload();
-                                }, 3000);
+                                }, 5000);
                             });
                         }
                     });
@@ -691,22 +733,15 @@
                     stripe.confirmCardSetup(clientSecret, {
                         payment_method: {
                             card: cardElement,
-                            billing_details: {
-                                name: name,
-                                email: email
-                            }
+                            billing_details: billingDetails
                         }
                     }).then(function(result) {
                         if (result.error) {
                             // Show error to customer
-                            const errorElement = document.getElementById('card-errors');
-                            errorElement.textContent = result.error.message;
-                            
-                            // Reset UI
-                            submitButton.disabled = false;
-                            formContainer.style.display = 'block';
-                            processingDiv.style.display = 'none';
+                            handlePaymentError(result.error.message);
                         } else {
+                            console.log('Setup intent confirmed:', result.setupIntent);
+                            
                             // Setup successful - Update invoice on server
                             fetch('{% url "invoices:get_setup_intent" invoice.id %}', {
                                 method: 'POST',
@@ -719,13 +754,24 @@
                                     payment_method_id: result.setupIntent.payment_method
                                 })
                             })
-                            .then(response => response.json())
+                            .then(response => {
+                                if (!response.ok) {
+                                    return response.json().then(data => {
+                                        throw new Error(data.error || 'Failed to update invoice');
+                                    });
+                                }
+                                return response.json();
+                            })
                             .then(data => {
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
+                                
                                 // Invoice updated successfully
-                                processingDiv.style.display = 'none';
-                                successDiv.style.display = 'block';
-                                successTitle.textContent = 'Payment Authorized!';
-                                successMessage.textContent = 'Your payment method has been authorized successfully. Your card will not be charged until the service is completed.';
+                                showSuccessMessage(
+                                    'Payment Method Authorized!', 
+                                    'Your payment method has been saved and authorized successfully. Your card will not be charged until the service is completed.'
+                                );
                                 
                                 // Reload the page after 3 seconds to show updated status
                                 setTimeout(function() {
@@ -734,20 +780,32 @@
                             })
                             .catch(error => {
                                 console.error('Error updating invoice:', error);
-                                // Still show success to user since setup was processed by Stripe
-                                processingDiv.style.display = 'none';
-                                successDiv.style.display = 'block';
-                                successTitle.textContent = 'Payment Authorized!';
-                                successMessage.textContent = 'Your payment method has been authorized successfully. Your card will not be charged until the service is completed.';
-                                
-                                setTimeout(function() {
-                                    window.location.reload();
-                                }, 3000);
+                                handlePaymentError(error.message || 'Failed to update invoice. Please try again or contact support.');
                             });
                         }
                     });
                 }
             });
+            
+            // Helper function to handle payment errors
+            function handlePaymentError(errorMessage) {
+                const errorElement = document.getElementById('card-errors');
+                errorElement.textContent = errorMessage || 'An error occurred during payment processing';
+                
+                // Reset UI
+                submitButton.disabled = false;
+                formContainer.style.display = 'block';
+                processingDiv.style.display = 'none';
+                successDiv.style.display = 'none';
+            }
+            
+            // Helper function to show success message
+            function showSuccessMessage(title, message) {
+                processingDiv.style.display = 'none';
+                successDiv.style.display = 'block';
+                successTitle.textContent = title;
+                successMessage.textContent = message;
+            }
             
             // Reset modal when it's hidden
             const paymentModal = document.getElementById('paymentModal');

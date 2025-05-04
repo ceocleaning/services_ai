@@ -52,17 +52,22 @@ class Invoice(models.Model):
         return f"Invoice #{self.invoice_number} - {self.booking.name}"
     
     def save(self, *args, **kwargs):
-        # Generate invoice number if not set
-        if not self.invoice_number:
-            self.invoice_number = generate_id('inv_')
+        # Check if this is a new instance (no primary key)
+        if not self.id:
+            # Generate invoice number if not set
+            if not self.invoice_number:
+                self.invoice_number = generate_id('inv_no_')
+            
+            # Generate ID only for new instances
+            self.id = generate_id('inv_')
         
         super().save(*args, **kwargs)
     
 
     def get_preview_url(self):
-        return reverse('invoices:public_invoice_detail', kwargs={'id': self.id})
-
-    
+        from django.conf import settings
+        url = reverse('invoices:public_invoice_detail', kwargs={'invoice_id': self.id})
+        return f"{settings.BASE_URL}{url}"
 
 
 class Payment(models.Model):
@@ -93,6 +98,6 @@ class Payment(models.Model):
         return f"Payment of {self.amount} for Invoice #{self.invoice.invoice_number}"
     
     def save(self, *args, **kwargs):
-        self.id = generate_id('pay_')
+        if not self.id:
+            self.id = generate_id('pay_')
         super().save(*args, **kwargs)
-

@@ -54,7 +54,7 @@ def send_email(smtp_config, recipient_email, subject, html_content, reply_to=Non
     
     try:
         # Create email message
-        msg = MIMEMultipart()
+        msg = MIMEMultipart('alternative')
         msg['From'] = smtp_config.from_email
         msg['To'] = recipient_email
         msg['Subject'] = subject
@@ -65,12 +65,16 @@ def send_email(smtp_config, recipient_email, subject, html_content, reply_to=Non
         else:
             msg['Reply-To'] = smtp_config.reply_to
         
-        # Attach HTML content
-        msg.attach(MIMEText(html_content, 'html'))
-        
         # Plain text version (fallback)
         text_content = strip_tags(html_content)
-        msg.attach(MIMEText(text_content, 'plain'))
+        part1 = MIMEText(text_content, 'plain')
+        
+        # Attach HTML content
+        part2 = MIMEText(html_content, 'html')
+        
+        # Attach parts in order: plain text first, then HTML
+        msg.attach(part1)
+        msg.attach(part2)
         
         # Connect to SMTP server and send email
         server = smtplib.SMTP(smtp_config.host, smtp_config.port)
