@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const summaryService = document.getElementById('summary-service');
     const summaryDateTime = document.getElementById('summary-datetime');
     const summaryLocation = document.getElementById('summary-location');
+    const summaryDuration = document.getElementById('summary-duration');
     const totalPriceSpan = document.getElementById('total-price');
     const startTimeInput = document.getElementById('start_time');
     const endTimeInput = document.getElementById('end_time');
@@ -31,9 +32,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // State variables
     let selectedServiceId = null;
     let basePrice = 0;
+    let baseDuration = 0;
     let serviceItems = [];
     let selectedItems = {};
     let totalPrice = 0;
+    let totalDuration = 0;
     let availabilityCheckTimeout = null;
 
     // Service selection change handler
@@ -53,9 +56,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 servicePriceSpan.textContent = price;
                 serviceDetailsDiv.classList.remove('d-none');
                 
+                // Store base duration
+                baseDuration = parseInt(duration);
+                totalDuration = baseDuration;
+                
                 // Calculate end time based on start time and duration
                 if (startTimeInput.value) {
-                    calculateEndTime(startTimeInput.value, parseInt(duration));
+                    calculateEndTime(startTimeInput.value, totalDuration);
                 }
                 
                 // Fetch service items
@@ -96,21 +103,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         startTimeInput.addEventListener('change', function() {
-            if (selectedServiceId) {
-                const selectedOption = serviceTypeSelect.options[serviceTypeSelect.selectedIndex];
-                const duration = parseInt(selectedOption.dataset.duration);
-                calculateEndTime(this.value, duration);
-            }
             updateBookingSummary();
             
-            // Check staff availability when time changes
-            if (selectedServiceId && bookingDateInput.value && endTimeInput.value) {
+            // Calculate end time when start time changes
+            if (selectedServiceId) {
+                calculateEndTime(this.value, totalDuration);
+            }
+            
+            // Check staff availability when start time changes
+            if (selectedServiceId && bookingDateInput.value) {
                 checkStaffAvailability();
             }
         });
         
         endTimeInput.addEventListener('change', function() {
             updateBookingSummary();
+            
             // Check staff availability when end time changes
             if (selectedServiceId && bookingDateInput.value && startTimeInput.value) {
                 checkStaffAvailability();
@@ -141,7 +149,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Calculate end time based on start time and duration
     function calculateEndTime(startTime, durationMinutes) {
-        if (!startTime) return;
+        if (!startTime || !durationMinutes) return;
         
         const [hours, minutes] = startTime.split(':').map(Number);
         const startDate = new Date();
@@ -354,8 +362,11 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             
                             <p class="card-text">${item.description || ''}</p>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="text-primary fw-bold">$${item.price_value}</span>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="text-primary fw-bold">$${item.price_value}</span>
+                            ${parseInt(item.duration_minutes) > 0 ? `<span class="text-info"><i class="bi bi-clock"></i> +${item.duration_minutes} mins</span>` : ''}
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
                                 <div class="form-check form-switch">
                                     <input class="form-check-input service-item-checkbox" 
                                            type="checkbox" 
@@ -363,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                            name="service_items[]" 
                                            value="${item.id}"
                                            data-price="${item.price_value}"
+                                       data-duration="${item.duration_minutes || 0}"
                                            ${item.is_optional ? '' : 'checked disabled'}>
                                     <label class="form-check-label" for="item_${item.id}">
                                         ${item.is_optional ? 'Add' : 'Required'}
@@ -401,9 +413,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const item = serviceItems.find(i => i.id === itemId);
                 
                 if (this.checked) {
+                    const itemData = serviceItems.find(i => i.id === itemId);
                     selectedItems[itemId] = {
                         price: price,
-                        quantity: 1
+                        quantity: 1,
+                        duration: itemData ? parseInt(itemData.duration_minutes || 0) : 0
                     };
                     
                     // Show quantity control if max_quantity > 1
@@ -475,7 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (item.is_required) {
                 selectedItems[item.id] = {
                     price: parseFloat(item.price_value),
-                    quantity: 1
+                    quantity: 1,
+                    duration: parseInt(item.duration_minutes || 0)
                 };
             }
         });
@@ -485,16 +500,49 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Industry-specific fields functionality has been removed as requested
 
-    // Calculate and update total price
+    // Calculate and update total price and duration
     function updateTotalPrice() {
         totalPrice = basePrice;
+        totalDuration = baseDuration;
         
-        // Add prices of selected items
+        // Add prices and durations of selected items
         Object.values(selectedItems).forEach(item => {
             totalPrice += item.price * item.quantity;
+            totalDuration += item.duration * item.quantity;
         });
         
         totalPriceSpan.textContent = totalPrice.toFixed(2);
+        
+        // Update service duration display
+        if (serviceDurationSpan) {
+            serviceDurationSpan.textContent = totalDuration;
+        }
+        
+        // Update summary duration display
+        if (summaryDuration) {
+            const hours = Math.floor(totalDuration / 60);
+            const minutes = totalDuration % 60;
+            let durationText = '';
+            
+            if (hours > 0) {
+                durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+                if (minutes > 0) durationText += ' ';
+            }
+            
+            if (minutes > 0 || hours === 0) {
+                durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            }
+            
+            summaryDuration.textContent = durationText;
+        }
+        
+        // Recalculate end time if start time is set
+        if (startTimeInput && startTimeInput.value) {
+            calculateEndTime(startTimeInput.value, totalDuration);
+        }
+        
+        // Update booking summary
+        updateBookingSummary();
     }
 
     // Update booking summary
@@ -513,6 +561,26 @@ document.addEventListener('DOMContentLoaded', function() {
             summaryDateTime.textContent = `${formattedDate}, ${formatTime(startTimeInput.value)} - ${formatTime(endTimeInput.value)}`;
         } else {
             summaryDateTime.textContent = '-';
+        }
+        
+        // Format duration in summary
+        if (totalDuration > 0) {
+            const hours = Math.floor(totalDuration / 60);
+            const minutes = totalDuration % 60;
+            let durationText = '';
+            
+            if (hours > 0) {
+                durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+                if (minutes > 0) durationText += ' ';
+            }
+            
+            if (minutes > 0 || hours === 0) {
+                durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+            }
+            
+            summaryDuration.textContent = durationText;
+        } else {
+            summaryDuration.textContent = '-';
         }
         
         // Format location
