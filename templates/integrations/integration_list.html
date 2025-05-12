@@ -1,0 +1,250 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <form id="csrfForm" style="display: none;">
+        {% csrf_token %}
+    </form>
+    <h1 class="mt-4">API Integrations</h1>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+                <i class="fas fa-plug me-1"></i>
+                Managed Integrations
+            </div>
+            <div>
+                <a href="{% url 'integration:integration_logs' %}" class="btn btn-info btn-sm me-2">
+                    <i class="fas fa-list-alt me-1"></i>View All Logs
+                </a>
+                <a href="{% url 'integration:add_integration' %}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-plus me-1"></i>Add New Integration
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if integrations %}
+            <ul class="nav nav-tabs mb-3" id="integrationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="direct-api-tab" data-bs-toggle="tab" data-bs-target="#direct-api" type="button" role="tab">
+                        Direct API Integrations
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="workflow-tab" data-bs-toggle="tab" data-bs-target="#workflow" type="button" role="tab">
+                        Workflow Platforms
+                    </button>
+                </li>
+            </ul>
+            <div class="tab-content" id="integrationTabsContent">
+                <!-- Direct API Tab -->
+                <div class="tab-pane fade show active" id="direct-api" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Platform Name</th>
+                                    <th>Base URL</th>
+                                    <th>Auth Type</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for integration in integrations %}
+                                {% if integration.platform_type == 'direct_api' %}
+                                <tr>
+                                    <td>{{ integration.name }}</td>
+                                    <td>{{ integration.base_url }}</td>
+                                    <td>{{ integration.get_auth_type_display }}</td>
+                                    <td>
+                                        {% if integration.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'integration:integration_mapping' integration.id %}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-exchange-alt"></i> Mapping
+                                            </a>
+                                            <a href="{% url 'integration:preview_mapping' integration.id %}" class="btn btn-secondary btn-sm">
+                                                <i class="fas fa-eye"></i> Preview
+                                            </a>
+                                            <a href="{% url 'integration:edit_integration' integration.id %}" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button class="btn btn-primary btn-sm test-integration" data-integration-id="{{ integration.id }}">
+                                                <i class="fas fa-vial"></i> Test
+                                            </button>
+                                            <a href="{% url 'integration:integration_platform_logs' integration.id %}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-list-alt"></i> Logs
+                                            </a>
+                                            <a href="{% url 'integration:delete_integration' integration.id %}" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Workflow Tab -->
+                <div class="tab-pane fade" id="workflow" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>Platform Name</th>
+                                    <th>Webhook URL</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for integration in integrations %}
+                                {% if integration.platform_type == 'workflow' %}
+                                <tr>
+                                    <td>{{ integration.name }}</td>
+                                    <td>{{ integration.webhook_url }}</td>
+                                    <td>
+                                        {% if integration.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'integration:edit_integration' integration.id %}" class="btn btn-warning btn-sm">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <button class="btn btn-primary btn-sm test-integration" data-integration-id="{{ integration.id }}">
+                                                <i class="fas fa-vial"></i> Test
+                                            </button>
+                                            <a href="{% url 'integration:integration_platform_logs' integration.id %}" class="btn btn-info btn-sm">
+                                                <i class="fas fa-list-alt"></i> Logs
+                                            </a>
+                                            <a href="{% url 'integration:delete_integration' integration.id %}" class="btn btn-danger btn-sm">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No integrations configured yet.</p>
+                <a href="{% url 'integration:add_integration' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>Add Your First Integration
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Test Result Modal -->
+<div class="modal fade" id="testResultModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Integration Test Results</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="testResult"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Bootstrap tabs
+    var triggerTabList = [].slice.call(document.querySelectorAll('#integrationTabs button'))
+    triggerTabList.forEach(function(triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl)
+        triggerEl.addEventListener('click', function(event) {
+            event.preventDefault()
+            tabTrigger.show()
+        })
+    })
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Test Integration functionality
+    document.querySelectorAll('.test-integration').forEach(button => {
+        button.addEventListener('click', async function() {
+            const integrationId = this.dataset.integrationId;
+            const resultModal = new bootstrap.Modal(document.getElementById('testResultModal'));
+            const resultDiv = document.getElementById('testResult');
+            
+            try {
+                button.disabled = true;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                
+                const response = await fetch(`/integration/${integrationId}/test/`, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    }
+                });
+                
+                let result;
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    result = await response.json();
+                } else {
+                    // If response is not JSON, treat it as an error
+                    throw new Error('Invalid response from server');
+                }
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="alert ${result.success ? 'alert-success' : 'alert-danger'}">
+                            <h6>${result.success ? 'Success!' : 'Error!'}</h6>
+                            <p>${result.message}</p>
+                            ${result.response ? `<pre class="mt-3"><code>${JSON.stringify(result.response, null, 2)}</code></pre>` : ''}
+                        </div>
+                    `;
+                } else {
+                    throw new Error(result.message || 'Failed to test integration');
+                }
+            } catch (error) {
+                console.error('Test integration error:', error);
+                resultDiv.innerHTML = `
+                    <div class="alert alert-danger">
+                        <h6>Error!</h6>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                button.disabled = false;
+                button.innerHTML = '<i class="fas fa-vial"></i> Test';
+                resultModal.show();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

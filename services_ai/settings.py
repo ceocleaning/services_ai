@@ -26,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-1234567890')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'True')
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'core.apps.CoreConfig',
     'business.apps.BusinessConfig',
     'accounts.apps.AccountsConfig',
+    'integration.apps.IntegrationConfig',
     'dashboard.apps.DashboardConfig',
 ]
 

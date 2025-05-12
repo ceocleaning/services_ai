@@ -96,6 +96,12 @@
                             <span>Staff</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{% url 'integration:integration_list' %}" class="nav-link {% if '/integration/' in request.path %}active{% endif %}">
+                            <i class="fas fa-robot"></i>
+                            <span>Integrations</span>
+                        </a>
+                    </li>
                     <li class="nav-header">Settings</li>
                     <li class="nav-item">
                         <a href="/business/profile/" class="nav-link {% if '/business/profile/' in request.path %}active{% endif %}">
