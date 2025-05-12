@@ -54,7 +54,7 @@ def booking_notification(sender, instance, created, update_fields, **kwargs):
             related_object_id=instance.id,
             related_object_type='booking'
         )
-    elif update_fields and 'status' in update_fields:
+    elif update_fields and 'status' in update_fields and instance.status != 'pending':
         create_notification(
             user=business.user,
             notification_type='booking_status_changed',

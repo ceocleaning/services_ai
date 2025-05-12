@@ -2,7 +2,7 @@
     <div class="dropdown-header">
         Notifications
     </div>
-    {% for notification in notifications %}
+    {% for notification in notifications|slice:":5" %}
         <div class="dropdown-item {% if not notification.is_read %}unread-notification{% endif %}">
             <div class="notification">
                 <div class="notification-icon 
@@ -31,11 +31,23 @@
                     <div class="notification-title">{{ notification.title }}</div>
                     <div class="notification-text">{{ notification.message }}</div>
                     <div class="notification-time">{{ notification.get_time_since }}</div>
+                    {% if notification.is_read %}
+                        <div class="notification-read-status"><small class="text-muted"><i class="fas fa-check"></i> Read</small></div>
+                    {% endif %}
+                    {% if notification.get_related_object_url %}
+                        <div class="notification-link mt-1">
+                            <a href="{{ notification.get_related_object_url }}" class="text-primary small">
+                                <i class="fas fa-external-link-alt"></i> View Details
+                            </a>
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="notification-actions">
-                    <button class="btn btn-sm btn-link mark-read-btn" data-notification-id="{{ notification.id }}" title="Mark as read">
-                        <i class="fas fa-check"></i>
-                    </button>
+                    {% if not notification.is_read %}
+                        <button class="btn btn-sm btn-link mark-read-btn" data-notification-id="{{ notification.id }}" title="Mark as read">
+                            <i class="fas fa-check"></i>
+                        </button>
+                    {% endif %}
                 </div>
             </div>
         </div>

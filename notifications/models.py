@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from django.urls import reverse
+from django.shortcuts import get_object_or_404
 
 class Notification(models.Model):
     NOTIFICATION_TYPES = (
@@ -50,3 +52,28 @@ class Notification(models.Model):
             return f"{days} day{'s' if days > 1 else ''} ago"
         else:
             return self.created_at.strftime("%b %d, %Y")
+    
+    def get_related_object_url(self):
+        """Return the URL for the related object if it exists"""
+        if not self.related_object_id or not self.related_object_type:
+            return None
+        
+        try:
+            if self.related_object_type == 'lead':
+                return reverse('leads:lead_detail', kwargs={'lead_id': self.related_object_id})
+            elif self.related_object_type == 'booking':
+                return reverse('bookings:booking_detail', kwargs={'booking_id': self.related_object_id})
+            elif self.related_object_type == 'invoice':
+                return reverse('invoices:invoice_detail', kwargs={'invoice_id': self.related_object_id})
+            elif self.related_object_type == 'staff':
+                return reverse('business:staff_detail', kwargs={'staff_id': self.related_object_id})
+            elif self.related_object_type == 'staff_availability':
+                # For staff availability, we'll link to the staff detail page
+                from bookings.models import StaffAvailability
+                availability = StaffAvailability.objects.get(id=self.related_object_id)
+                return reverse('business:staff_detail', kwargs={'staff_id': availability.staff_member.id})
+            else:
+                return None
+        except Exception:
+            # If there's any error (like the object was deleted), return None
+            return None
