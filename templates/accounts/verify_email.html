@@ -1,0 +1,178 @@
+{% extends 'common/auth_base.html' %}
+{% load static %}
+
+{% block title %}Email Verification{% endblock %}
+
+{% block auth_content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow border-0">
+                <div class="card-header bg-primary text-white text-center py-3">
+                    <h4 class="mb-0">Email Verification</h4>
+                </div>
+                <div class="card-body p-4">
+                    
+
+                    
+                    {% if is_expired %}
+                        <div class="alert alert-warning">
+                            <p><strong>OTP has expired.</strong> Please request a new verification code.</p>
+                        </div>
+                    {% elif max_attempts_reached %}
+                        <div class="alert alert-danger">
+                            <p><strong>Maximum attempts reached.</strong> Please request a new verification code.</p>
+                        </div>
+                    {% else %}
+                        <div class="text-center mb-4">
+                            <i class="fas fa-envelope-open-text fa-3x text-primary mb-3"></i>
+                            <p class="lead">We've sent a verification code to</p>
+                            <h5 class="text-primary mb-4"><strong>{{ email }}</strong></h5>
+                        </div>
+                        
+                        <form method="post" action="{% url 'accounts:verify_email' %}" class="mb-4">
+                            {% csrf_token %}
+                            <div class="mb-4">
+                                <label for="otp" class="form-label fw-bold">Verification Code</label>
+                                <div class="otp-input-container">
+                                    <input type="text" class="form-control form-control-lg text-center shadow-sm" id="otp" name="otp" maxlength="6" placeholder="Enter 6-digit code" required>
+                                </div>
+                                <div class="form-text text-end mt-2">
+                                    {% if attempts and max_attempts %}
+                                        <span class="badge bg-secondary">Attempts: {{ attempts }}/{{ max_attempts }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg fw-bold py-2">
+                                    <i class="fas fa-check-circle me-2"></i>Verify Email
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                    
+                    <div class="mt-4 text-center">
+                        <p class="text-muted mb-3">Didn't receive the code?</p>
+                        <button id="resendBtn" class="btn btn-outline-primary btn-lg px-4" {% if not can_resend %}disabled{% endif %}>
+                            <i class="fas fa-paper-plane me-2"></i>Resend Code
+                        </button>
+                        <div id="countdown" class="mt-3 text-muted fw-bold d-none">
+                            <i class="fas fa-clock me-1"></i> Please wait <span id="timer" class="text-primary">60</span> seconds before requesting a new code.
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center py-3 bg-light">
+                    <a href="{% url 'accounts:signup' %}" class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-2"></i>Back to Sign Up
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const resendBtn = document.getElementById('resendBtn');
+        const countdown = document.getElementById('countdown');
+        const timer = document.getElementById('timer');
+        let timeLeft = 60;
+        let countdownTimer;
+
+        // Function to start the countdown
+        function startCountdown() {
+            timeLeft = 60;
+            if (countdown) {
+                countdown.classList.remove('d-none');
+
+                // Clear any existing timer
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                }
+
+                // Start new timer
+                countdownTimer = setInterval(function () {
+                    timeLeft--;
+                    if (timer) {
+                        timer.textContent = timeLeft;
+                    }
+
+                    if (timeLeft <= 0) {
+                        clearInterval(countdownTimer);
+                        if (resendBtn) {
+                            resendBtn.disabled = false;
+                        }
+                        if (countdown) {
+                            countdown.classList.add('d-none');
+                        }
+                    }
+                }, 1000);
+            }
+        }
+
+        // Check if resendBtn exists and is disabled on page load
+        if (resendBtn && resendBtn.disabled) {
+            startCountdown();
+        }
+
+        // Only add event listener if resendBtn exists
+        if (resendBtn) {
+            resendBtn.addEventListener('click', function () {
+                // Disable button
+                resendBtn.disabled = true;
+
+                // Send AJAX request to resend OTP
+                fetch('{% url "accounts:resend_verification" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Show alert with message
+                    const alertClass = data.success ? 'alert-success' : 'alert-danger';
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = `alert ${alertClass} alert-dismissible fade show`;
+                    alertDiv.innerHTML = `
+                        ${data.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    `;
+
+                    // Insert alert at the top of the card body
+                    const cardBody = document.querySelector('.card-body');
+                    if (cardBody) {
+                        cardBody.insertBefore(alertDiv, cardBody.firstChild);
+                    }
+
+                    // Start countdown
+                    startCountdown();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    resendBtn.disabled = false;
+                });
+            });
+        }
+
+        // Format OTP input
+        const otpInput = document.getElementById('otp');
+        if (otpInput) {
+            otpInput.addEventListener('input', function () {
+                // Remove non-digit characters
+                this.value = this.value.replace(/\D/g, '');
+
+                // Limit to 6 digits
+                if (this.value.length > 6) {
+                    this.value = this.value.slice(0, 6);
+                }
+            });
+        }
+    });
+</script>
+
+{% endblock %}

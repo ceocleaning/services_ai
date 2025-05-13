@@ -10,6 +10,10 @@ urlpatterns = [
     path('login/', views.login_page, name='login'),
     path('logout/', views.logout_page, name='logout'),
     
+    # Email verification
+    path('verify-email/', views.verify_email, name='verify_email'),
+    path('resend-verification/', views.resend_verification, name='resend_verification'),
+    
     # Password reset flow
     path('password-reset/', views.password_reset_page, name='password_reset'),
     

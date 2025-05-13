@@ -71,6 +71,8 @@ class Business(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    
+
     default_payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES, null=True, blank=True)
 
     class Meta:

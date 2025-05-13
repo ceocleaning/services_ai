@@ -48,6 +48,22 @@ def register_business(request):
             'message': 'You already have a registered business.'
         })
     
+    # Check if user's email is verified
+    from accounts.models import EmailVerification
+    user_email = request.user.email
+    try:
+        verification = EmailVerification.objects.filter(user=request.user, email=user_email).first()
+        if not verification or not verification.is_verified:
+            return JsonResponse({
+                'success': False,
+                'message': 'Please verify your email address before registering a business.',
+                'redirect_url': '/accounts/verify-email/'
+            })
+    except Exception as e:
+        # Continue if there's an error checking verification
+        # This ensures backward compatibility with existing users
+        pass
+    
     try:
         # Parse JSON data from request body
         data = json.loads(request.body)
@@ -87,8 +103,18 @@ def register_business(request):
                 description=data.get('business_description', '')
             )
             
-               # Create business configuration
+            # Create business configuration
             BusinessConfiguration.objects.create(business=business)
+            
+            # Mark the email as verified in our verification system if it matches
+            if data['email'] == user_email:
+                try:
+                    verification = EmailVerification.objects.filter(user=request.user, email=user_email).first()
+                    if verification:
+                        verification.is_verified = True
+                        verification.save()
+                except Exception:
+                    pass
             
             return JsonResponse({
                 'success': True,
