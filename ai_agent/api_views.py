@@ -28,7 +28,8 @@ def check_availability(request):
     }
     """
     try:
-        data = json.loads(request.body)
+        body = json.loads(request.body)
+        data = body.get('args', {})
         # Process check_availability request with data
         
         # Extract data from request
