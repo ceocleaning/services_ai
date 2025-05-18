@@ -1,0 +1,80 @@
+/* 
+ * Retell Agent CSS
+ * Custom styles for the Retell Agent module
+ */
+
+/* Card styling */
+.retell-agent-card {
+    transition: all 0.2s ease;
+    border-left: 4px solid var(--bs-primary);
+}
+
+.retell-agent-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Form styling */
+.input-group-text {
+    background-color: var(--bs-primary);
+    color: #fff;
+    border-color: var(--bs-primary);
+}
+
+/* Empty state styling */
+.empty-state-icon {
+    color: var(--bs-primary);
+    opacity: 0.7;
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+}
+
+/* Table styling */
+.table-hover tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.05);
+}
+
+/* Action buttons */
+.btn-outline-primary {
+    border-color: var(--bs-primary);
+    color: var(--bs-primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--bs-primary);
+    color: #fff;
+}
+
+.btn-outline-danger {
+    border-color: var(--bs-danger);
+    color: var(--bs-danger);
+}
+
+.btn-outline-danger:hover {
+    background-color: var(--bs-danger);
+    color: #fff;
+}
+
+/* Form validation */
+.invalid-feedback {
+    display: block;
+    color: var(--bs-danger);
+    margin-top: 0.25rem;
+}
+
+/* Info card */
+.info-card {
+    background-color: rgba(79, 70, 229, 0.05);
+    border-left: 4px solid var(--bs-primary);
+}
+
+/* Dark mode adjustments */
+[data-bs-theme="dark"] .input-group-text {
+    background-color: var(--bs-primary);
+    color: #fff;
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .table-hover tbody tr:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+}

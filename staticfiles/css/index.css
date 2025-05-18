@@ -1,0 +1,533 @@
+/* Index CSS for AI Appointment Assistant Landing Page
+   Following the design system from UI.md */
+
+/* Hero Section */
+.hero-section {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-darkest);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+    z-index: 0;
+}
+
+.hero-section::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    left: -50%;
+    width: 100%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(12, 165, 233, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+    z-index: 0;
+}
+
+.hero-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-section .btn-primary {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    background-color: var(--primary-indigo);
+    border-color: var(--primary-indigo);
+}
+
+.hero-section .btn-primary:hover, .hero-section .btn-primary:focus {
+    background-color: var(--primary-indigo);
+    border-color: var(--primary-indigo-dark);
+    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
+}
+
+.hero-section h1 {
+    font-weight: 700;
+}
+
+.hero-section .lead {
+    color: var(--color-text-secondary);
+    font-size: 1.2rem;
+    margin-bottom: var(--space-xl);
+}
+
+.hero-image-container {
+    position: relative;
+}
+
+.hero-image-container::before {
+    content: '';
+    position: absolute;
+    top: -15px;
+    left: -15px;
+    right: -15px;
+    bottom: -15px;
+    border: 2px solid var(--primary-indigo-medium-dark);
+    border-radius: 1rem;
+    z-index: -1;
+    opacity: 0.5;
+    transform: rotate(-2deg);
+}
+
+.hero-image-container img {
+    max-width: 100%;
+    transition: transform 0.5s ease, box-shadow 0.5s ease;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.hero-image-container img:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+}
+
+.rating-stars {
+    color: var(--warning);
+}
+
+/* Trusted By Section */
+.trusted-by {
+    padding: var(--space-xl) 0;
+    background-color: var(--gray-darkest);
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.trusted-by::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(79, 70, 229, 0.3), transparent);
+}
+
+.client-logo {
+    opacity: 0.7;
+    transition: all 0.3s ease;
+    filter: grayscale(100%) invert(1);
+    max-height: 40px;
+    width: auto;
+}
+
+.client-logo:hover {
+    opacity: 1;
+    filter: grayscale(0) invert(1);
+    transform: scale(1.1);
+}
+
+/* Features Section */
+.features-section {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+.features-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/cubes.png');
+    opacity: 0.03;
+    z-index: 0;
+}
+
+.features-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.feature-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, var(--primary-indigo-dark) 0%, var(--primary-indigo) 100%);
+    margin-bottom: var(--space-md);
+    position: relative;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.feature-icon-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    border-radius: 20px;
+    z-index: 1;
+}
+
+.feature-icon-container i {
+    position: relative;
+    z-index: 2;
+    font-size: 1.5rem;
+    color: white;
+}
+
+/* How It Works Section */
+.how-it-works {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-darkest);
+    position: relative;
+    overflow: hidden;
+}
+
+.how-it-works::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(0, 0, 0, 0), rgba(79, 70, 229, 0.05));
+    z-index: 0;
+}
+
+.how-it-works::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 30%;
+    height: 100%;
+    background: linear-gradient(270deg, rgba(0, 0, 0, 0), rgba(12, 165, 233, 0.05));
+    z-index: 0;
+}
+
+.how-it-works .container {
+    position: relative;
+    z-index: 1;
+}
+
+.step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--secondary-teal) 0%, var(--secondary-teal-dark) 100%);
+    color: white;
+    font-weight: 600;
+    flex-shrink: 0;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.step-number::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0));
+    z-index: 1;
+}
+
+.step-number::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/diagonal-noise.png');
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.step-item {
+    position: relative;
+}
+
+.step-item:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 50px;
+    left: 25px;
+    width: 1px;
+    height: calc(100% - 50px);
+    background: linear-gradient(to bottom, var(--secondary-teal-medium-light), transparent);
+    z-index: 0;
+}
+
+.step-content {
+    flex-grow: 1;
+}
+
+.step-content h4 {
+    margin-bottom: var(--space-xs);
+}
+
+.demo-video-container {
+    border-radius: 1rem;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.demo-video-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, var(--secondary-teal), var(--primary-indigo), var(--secondary-teal));
+    z-index: -1;
+    border-radius: 1.1rem;
+    opacity: 0.7;
+    animation: border-glow 3s infinite alternate;
+}
+
+@keyframes border-glow {
+    0% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 0.7;
+    }
+}
+
+/* Industries Section */
+.industries-section {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+.industries-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(0, 0, 0, 0) 50%, rgba(12, 165, 233, 0.05) 100%);
+    z-index: 0;
+}
+
+.industries-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.industry-card {
+    background-color: var(--gray-darkest);
+    border-radius: 1rem;
+    transition: all 0.5s ease;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.industry-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
+    z-index: -1;
+}
+
+.industry-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+.industry-icon-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    border-radius: 20px;
+    margin: 0 auto var(--space-md);
+    background-color: var(--gray-dark);
+    font-size: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.industry-icon-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
+    z-index: 1;
+}
+
+.industry-icon-container i {
+    position: relative;
+    z-index: 2;
+    font-size: 1.8rem;
+}
+
+/* Testimonials Section */
+.testimonials-section {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-darkest);
+    position: relative;
+    overflow: hidden;
+}
+
+.testimonials-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+    opacity: 0.03;
+    z-index: 0;
+}
+
+.testimonials-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Pricing Section */
+.pricing-section {
+    padding: var(--space-3xl) 0;
+    background-color: var(--gray-dark);
+    position: relative;
+    overflow: hidden;
+}
+
+.pricing-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -20%;
+    width: 60%;
+    height: 200%;
+    background: radial-gradient(ellipse, rgba(79, 70, 229, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    z-index: 0;
+}
+
+.pricing-section::after {
+    content: '';
+    position: absolute;
+    bottom: -50%;
+    right: -20%;
+    width: 60%;
+    height: 200%;
+    background: radial-gradient(ellipse, rgba(12, 165, 233, 0.05) 0%, rgba(0, 0, 0, 0) 70%);
+    z-index: 0;
+}
+
+.pricing-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+.price-container .display-4 {
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+/* CTA Section */
+.cta-section {
+    padding: var(--space-2xl) 0;
+    background: linear-gradient(135deg, var(--primary-indigo-dark) 0%, var(--primary-indigo) 50%, var(--primary-indigo-medium-dark) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.cta-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: url('https://www.transparenttextures.com/patterns/diagonal-noise.png');
+    opacity: 0.1;
+    z-index: 0;
+}
+
+.cta-section::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 30%;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.2), transparent);
+    z-index: 0;
+}
+
+.cta-section .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+    .hero-section {
+        padding: var(--space-2xl) 0;
+        text-align: center;
+    }
+    
+    .hero-section .d-flex {
+        justify-content: center;
+    }
+    
+    .hero-image-container {
+        margin-top: var(--space-xl);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .hero-section h1 {
+        font-size: 1.8rem;
+    }
+    
+    .hero-section .lead {
+        font-size: 1rem;
+    }
+    
+    .step-item {
+        margin-bottom: var(--space-lg);
+    }
+    
+    .demo-video-container {
+        margin-top: var(--space-xl);
+    }
+}

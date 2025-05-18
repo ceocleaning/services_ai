@@ -1,0 +1,133 @@
+/* Business Profile CSS for Services AI */
+
+/* Section Titles */
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--color-border);
+    color: var(--primary-indigo);
+}
+
+/* Business Logo */
+.business-logo-container {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.business-logo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.business-logo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gray-light);
+    color: var(--gray-medium);
+    font-size: 2.5rem;
+}
+
+.logo-upload-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    text-align: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.logo-upload-overlay:hover {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.logo-upload-overlay i {
+    font-size: 1.25rem;
+}
+
+/* Form Styling */
+.form-label {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.form-control:disabled {
+    background-color: rgba(0, 0, 0, 0.03);
+    color: var(--color-text-primary);
+    opacity: 0.8;
+    cursor: not-allowed;
+}
+
+.form-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--color-border);
+}
+
+/* Settings List */
+.settings-list .list-group-item {
+    padding: 1rem 0;
+    border-color: var(--color-border);
+}
+
+.settings-list .list-group-item:first-child {
+    padding-top: 0;
+}
+
+.settings-list .list-group-item:last-child {
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Status Items */
+.status-item .progress {
+    border-radius: 10px;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.status-item .badge {
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767.98px) {
+    .business-logo-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+        padding: 1rem 1.25rem;
+    }
+    
+    .card-body {
+        padding: 1.25rem;
+    }
+}
+
+/* Edit Mode Styling */
+.edit-mode .form-control:not(:disabled) {
+    border-color: var(--primary-indigo-light);
+    box-shadow: 0 0 0 0.2rem rgba(var(--primary-indigo-rgb), 0.1);
+}
+
+.edit-mode .business-logo-container:hover .logo-upload-overlay {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+}

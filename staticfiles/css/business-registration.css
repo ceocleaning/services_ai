@@ -1,0 +1,218 @@
+/* Business Registration Form Styles */
+
+/* Form Container */
+.business-registration {
+    padding: 30px;
+    border-radius: 10px;
+    background-color: rgba(30, 35, 45, 0.6);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Custom container width for business registration */
+.business-registration-container {
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* Form inputs with more padding */
+.business-registration .form-control,
+.business-registration .form-select {
+    padding: 12px 15px;
+    border-radius: 8px;
+}
+
+/* Form labels with more spacing */
+.business-registration .form-label {
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+/* Progress Steps */
+.progress-container {
+    position: relative;
+    margin: 30px 0;
+}
+
+.step-indicators {
+    position: relative;
+    margin-top: -14px;
+}
+
+.step {
+    text-align: center;
+    position: relative;
+    z-index: 1;
+}
+
+.step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--bs-dark);
+    border: 2px solid var(--bs-gray-600);
+    color: var(--bs-gray-400);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.step.active .step-circle {
+    background-color: var(--bs-primary);
+    border-color: var(--bs-primary);
+    color: white;
+}
+
+.step.completed .step-circle {
+    background-color: var(--bs-success);
+    border-color: var(--bs-success);
+    color: white;
+}
+
+.step-label {
+    font-size: 0.8rem;
+    color: var(--bs-gray-500);
+    transition: all 0.3s ease;
+}
+
+.step.active .step-label {
+    color: var(--bs-primary);
+    font-weight: 500;
+}
+
+.step.completed .step-label {
+    color: var(--bs-success);
+}
+
+/* Form Steps */
+.form-step {
+    transition: all 0.3s ease;
+}
+
+/* Review Section */
+.review-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 15px;
+}
+
+.review-container {
+    background-color: rgba(30, 35, 45, 0.4);
+    border-radius: 10px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.review-data {
+    font-size: 0.9rem;
+}
+
+.review-data h5 {
+    font-size: 1rem;
+    margin-bottom: 15px;
+    color: var(--bs-primary);
+    display: flex;
+    align-items: center;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.review-data h5 i {
+    margin-right: 8px;
+    opacity: 0.8;
+}
+
+.review-data .review-section {
+    margin-bottom: 25px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 15px 20px;
+    border-left: 3px solid var(--bs-primary);
+}
+
+.review-data .review-item {
+    margin-bottom: 12px;
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.review-data .review-label {
+    font-weight: 500;
+    margin-bottom: 2px;
+    width: 140px;
+    color: var(--bs-gray-300);
+}
+
+.review-data .review-value {
+    color: var(--bs-gray-100);
+    flex: 1;
+    word-break: break-word;
+}
+
+.review-actions .btn-outline-primary {
+    border-width: 1px;
+    padding: 0.3rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+.terms-section {
+    background-color: rgba(30, 35, 45, 0.4);
+    border-radius: 8px;
+    border-left: 3px solid var(--bs-warning);
+}
+
+/* Industry Fields */
+.industry-field {
+    background-color: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 15px;
+}
+
+.industry-field .form-label {
+    font-weight: 500;
+}
+
+/* Animation */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Loading Indicator */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    border-radius: 8px;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 576px) {
+    .step-label {
+        font-size: 0.7rem;
+    }
+    
+    .step-circle {
+        width: 28px;
+        height: 28px;
+    }
+}
