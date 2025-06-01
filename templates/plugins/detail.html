@@ -1,0 +1,180 @@
+{% extends "common/dashboard_base.html" %}
+{% load static %}
+{% load plugin_tags %}
+
+{% block title %}{{ plugin.name }} - Plugin Details{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1>{{ plugin.name }}</h1>
+            <p class="lead">{{ plugin.description }}</p>
+        </div>
+        <div class="col-auto text-end">
+            <a href="{% url 'plugins:plugin_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Plugins
+            </a>
+            <form method="post" action="{% url 'plugins:toggle_plugin' plugin.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn {% if plugin.enabled %}btn-warning{% else %}btn-success{% endif %}">
+                    {% if plugin.enabled %}
+                    <i class="fas fa-pause-circle"></i> Disable
+                    {% else %}
+                    <i class="fas fa-play-circle"></i> Enable
+                    {% endif %}
+                </button>
+            </form>
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#uninstallModal">
+                <i class="fas fa-trash"></i> Uninstall
+            </button>
+        </div>
+    </div>
+    
+    {% if messages %}
+    <div class="row">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Plugin Information</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Version:</strong> {{ plugin.version }}</p>
+                    <p><strong>Author:</strong> {{ plugin.author }}</p>
+                    <p><strong>Email:</strong> {{ plugin.email }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if plugin.enabled %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if plugin.enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </p>
+                    <p><strong>Installed:</strong> {{ plugin.installed_at|date:"M d, Y" }}</p>
+                    <p><strong>Updated:</strong> {{ plugin.updated_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Permissions</h5>
+                </div>
+                <div class="card-body">
+                    {% if permissions %}
+                    <ul class="list-group">
+                        {% for permission in permissions %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ permission.permission_name }}
+                            <form method="post" action="{% url 'plugins:toggle_permission' plugin.id permission.id %}">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm {% if permission.enabled %}btn-success{% else %}btn-secondary{% endif %}">
+                                    {% if permission.enabled %}Enabled{% else %}Disabled{% endif %}
+                                </button>
+                            </form>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p>No permissions required.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            {% if custom_settings_page %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Custom Settings</h5>
+                </div>
+                <div class="card-body">
+                    {{ custom_settings_page|safe }}
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if settings %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Settings</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'plugins:update_settings' plugin.id %}">
+                        {% csrf_token %}
+                        {% for setting in settings %}
+                        <div class="mb-3">
+                            <label for="{{ setting.setting_name }}" class="form-label">
+                                {{ setting.setting_name|title }}
+                            </label>
+                            
+                            {% if setting.setting_type == 'checkbox' %}
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="{{ setting.setting_name }}" 
+                                       name="{{ setting.setting_name }}" value="true"
+                                       {% if setting.setting_value == 'true' %}checked{% endif %}>
+                            </div>
+                            {% elif setting.setting_type == 'textarea' %}
+                            <textarea class="form-control" id="{{ setting.setting_name }}" 
+                                      name="{{ setting.setting_name }}" rows="3">{{ setting.setting_value }}</textarea>
+                            {% elif setting.setting_type == 'select' %}
+                            <select class="form-select" id="{{ setting.setting_name }}" name="{{ setting.setting_name }}">
+                                {% for option in plugin.manifest.settings|get_item:forloop.counter0|get_item:'options' %}
+                                <option value="{{ option.value }}" 
+                                        {% if setting.setting_value == option.value %}selected{% endif %}>
+                                    {{ option.label }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            {% else %}
+                            <input type="{{ setting.setting_type }}" class="form-control" id="{{ setting.setting_name }}" 
+                                   name="{{ setting.setting_name }}" value="{{ setting.setting_value }}">
+                            {% endif %}
+                            
+                            {% if plugin.manifest.settings|get_item:forloop.counter0|get_item:'description' %}
+                            <div class="form-text">
+                                {{ plugin.manifest.settings|get_item:forloop.counter0|get_item:'description' }}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-primary">Save Settings</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Uninstall Confirmation Modal -->
+<div class="modal fade" id="uninstallModal" tabindex="-1" aria-labelledby="uninstallModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uninstallModalLabel">Confirm Uninstallation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to uninstall <strong>{{ plugin.name }}</strong>? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="post" action="{% url 'plugins:uninstall_plugin' plugin.id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">Uninstall</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

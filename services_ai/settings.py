@@ -18,6 +18,8 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Plugins directory
+PLUGINS_DIR = os.path.join(BASE_DIR, 'plugins')
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -40,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    
+    'django_q',
     # Custom apps
     'ai_agent.apps.AiAgentConfig',
     'bookings.apps.BookingsConfig',
@@ -53,6 +55,7 @@ INSTALLED_APPS = [
     'integration.apps.IntegrationConfig',
     'dashboard.apps.DashboardConfig',
     'notifications.apps.NotificationsConfig',
+    'plugins.apps.PluginsConfig',
 ]
 
 MIDDLEWARE = [

@@ -18,9 +18,9 @@ def lead_post_save(sender, instance, created, **kwargs):
             from django_q.tasks import async_task
             async_task('core.email_notifications.send_lead_notification', instance.id)
 
-            business_config = instance.business.businessconfiguration
+            business_config = instance.business.configuration
 
-            if business_config.call_enabled and business_config.initial_response_delay > 0:
+            if business_config.voice_enabled and business_config.initial_response_delay > 0:
 
                 schedule(
                     'leads.tasks.make_call_to_lead',  

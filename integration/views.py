@@ -914,6 +914,17 @@ def integration_logs(request, platform_id=None):
 # Template filter for pretty printing JSON data
 @register.filter
 def pprint(data):
+    # Convert WindowsPath objects to strings before serialization
+    def path_converter(obj):
+        import pathlib
+        if isinstance(obj, pathlib.Path) or isinstance(obj, pathlib.WindowsPath) or isinstance(obj, pathlib.PosixPath):
+            return str(obj)
+        raise TypeError(f'Object of type {type(obj)} is not JSON serializable')
+    
     if isinstance(data, dict) or isinstance(data, list):
-        return json.dumps(data, indent=2)
+        try:
+            return json.dumps(data, indent=2, default=path_converter)
+        except TypeError:
+            # Fall back to string representation if JSON serialization fails
+            return str(data)
     return data

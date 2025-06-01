@@ -1,5 +1,6 @@
 {% extends 'common/dashboard_base.html' %}
 {% load static %}
+{% load plugin_tags %}
 
 {% block title %}Dashboard - Services AI{% endblock %}
 
@@ -323,6 +324,24 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Plugin Widgets Section -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-puzzle-piece me-2"></i> Plugin Widgets
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% render_plugin_widgets %}
                     </div>
                 </div>
             </div>

@@ -1,0 +1,59 @@
+{% extends "common/dashboard_base.html" %}
+{% load static %}
+
+{% block title %}Plugin Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Installed Plugins</h1>
+        <a href="{% url 'plugins:upload_plugin' %}" class="btn btn-primary">
+            <i class="fas fa-upload"></i> Upload Plugin
+        </a>
+    </div>
+
+    {% if messages %}
+    <div class="row">
+        <div class="col">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if plugins %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {% for plugin in plugins %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">{{ plugin.name }}</h5>
+                    <span class="badge {% if plugin.enabled %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if plugin.enabled %}Enabled{% else %}Disabled{% endif %}
+                    </span>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">{{ plugin.description }}</p>
+                    <p><small class="text-muted">Version: {{ plugin.version }}</small></p>
+                    <p><small class="text-muted">Author: {{ plugin.author }}</small></p>
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'plugins:plugin_detail' plugin.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-cog"></i> Manage
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <p>No plugins installed yet. Upload a plugin to get started.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -83,7 +83,7 @@
                     <li class="nav-item">
                         <a class="nav-link {% if '/ai-agent/' in request.path %}active{% endif %}" href="#aiAgentSubmenu" data-bs-toggle="collapse" aria-expanded="{% if '/ai_agent/' in request.path %}true{% else %}false{% endif %}">
                             <i class="fas fa-robot"></i>
-                            <span>AI Agent</span>
+                            <span>SMS Agent</span>
                             <i class="fas fa-angle-down ms-auto"></i>
                         </a>
                         <ul class="collapse {% if '/ai-agent/' in request.path %}show{% endif %} nav flex-column submenu" id="aiAgentSubmenu">
@@ -117,6 +117,12 @@
                         <a href="{% url 'integration:integration_list' %}" class="nav-link {% if '/integration/' in request.path %}active{% endif %}">
                             <i class="fas fa-robot"></i>
                             <span>Integrations</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'plugins:plugin_list' %}" class="nav-link {% if '/plugins/dashboard/' in request.path %}active{% endif %}">
+                            <i class="fas fa-plug"></i>
+                            <span>Plugins</span>
                         </a>
                     </li>
                     <li class="nav-header">Settings</li>

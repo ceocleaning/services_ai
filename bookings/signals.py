@@ -149,3 +149,33 @@ def send_booking_to_integrations(sender, instance, created, **kwargs):
             print(f"Error in send_booking_to_integrations: {str(e)}")
             # Don't raise exceptions that would interrupt the normal booking flow
             pass
+
+
+@receiver(post_save, sender=Booking)
+def notify_plugins_booking_created(sender, instance, created, **kwargs):
+    """
+    Notify plugins when a booking is created
+    
+    This signal handler triggers plugin notifications when a new booking is created.
+    It uses the plugin event system to notify all active plugins that have registered
+    for the 'booking_created' event.
+    """
+    if created:  # Only trigger for new bookings
+        try:
+            # Import here to avoid circular imports
+            from plugins.events import notify_booking_created
+            
+            # Use Django Q for asynchronous processing if available
+            try:
+                from django_q.tasks import async_task
+                async_task('plugins.events.notify_booking_created', instance)
+                print(f"Scheduled async notification for booking {instance.id} creation")
+            except ImportError:
+                # Fall back to synchronous processing if Django Q is not available
+                results = notify_booking_created(instance)
+                print(f"Notified plugins about booking {instance.id} creation: {results}")
+        except Exception as e:
+            # Log the error but don't interrupt the normal flow
+            print(f"Error notifying plugins about booking creation: {str(e)}")
+            import traceback
+            print(traceback.format_exc())
