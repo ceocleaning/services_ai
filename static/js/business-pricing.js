@@ -4,33 +4,108 @@
  */
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const pricingTabs = document.querySelectorAll('#pricingTabs button[data-bs-toggle="tab"]');
+    pricingTabs.forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function (event) {
+            // Store active tab in localStorage for persistence
+            localStorage.setItem('activePricingTab', event.target.id);
+        });
+    });
+
+    // Restore active tab from localStorage
+    const activeTab = localStorage.getItem('activePricingTab');
+    if (activeTab) {
+        const tabElement = document.getElementById(activeTab);
+        if (tabElement) {
+            const tab = new bootstrap.Tab(tabElement);
+            tab.show();
+        }
+    }
+
     // Elements
     const addServiceForm = document.getElementById('addServiceForm');
+    const addServiceModal = document.getElementById('addServiceModal');
     const deleteServiceForm = document.getElementById('deleteServiceForm');
     const deleteServiceId = document.getElementById('deleteServiceId');
     const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
     
+    // Reset modal when closed
+    if (addServiceModal) {
+        addServiceModal.addEventListener('hidden.bs.modal', function () {
+            // Reset form
+            if (addServiceForm) {
+                addServiceForm.reset();
+                // Reset form action to add
+                addServiceForm.action = '/business/service/add/';
+                // Reset modal title
+                const modalTitle = document.getElementById('addServiceModalLabel');
+                if (modalTitle) {
+                    modalTitle.textContent = 'Add New Service';
+                }
+                // Remove hidden service ID if exists
+                const hiddenServiceId = document.getElementById('editServiceId');
+                if (hiddenServiceId) {
+                    hiddenServiceId.remove();
+                }
+                // Reset pricing type to paid
+                const paidRadio = document.getElementById('servicePaid');
+                if (paidRadio) {
+                    paidRadio.checked = true;
+                    handlePricingTypeChange('paid');
+                }
+            }
+        });
+    }
+    
     // Service icon preview
     const serviceIcon = document.getElementById('serviceIcon');
     const serviceColor = document.getElementById('serviceColor');
-    const serviceIsFree = document.getElementById('serviceIsFree');
     const servicePrice = document.getElementById('servicePrice');
+    const servicePriceContainer = document.getElementById('servicePriceContainer');
+    const serviceIsFreeHidden = document.getElementById('serviceIsFree');
     
-    // Handle free service toggle
-    if (serviceIsFree && servicePrice) {
-        serviceIsFree.addEventListener('change', function() {
-            if (this.checked) {
-                servicePrice.value = '0.00';
-                servicePrice.disabled = true;
-            } else {
-                servicePrice.disabled = false;
-            }
+    // Handle pricing type radio buttons
+    const pricingTypeRadios = document.querySelectorAll('input[name="pricing_type"]');
+    if (pricingTypeRadios.length > 0) {
+        pricingTypeRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                handlePricingTypeChange(this.value);
+            });
         });
         
         // Initialize on page load
-        if (serviceIsFree.checked) {
-            servicePrice.value = '0.00';
-            servicePrice.disabled = true;
+        const checkedRadio = document.querySelector('input[name="pricing_type"]:checked');
+        if (checkedRadio) {
+            handlePricingTypeChange(checkedRadio.value);
+        }
+    }
+    
+    // Function to handle pricing type changes
+    function handlePricingTypeChange(type) {
+        if (type === 'free') {
+            // Hide price field and set hidden input
+            if (servicePriceContainer) {
+                servicePriceContainer.style.display = 'none';
+            }
+            if (servicePrice) {
+                servicePrice.value = '0.00';
+                servicePrice.required = false;
+            }
+            if (serviceIsFreeHidden) {
+                serviceIsFreeHidden.value = 'on';
+            }
+        } else {
+            // Show price field and clear hidden input
+            if (servicePriceContainer) {
+                servicePriceContainer.style.display = 'block';
+            }
+            if (servicePrice) {
+                servicePrice.required = true;
+            }
+            if (serviceIsFreeHidden) {
+                serviceIsFreeHidden.value = '';
+            }
         }
     }
     
@@ -244,23 +319,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('serviceName').value = data.name;
                     document.getElementById('serviceDescription').value = data.description;
                     
-                    // Handle is_free checkbox and price field
-                    const isFreeCheckbox = document.getElementById('serviceIsFree');
-                    const priceField = document.getElementById('servicePrice');
+                    // Handle pricing type radio buttons
+                    const pricingType = data.is_free ? 'free' : 'paid';
+                    const pricingRadio = document.getElementById(pricingType === 'free' ? 'serviceFree' : 'servicePaid');
+                    if (pricingRadio) {
+                        pricingRadio.checked = true;
+                        handlePricingTypeChange(pricingType);
+                    }
                     
-                    if (isFreeCheckbox && priceField) {
-                        isFreeCheckbox.checked = data.is_free;
+                    // Set price value
+                    const priceField = document.getElementById('servicePrice');
+                    if (priceField) {
                         priceField.value = data.price;
-                        
-                        // If service is free, disable the price field
-                        if (data.is_free) {
-                            priceField.disabled = true;
-                        } else {
-                            priceField.disabled = false;
-                        }
-                    } else {
-                        // Fallback if elements don't exist
-                        document.getElementById('servicePrice').value = data.price;
                     }
                     
                     document.getElementById('serviceDuration').value = data.duration;

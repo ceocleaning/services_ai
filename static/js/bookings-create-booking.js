@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('create-booking-form');
     if (!form) return;
 
-    // Cache DOM elements
+    // Cache DOM elements (with null checks for multi-step form)
     const serviceTypeSelect = document.getElementById('service_type');
     const serviceDetailsDiv = document.getElementById('service-details');
     const serviceDurationSpan = document.getElementById('service-duration');
@@ -28,6 +28,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const staffAvailabilityMessage = document.getElementById('staff-availability-message');
     const alternateTimeslotsContainer = document.getElementById('alternate-timeslots-container');
     const alternateTimeslots = document.getElementById('alternate-timeslots');
+    
+    // Check if we're using the multi-step form (new template)
+    const isMultiStepForm = document.querySelector('.steps-progress') !== null;
 
     // State variables
     let selectedServiceId = null;
@@ -40,56 +43,86 @@ document.addEventListener('DOMContentLoaded', function() {
     let availabilityCheckTimeout = null;
 
     // Service selection change handler
+    // Handle both select dropdown (old) and radio buttons (new)
     if (serviceTypeSelect) {
-        serviceTypeSelect.addEventListener('change', function() {
-            const serviceId = this.value;
-            selectedServiceId = serviceId;
-            
-            if (serviceId) {
-                const selectedOption = this.options[this.selectedIndex];
-                const duration = selectedOption.dataset.duration;
-                const price = selectedOption.dataset.price;
-                basePrice = parseFloat(price);
-                
-                // Update service details
-                serviceDurationSpan.textContent = duration;
-                servicePriceSpan.textContent = price;
-                serviceDetailsDiv.classList.remove('d-none');
-                
-                // Store base duration
-                baseDuration = parseInt(duration);
-                totalDuration = baseDuration;
-                
-                // Calculate end time based on start time and duration
-                if (startTimeInput.value) {
-                    calculateEndTime(startTimeInput.value, totalDuration);
-                }
-                
-                // Fetch service items
-                fetchServiceItems(serviceId);
-                
-                // Not fetching industry fields as requested
-                
-                // Update summary
-                updateBookingSummary();
-                
-                // Check staff availability if date and time are set
-                if (bookingDateInput.value && startTimeInput.value && endTimeInput.value) {
-                    checkStaffAvailability();
-                }
-            } else {
-                serviceDetailsDiv.classList.add('d-none');
-                // Service items section remains visible, just update content
-                serviceItemsContainer.innerHTML = '<div class="alert alert-info">Please select a service to view available items</div>';
-                bookingSummary.classList.add('d-none');
-                basePrice = 0;
-                totalPrice = 0;
-                updateTotalPrice();
-                
-                // Reset staff selection
-                resetStaffSelection();
-            }
+        // Check if it's a select element or radio buttons
+        if (serviceTypeSelect.tagName === 'SELECT') {
+            serviceTypeSelect.addEventListener('change', handleServiceChange);
+        }
+    }
+    
+    // Handle radio button service selection
+    const serviceRadios = document.querySelectorAll('input[name="service_type"]');
+    if (serviceRadios.length > 0) {
+        serviceRadios.forEach(radio => {
+            radio.addEventListener('change', handleServiceChange);
         });
+    }
+    
+    function handleServiceChange(event) {
+        const target = event.target;
+        let serviceId, duration, price;
+        
+        if (target.tagName === 'SELECT') {
+            // Handle select dropdown
+            serviceId = target.value;
+            if (serviceId) {
+                const selectedOption = target.options[target.selectedIndex];
+                duration = selectedOption.dataset.duration;
+                price = selectedOption.dataset.price;
+            }
+        } else if (target.type === 'radio') {
+            // Handle radio button
+            serviceId = target.value;
+            duration = target.dataset.duration;
+            price = target.dataset.price;
+        }
+        
+        selectedServiceId = serviceId;
+        
+        if (serviceId) {
+            basePrice = parseFloat(price);
+            
+            // Update service details (only if elements exist - old template)
+            if (serviceDurationSpan) serviceDurationSpan.textContent = duration;
+            if (servicePriceSpan) servicePriceSpan.textContent = price;
+            if (serviceDetailsDiv) serviceDetailsDiv.classList.remove('d-none');
+            
+            // Store base duration
+            baseDuration = parseInt(duration);
+            totalDuration = baseDuration;
+            
+            // Calculate end time based on start time and duration
+            if (startTimeInput.value) {
+                calculateEndTime(startTimeInput.value, totalDuration);
+            }
+            
+            // Fetch service items
+            fetchServiceItems(serviceId);
+            
+            // Not fetching industry fields as requested
+            
+            // Update summary
+            updateBookingSummary();
+            
+            // Check staff availability if date and time are set
+            if (bookingDateInput.value && startTimeInput.value && endTimeInput.value) {
+                checkStaffAvailability();
+            }
+        } else {
+            if (serviceDetailsDiv) serviceDetailsDiv.classList.add('d-none');
+            // Service items section remains visible, just update content
+            if (serviceItemsContainer) {
+                serviceItemsContainer.innerHTML = '<div class="alert alert-info">Please select a service to view available items</div>';
+            }
+            if (bookingSummary) bookingSummary.classList.add('d-none');
+            basePrice = 0;
+            totalPrice = 0;
+            updateTotalPrice();
+            
+            // Reset staff selection
+            resetStaffSelection();
+        }
     }
 
     // Date and time change handlers
@@ -207,17 +240,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Get the duration from the selected service
-            let duration = 60; // Default duration
-            if (selectedServiceId) {
-                const selectedOption = serviceTypeSelect.options[serviceTypeSelect.selectedIndex];
-                if (selectedOption && selectedOption.dataset.duration) {
-                    duration = parseInt(selectedOption.dataset.duration);
-                }
-            }
+            // Use the total duration (service + items) instead of just service duration
+            const duration = totalDuration || 60; // Use totalDuration which includes service items
             
             // Make API call to check availability
-            const url = `/bookings/api/check-availability/?date=${date}&time=${startTime}&duration_minutes=${duration}`;
+            const url = `/bookings/api/check-availability/?date=${date}&time=${startTime}&duration_minutes=${duration}&service_offering_id=${selectedServiceId}`;
             
             console.log("Checking availability with URL:", url);
             
@@ -363,58 +390,60 @@ document.addEventListener('DOMContentLoaded', function() {
             
             html += `
                 <div class="col-md-6 mb-3">
-                    <div class="card h-100 bg-dark">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h5 class="card-title">${item.name}</h5>
-                                <span class="text-primary ${item.is_optional ? 'text-success' : 'text-danger'}">${ item.is_optional ? 'Optional' : 'Required'}</span>
-                            </div>
-                            
-                            <p class="card-text">${item.description || ''}</p>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="text-primary fw-bold">${item.price_type !== 'free' ? '$' + item.price_value : 'Free'}</span>
-                                ${parseInt(item.duration_minutes) > 0 ? `<span class="text-info"><i class="bi bi-clock"></i> +${item.duration_minutes} mins</span>` : ''}
-                            </div>
-                            
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input service-item-checkbox" 
-                                           type="checkbox" 
-                                           id="item_${item.id}" 
-                                           name="service_items[]" 
-                                           value="${item.id}"
-                                           data-price="${item.price_value}"
-                                           data-duration="${item.duration_minutes || 0}"
-                                           data-field-type="${item.field_type}"
-                                           data-price-type="${item.price_type}"
-                                           ${item.is_optional ? '' : 'checked disabled'}>
-                                    <label class="form-check-label" for="item_${item.id}">
-                                        ${item.is_optional ? 'Add' : 'Required'}
-                                    </label>
+                    <div class="service-item-card-wrapper">
+                        <input class="service-item-checkbox-input" 
+                               type="checkbox" 
+                               id="item_${item.id}" 
+                               name="service_items[]" 
+                               value="${item.id}"
+                               data-price="${item.price_value}"
+                               data-duration="${item.duration_minutes || 0}"
+                               data-field-type="${item.field_type}"
+                               data-price-type="${item.price_type}"
+                               data-required="${!item.is_optional}"
+                               ${item.is_optional ? '' : 'checked'}>
+                        <label class="service-item-card ${item.is_optional ? '' : 'service-item-required'}" for="item_${item.id}">
+                            <div class="service-item-header">
+                                <div class="service-item-check-icon">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div class="service-item-info">
+                                    <h5 class="service-item-title">${item.name}</h5>
+                                    <span class="service-item-badge ${item.is_optional ? 'badge-optional' : 'badge-required'}">
+                                        ${item.is_optional ? 'Optional' : 'Required'}
+                                    </span>
                                 </div>
                             </div>
                             
-                            <!-- Field input based on field_type and price_type -->
-                            <div class="mt-3 item-field-container ${item.is_optional ? 'd-none' : ''}" id="field_container_${item.id}">
-                                ${renderItemField(item)}
-                            </div>
+                            ${item.description ? `<p class="service-item-description">${item.description}</p>` : ''}
                             
-                            ${shouldShowQuantity ? `
-                            <div class="mt-2 quantity-control ${item.is_optional && !selectedItems[item.id] ? 'd-none' : ''}">
-                                <label for="quantity_${item.id}">Quantity:</label>
-                                <div class="input-group input-group-sm">
-                                    <button type="button" class="btn btn-outline-secondary decrease-qty" data-item-id="${item.id}">-</button>
-                                    <input type="number" class="form-control text-center item-quantity" 
-                                           id="quantity_${item.id}" 
-                                           name="item_quantity_${item.id}" 
-                                           min="1" 
-                                           max="${item.max_quantity}" 
-                                           value="${selectedItems[item.id]?.quantity || 1}">
-                                    <button type="button" class="btn btn-outline-secondary increase-qty" data-item-id="${item.id}">+</button>
-                                </div>
+                            <div class="service-item-pricing">
+                                <span class="service-item-price">${item.price_type !== 'free' ? '$' + item.price_value : 'Free'}</span>
+                                ${parseInt(item.duration_minutes) > 0 ? `<span class="service-item-duration"><i class="fas fa-clock me-1"></i>+${item.duration_minutes} min</span>` : ''}
                             </div>
-                            ` : ''}
+                        </label>
+                        
+                        <!-- Field input based on field_type and price_type -->
+                        <div class="mt-3 item-field-container ${item.is_optional ? 'd-none' : ''}" id="field_container_${item.id}">
+                            ${renderItemField(item)}
                         </div>
+                        
+                        ${shouldShowQuantity ? `
+                        <div class="quantity-control ${item.is_optional && !selectedItems[item.id] ? 'd-none' : ''}">
+                            <label for="quantity_${item.id}">Quantity:</label>
+                            <div class="input-group input-group-sm">
+                                <button type="button" class="btn btn-outline-secondary decrease-qty" data-item-id="${item.id}">-</button>
+                                <input type="number" class="form-control text-center item-quantity" 
+                                       id="quantity_${item.id}" 
+                                       name="item_quantity_${item.id}" 
+                                       min="1" 
+                                       default="1"
+                                       max="${item.max_quantity}" 
+                                       value="${selectedItems[item.id]?.quantity || 1}">
+                                <button type="button" class="btn btn-outline-secondary increase-qty" data-item-id="${item.id}">+</button>
+                            </div>
+                        </div>
+                        ` : ''}
                     </div>
                 </div>
             `;
@@ -536,19 +565,28 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Add event listeners to checkboxes
-        document.querySelectorAll('.service-item-checkbox').forEach(checkbox => {
+        document.querySelectorAll('.service-item-checkbox-input').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const itemId = this.value;
                 const price = parseFloat(this.dataset.price);
                 const item = serviceItems.find(i => i.id === itemId);
                 const fieldContainer = document.getElementById(`field_container_${itemId}`);
+                const isRequired = this.dataset.required === 'true';
+                
+                // Prevent unchecking required items
+                if (isRequired && !this.checked) {
+                    this.checked = true;
+                    return;
+                }
                 
                 if (this.checked) {
                     const itemData = serviceItems.find(i => i.id === itemId);
                     selectedItems[itemId] = {
+                        name: itemData ? itemData.name : 'Unknown Item',
                         price: price,
                         quantity: 1,
-                        duration: itemData ? parseInt(itemData.duration_minutes || 0) : 0
+                        duration: itemData ? parseInt(itemData.duration_minutes || 0) : 0,
+                        inputValue: null  // Will store user input value
                     };
                     
                     // Show field container
@@ -625,13 +663,44 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
+        // Add event listeners to all field inputs to capture values
+        document.querySelectorAll('input[id^="field_"], textarea[id^="field_"], select[id^="field_"]').forEach(input => {
+            const eventType = input.type === 'radio' ? 'change' : 'input';
+            
+            input.addEventListener(eventType, function() {
+                const itemId = this.id.replace('field_', '').replace('_yes', '').replace('_no', '');
+                const item = serviceItems.find(i => i.id === itemId);
+                
+                if (selectedItems[itemId] && item) {
+                    // For number inputs on non-free items, the number represents quantity
+                    if (input.type === 'number' && item.price_type !== 'free') {
+                        const quantity = parseInt(this.value) || 0;
+                        selectedItems[itemId].quantity = quantity;
+                        selectedItems[itemId].inputValue = quantity;
+                    } 
+                    // For boolean (Yes/No radio buttons)
+                    else if (input.type === 'radio' && input.name.includes('field_')) {
+                        selectedItems[itemId].inputValue = this.value;
+                    }
+                    // For text, textarea, select, and free number inputs
+                    else {
+                        selectedItems[itemId].inputValue = this.value;
+                    }
+                    
+                    updateTotalPrice();
+                }
+            });
+        });
+        
         // Initialize selected items from required items
         items.forEach(item => {
-            if (item.is_required) {
+            if (!item.is_optional) {  // Required items (is_optional = false)
                 selectedItems[item.id] = {
+                    name: item.name,
                     price: parseFloat(item.price_value),
                     quantity: 1,
-                    duration: parseInt(item.duration_minutes || 0)
+                    duration: parseInt(item.duration_minutes || 0),
+                    inputValue: null  // Will store user input value
                 };
             }
         });
@@ -652,7 +721,15 @@ document.addEventListener('DOMContentLoaded', function() {
             totalDuration += item.duration * item.quantity;
         });
         
-        totalPriceSpan.textContent = totalPrice.toFixed(2);
+        if (totalPriceSpan) totalPriceSpan.textContent = totalPrice.toFixed(2);
+        
+        // Dispatch event for multi-step form to update summary
+        if (isMultiStepForm) {
+            const event = new CustomEvent('serviceItemsUpdated', {
+                detail: { items: selectedItems }
+            });
+            document.dispatchEvent(event);
+        }
         
         // Update service duration display
         if (serviceDurationSpan) {
@@ -685,71 +762,90 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update booking summary
         updateBookingSummary();
     }
-
+    
     // Update booking summary
     function updateBookingSummary() {
-        if (!selectedServiceId) {
-            bookingSummary.classList.add('d-none');
-            return;
+        // Check for selected service from either select or radio buttons
+        let serviceName = '';
+        let hasService = false;
+        
+        if (serviceTypeSelect && serviceTypeSelect.tagName === 'SELECT' && serviceTypeSelect.value) {
+            serviceName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex].text;
+            hasService = true;
+        } else {
+            // Check radio buttons
+            const selectedRadio = document.querySelector('input[name="service_type"]:checked');
+            if (selectedRadio) {
+                serviceName = selectedRadio.dataset.name || selectedRadio.value;
+                hasService = true;
+            }
         }
         
-        const serviceName = serviceTypeSelect.options[serviceTypeSelect.selectedIndex].text;
-        summaryService.textContent = serviceName;
+        if (!hasService) return;
+        
+        if (summaryService) summaryService.textContent = serviceName;
         
         // Format date and time
-        if (bookingDateInput.value && startTimeInput.value && endTimeInput.value) {
-            const formattedDate = new Date(bookingDateInput.value).toLocaleDateString();
-            summaryDateTime.textContent = `${formattedDate}, ${formatTime(startTimeInput.value)} - ${formatTime(endTimeInput.value)}`;
-        } else {
-            summaryDateTime.textContent = '-';
+        if (summaryDateTime) {
+            if (bookingDateInput && bookingDateInput.value && startTimeInput && startTimeInput.value && endTimeInput && endTimeInput.value) {
+                const formattedDate = new Date(bookingDateInput.value).toLocaleDateString();
+                summaryDateTime.textContent = `${formattedDate}, ${formatTime(startTimeInput.value)} - ${formatTime(endTimeInput.value)}`;
+            } else {
+                summaryDateTime.textContent = '-';
+            }
         }
         
         // Format duration in summary
-        if (totalDuration > 0) {
-            const hours = Math.floor(totalDuration / 60);
-            const minutes = totalDuration % 60;
-            let durationText = '';
-            
-            if (hours > 0) {
-                durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
-                if (minutes > 0) durationText += ' ';
+        if (summaryDuration) {
+            if (totalDuration > 0) {
+                const hours = Math.floor(totalDuration / 60);
+                const minutes = totalDuration % 60;
+                let durationText = '';
+                
+                if (hours > 0) {
+                    durationText += `${hours} hour${hours > 1 ? 's' : ''}`;
+                    if (minutes > 0) durationText += ' ';
+                }
+                
+                if (minutes > 0 || hours === 0) {
+                    durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
+                }
+                
+                summaryDuration.textContent = durationText;
+            } else {
+                summaryDuration.textContent = '-';
             }
-            
-            if (minutes > 0 || hours === 0) {
-                durationText += `${minutes} minute${minutes !== 1 ? 's' : ''}`;
-            }
-            
-            summaryDuration.textContent = durationText;
-        } else {
-            summaryDuration.textContent = '-';
         }
         
         // Format location
-        const locationType = locationTypeSelect.value;
-        let locationText = '';
-        
-        switch (locationType) {
-            case 'business':
-                locationText = 'At Business Location';
-                break;
-            case 'onsite':
-                locationText = 'On-site (Client Location)';
-                if (locationDetailsInput.value) {
-                    locationText += `: ${locationDetailsInput.value}`;
-                }
-                break;
-            case 'virtual':
-                locationText = 'Virtual Meeting';
-                if (locationDetailsInput.value) {
-                    locationText += `: ${locationDetailsInput.value}`;
-                }
-                break;
-            default:
-                locationText = '-';
+        if (summaryLocation && locationTypeSelect) {
+            const locationType = locationTypeSelect.value;
+            let locationText = '';
+            
+            switch (locationType) {
+                case 'business':
+                    locationText = 'At Business Location';
+                    break;
+                case 'onsite':
+                    locationText = 'On-site (Client Location)';
+                    if (locationDetailsInput && locationDetailsInput.value) {
+                        locationText += `: ${locationDetailsInput.value}`;
+                    }
+                    break;
+                case 'virtual':
+                    locationText = 'Virtual Meeting';
+                    if (locationDetailsInput && locationDetailsInput.value) {
+                        locationText += `: ${locationDetailsInput.value}`;
+                    }
+                    break;
+                default:
+                    locationText = '-';
+            }
+            
+            summaryLocation.textContent = locationText;
         }
         
-        summaryLocation.textContent = locationText;
-        bookingSummary.classList.remove('d-none');
+        if (bookingSummary) bookingSummary.classList.remove('d-none');
     }
 
     // Format time from 24h to 12h format
@@ -775,7 +871,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // First, check all service items with values and ensure their checkboxes are checked
         // This ensures that items with values are included in the form submission
-        document.querySelectorAll('.service-item-checkbox').forEach(function(checkbox) {
+        document.querySelectorAll('.service-item-checkbox-input').forEach(function(checkbox) {
             const itemId = checkbox.value;
             const fieldType = checkbox.dataset.fieldType;
             const priceType = checkbox.dataset.priceType;
@@ -795,14 +891,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
             
-            // If the item has a value and is not disabled (required items), check it
-            if (hasValue && !checkbox.disabled) {
+            // If the item has a value, check it
+            if (hasValue) {
                 checkbox.checked = true;
             }
         });
         
         // Now validate all checked items
-        document.querySelectorAll('.service-item-checkbox:checked').forEach(function(checkbox) {
+        document.querySelectorAll('.service-item-checkbox-input:checked').forEach(function(checkbox) {
             const itemId = checkbox.value;
             const fieldType = checkbox.dataset.fieldType;
             const priceType = checkbox.dataset.priceType;
@@ -844,7 +940,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (valid) {
             const selectedItemsData = {};
             
-            document.querySelectorAll('.service-item-checkbox:checked').forEach(function(checkbox) {
+            console.log('Checked checkboxes count:', document.querySelectorAll('.service-item-checkbox-input:checked').length);
+            
+            document.querySelectorAll('.service-item-checkbox-input:checked').forEach(function(checkbox) {
                 const itemId = checkbox.value;
                 const fieldType = checkbox.dataset.fieldType;
                 const priceType = checkbox.dataset.priceType;
@@ -874,6 +972,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     quantity: quantityInput ? parseInt(quantityInput.value) : 1
                 };
             });
+            
+            console.log('Selected items data:', selectedItemsData);
+            console.log('Selected items data JSON:', JSON.stringify(selectedItemsData));
             
             // Add the selected items data as a hidden input
             const hiddenInput = document.createElement('input');

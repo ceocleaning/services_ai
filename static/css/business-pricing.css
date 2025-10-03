@@ -1,7 +1,41 @@
 /* Business Pricing CSS for Services AI */
 
+/* Tab Navigation Styling */
+.pricing-tabs {
+    border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+}
+
+.pricing-tabs .nav-link {
+    border: none;
+    color: var(--gray-light);
+    font-weight: 500;
+    padding: 0.8rem 1.5rem;
+    transition: all 0.3s ease;
+    background: transparent;
+}
+
+.pricing-tabs .nav-link:hover {
+    color: white;
+    background-color: var(--gray-dark);
+}
+
+.pricing-tabs .nav-link.active {
+    color: white;
+    background-color: var(gray-darkest);
+}
+
+.pricing-tabs .nav-link i {
+    font-size: 0.9rem;
+}
+
+/* Tab Content */
+.tab-content {
+    background: transparent;
+}
+
 /* Service Table Styling */
-#servicesTable thead th {
+#servicesTable thead th,
+#serviceItemsTable thead th {
     background-color: rgba(0, 0, 0, 0.05);
     font-weight: 600;
     color: var(--color-text-primary);
@@ -9,39 +43,41 @@
     padding: 1rem;
 }
 
-#servicesTable tbody tr {
+#servicesTable tbody tr,
+#serviceItemsTable tbody tr {
     transition: background-color 0.2s ease;
 }
 
-#servicesTable tbody tr:hover {
+#servicesTable tbody tr:hover,
+#serviceItemsTable tbody tr:hover {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
 /* Service Icon */
 .service-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 0.875rem;
+    font-size: 1rem;
 }
 
 /* Empty State */
 .empty-state {
-    padding: 2rem 1rem;
+    padding: 3rem 1rem;
     text-align: center;
 }
 
 .empty-state-icon {
-    width: 64px;
-    height: 64px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
-    background-color: rgba(var(--primary-indigo-rgb), 0.1);
-    color: var(--primary-indigo);
-    font-size: 1.5rem;
+    background-color: rgba(79, 70, 229, 0.1);
+    color: var(--primary);
+    font-size: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -54,6 +90,12 @@
     border-radius: 0.5rem;
     background-color: rgba(0, 0, 0, 0.03);
     margin-bottom: 1rem;
+    transition: all 0.3s ease;
+}
+
+.strategy-item:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
 }
 
 .strategy-item h6 {
@@ -66,34 +108,86 @@
     padding: 0.35rem 0.65rem;
 }
 
-/* Package List */
-.package-list .list-group-item {
-    padding: 1rem 1.25rem;
-    border-color: var(--color-border);
+/* Quick Stats */
+.stat-item {
+    transition: all 0.3s ease;
 }
 
-.package-services {
-    margin-top: 0.5rem;
-    color: var(--color-text-secondary);
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.25rem;
 }
 
-.package-price {
-    font-weight: 700;
-    font-size: 1.125rem;
-    color: var(--color-text-primary);
+/* Info Section */
+.info-section {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
-.package-savings {
-    font-weight: 500;
+.info-section h6 {
+    font-weight: 600;
+}
+
+.info-section ul {
+    margin-bottom: 0;
+}
+
+.info-section ul li {
+    margin-bottom: 0.5rem;
+}
+
+/* Modal Backdrop Blur */
+.modal-backdrop {
+    backdrop-filter: blur(8px);
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-backdrop.show {
+    opacity: 1;
 }
 
 /* Modal Styling */
+.modal-content {
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background-color: var(--gray-dark);
+}
+
 .modal-header {
-    border-bottom-color: var(--color-border);
+    border-bottom: 1px solid var(--gray-medium-dark);
+    padding: 1.5rem;
+    background-color: var(--gray-dark);
+    border-radius: 1rem 1rem 0 0;
+}
+
+.modal-body {
+    padding: 1.5rem;
+    background-color: var(--gray-dark);
 }
 
 .modal-footer {
-    border-top-color: var(--color-border);
+    border-top: 1px solid var(--gray-medium-dark);
+    padding: 1.5rem;
+    background-color: var(--gray-dark);
+    border-radius: 0 0 1rem 1rem;
+}
+
+.modal-title {
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+/* Modal Sizes */
+.modal-lg {
+    max-width: 800px;
 }
 
 /* Service Selection in Package Modal */
@@ -108,16 +202,53 @@
 
 /* Form Controls */
 .form-control:focus, .form-select:focus {
-    border-color: var(--primary-indigo-light);
-    box-shadow: 0 0 0 0.2rem rgba(var(--primary-indigo-rgb), 0.1);
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
 }
 
 .form-control-color {
     height: 38px;
 }
 
+.form-label {
+    font-weight: 500;
+    color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
+}
+
+/* Pricing Type Toggle */
+.pricing-type-toggle {
+    display: flex;
+    gap: 0;
+}
+
+.pricing-type-toggle .btn {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.pricing-type-toggle .btn-check:checked + .btn-outline-primary {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+.pricing-type-toggle .btn-check:checked + .btn-outline-success {
+    background-color: var(--success);
+    border-color: var(--success);
+    color: white;
+}
+
+.pricing-type-toggle .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 /* Action Buttons */
-.edit-service-btn, .delete-service-btn {
+.edit-service-btn, .delete-service-btn,
+.edit-item-btn, .delete-item-btn {
     margin-left: 0.25rem;
     width: 32px;
     height: 32px;
@@ -125,6 +256,32 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.edit-service-btn:hover, .edit-item-btn:hover {
+    transform: scale(1.1);
+}
+
+.delete-service-btn:hover, .delete-item-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.card-header {
+    background-color: transparent;
+    border-bottom: 1px solid var(--gray-medium-dark);
+    padding: 1rem 1.5rem;
+}
+
+.card-header h5 {
+    font-weight: 600;
+    color: var(--color-text-primary);
 }
 
 /* Responsive Adjustments */
@@ -133,7 +290,8 @@
         border-radius: 0.5rem;
     }
     
-    #servicesTable td {
+    #servicesTable td,
+    #serviceItemsTable td {
         padding: 0.75rem;
     }
     
@@ -145,5 +303,16 @@
     
     .modal-dialog {
         margin: 0.5rem;
+    }
+    
+    .pricing-tabs .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
     }
 }

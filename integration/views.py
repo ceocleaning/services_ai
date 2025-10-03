@@ -257,7 +257,7 @@ def preview_mapping(request, platform_id):
         # Lead
         if sample_booking.lead:
             booking_data['lead_id'] = sample_booking.lead.id
-            booking_data['lead_name'] = sample_booking.lead.name
+            booking_data['lead_name'] = sample_booking.lead.first_name + " " + sample_booking.lead.last_name
         else:
             booking_data['lead_id'] = None
             booking_data['lead_name'] = None

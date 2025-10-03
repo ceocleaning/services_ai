@@ -268,8 +268,8 @@ def add_service(request):
     business = request.user.business
     
     try:
-        # Check if service is free
-        is_free = 'is_free' in request.POST
+        # Check if service is free - check the value, not just presence
+        is_free = request.POST.get('is_free', '') == 'on'
         
         # If service is free, set price to 0
         price = Decimal('0.00') if is_free else Decimal(request.POST.get('price', '0.00'))
@@ -317,8 +317,8 @@ def update_service(request):
         # Get service and verify it belongs to this business
         service = get_object_or_404(ServiceOffering, id=service_id, business=business)
         
-        # Check if service is free
-        is_free = 'is_free' in request.POST
+        # Check if service is free - check the value, not just presence
+        is_free = request.POST.get('is_free', '') == 'on'
         
         # If service is free, set price to 0
         price = Decimal('0.00') if is_free else Decimal(request.POST.get('price', '0.00'))
@@ -594,6 +594,8 @@ def get_service_item_details(request, item_id):
             'id': str(service_item.id),
             'name': service_item.name,
             'description': service_item.description,
+            'field_type': service_item.field_type,
+            'field_options': service_item.field_options,
             'price_type': service_item.price_type,
             'price_value': float(service_item.price_value),
             'duration_minutes': service_item.duration_minutes,
@@ -896,6 +898,8 @@ def test_smtp_connection(request):
     if not hasattr(request.user, 'business'):
         messages.warning(request, 'Please register your business first.')
         return redirect('business:register')
+
+
 
 # Staff Management Views
 @login_required

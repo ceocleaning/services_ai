@@ -16,12 +16,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceValue = document.getElementById('priceValue');
     const pricePrefix = document.getElementById('pricePrefix');
     const priceSuffix = document.getElementById('priceSuffix');
+    const priceRow = priceType ? priceType.closest('.row') : null;
+    const maxQuantityRow = document.getElementById('maxQuantity') ? document.getElementById('maxQuantity').closest('.row') : null;
     
     // Edit form elements
     const editPriceType = document.getElementById('editPriceType');
     const editPriceValue = document.getElementById('editPriceValue');
     const editPricePrefix = document.getElementById('editPricePrefix');
     const editPriceSuffix = document.getElementById('editPriceSuffix');
+    const editPriceRow = editPriceType ? editPriceType.closest('.row') : null;
+    const editMaxQuantityRow = document.getElementById('editMaxQuantity') ? document.getElementById('editMaxQuantity').closest('.row') : null;
     
     // Field type handling
     const fieldType = document.getElementById('fieldType');
@@ -33,92 +37,84 @@ document.addEventListener('DOMContentLoaded', function() {
     const editFieldOptionsContainer = document.getElementById('editFieldOptionsContainer');
     const editFieldOptions = document.getElementById('editFieldOptions');
     
-    // Update price input based on price type
-    if (priceType && priceValue && pricePrefix && priceSuffix) {
-        priceType.addEventListener('change', function() {
-            updatePriceInput(this.value, pricePrefix, priceSuffix);
-            
-            // Update field type based on price type
-            if (fieldType) {
-                if (this.value === 'free') {
-                    // Enable field type selection for free items
-                    fieldType.disabled = false;
-                    document.querySelector('label[for="fieldType"]').classList.remove('text-muted');
-                } else {
-                    // Force number field type for non-free items
-                    fieldType.value = 'number';
-                    fieldType.disabled = true;
-                    document.querySelector('label[for="fieldType"]').classList.add('text-muted');
-                    
-                    // Update field options visibility
-                    if (fieldOptionsContainer) {
-                        updateFieldOptionsVisibility('number', fieldOptionsContainer);
-                    }
-                }
-            }
-        });
-        
-        // Set initial state
-        updatePriceInput(priceType.value, pricePrefix, priceSuffix);
-        
-        // Set initial field type state based on price type
-        if (fieldType) {
-            if (priceType.value === 'free') {
-                fieldType.disabled = false;
-                document.querySelector('label[for="fieldType"]').classList.remove('text-muted');
-            } else {
-                fieldType.value = 'number';
-                fieldType.disabled = true;
-                document.querySelector('label[for="fieldType"]').classList.add('text-muted');
-                
-                // Update field options visibility
-                if (fieldOptionsContainer) {
-                    updateFieldOptionsVisibility('number', fieldOptionsContainer);
-                }
-            }
-        }
-    }
-    
-    // Update edit form price input based on price type
-    if (editPriceType && editPriceValue && editPricePrefix && editPriceSuffix) {
-        editPriceType.addEventListener('change', function() {
-            updatePriceInput(this.value, editPricePrefix, editPriceSuffix);
-            
-            // Update field type based on price type
-            if (editFieldType) {
-                if (this.value === 'free') {
-                    // Enable field type selection for free items
-                    editFieldType.disabled = false;
-                    document.querySelector('label[for="editFieldType"]').classList.remove('text-muted');
-                } else {
-                    // Force number field type for non-free items
-                    editFieldType.value = 'number';
-                    editFieldType.disabled = true;
-                    document.querySelector('label[for="editFieldType"]').classList.add('text-muted');
-                    
-                    // Update field options visibility
-                    if (editFieldOptionsContainer) {
-                        updateFieldOptionsVisibility('number', editFieldOptionsContainer);
-                    }
-                }
-            }
-        });
-    }
-    
     // Handle field type changes in add form
-    if (fieldType && fieldOptionsContainer) {
+    if (fieldType) {
         fieldType.addEventListener('change', function() {
+            // Update field options visibility
             updateFieldOptionsVisibility(this.value, fieldOptionsContainer);
+            
+            // If field type is not number, set price type to free and hide price fields
+            if (this.value !== 'number') {
+                if (priceType) {
+                    priceType.value = 'free';
+                    updatePriceInput('free', pricePrefix, priceSuffix);
+                    
+                    // Hide price row and max quantity row
+                    if (priceRow) priceRow.style.display = 'none';
+                    if (maxQuantityRow) maxQuantityRow.style.display = 'none';
+                }
+            } else {
+                // Show price row and max quantity row
+                if (priceRow) priceRow.style.display = 'flex';
+                if (maxQuantityRow) maxQuantityRow.style.display = 'flex';
+            }
         });
         
         // Set initial state
         updateFieldOptionsVisibility(fieldType.value, fieldOptionsContainer);
+        
+        // Set initial price visibility based on field type
+        if (fieldType.value !== 'number') {
+            if (priceType) {
+                priceType.value = 'free';
+                updatePriceInput('free', pricePrefix, priceSuffix);
+                if (priceRow) priceRow.style.display = 'none';
+                if (maxQuantityRow) maxQuantityRow.style.display = 'none';
+            }
+        } else {
+            if (priceRow) priceRow.style.display = 'flex';
+            if (maxQuantityRow) maxQuantityRow.style.display = 'flex';
+        }
     }
     
     // Handle field type changes in edit form
-    if (editFieldType && editFieldOptionsContainer) {
+    if (editFieldType) {
         editFieldType.addEventListener('change', function() {
+            // Update field options visibility
             updateFieldOptionsVisibility(this.value, editFieldOptionsContainer);
+            
+            // If field type is not number, set price type to free and hide price fields
+            if (this.value !== 'number') {
+                if (editPriceType) {
+                    editPriceType.value = 'free';
+                    updatePriceInput('free', editPricePrefix, editPriceSuffix);
+                    
+                    // Hide price row and max quantity row
+                    if (editPriceRow) editPriceRow.style.display = 'none';
+                    if (editMaxQuantityRow) editMaxQuantityRow.style.display = 'none';
+                }
+            } else {
+                // Show price row and max quantity row
+                if (editPriceRow) editPriceRow.style.display = 'flex';
+                if (editMaxQuantityRow) editMaxQuantityRow.style.display = 'flex';
+            }
+        });
+    }
+    
+    // Update price input based on price type
+    if (priceType) {
+        priceType.addEventListener('change', function() {
+            updatePriceInput(this.value, pricePrefix, priceSuffix);
+        });
+        
+        // Set initial state
+        updatePriceInput(priceType.value, pricePrefix, priceSuffix);
+    }
+    
+    // Update edit form price input based on price type
+    if (editPriceType) {
+        editPriceType.addEventListener('change', function() {
+            updatePriceInput(this.value, editPricePrefix, editPriceSuffix);
         });
     }
     
@@ -163,8 +159,11 @@ document.addEventListener('DOMContentLoaded', function() {
      * Update price input based on price type
      */
     function updatePriceInput(type, prefixElement, suffixElement) {
+        if (!prefixElement || !suffixElement) return;
+        
         // Get the price value input element
         const priceValueInput = prefixElement.parentElement.querySelector('input');
+        if (!priceValueInput) return;
         
         // Handle different price types
         switch(type) {
@@ -201,8 +200,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 priceValueInput.value = '0';
                 priceValueInput.disabled = true;
                 priceValueInput.required = false;
-                // Optional: Hide the entire price value input group
-                // priceValueInput.parentElement.style.display = 'none';
                 break;
             default:
                 prefixElement.textContent = '$';
@@ -217,6 +214,8 @@ document.addEventListener('DOMContentLoaded', function() {
      * Update field options visibility based on field type
      */
     function updateFieldOptionsVisibility(fieldType, optionsContainer) {
+        if (!optionsContainer) return;
+        
         // Only show options for select field type
         if (fieldType === 'select') {
             optionsContainer.style.display = 'block';
@@ -237,9 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
      * Fetch service item details for editing
      */
     function fetchServiceItemDetails(itemId) {
-        // In a real implementation, this would make an AJAX call to get the item details
-        // For now, we'll simulate this with a fetch request
-        
         fetch(`/business/api/service-items/${itemId}/`)
             .then(response => {
                 if (!response.ok) {
@@ -274,16 +270,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Update field options visibility
                 updateFieldOptionsVisibility(data.field_type || 'text', editFieldOptionsContainer);
                 
-                // Set field type state based on price type
-                if (data.price_type === 'free') {
-                    // Enable field type selection for free items
-                    document.getElementById('editFieldType').disabled = false;
-                    document.querySelector('label[for="editFieldType"]').classList.remove('text-muted');
+                // Set price visibility based on field type
+                if (data.field_type !== 'number') {
+                    if (editPriceRow) editPriceRow.style.display = 'none';
+                    if (editMaxQuantityRow) editMaxQuantityRow.style.display = 'none';
                 } else {
-                    // Force number field type for non-free items
-                    document.getElementById('editFieldType').value = 'number';
-                    document.getElementById('editFieldType').disabled = true;
-                    document.querySelector('label[for="editFieldType"]').classList.add('text-muted');
+                    if (editPriceRow) editPriceRow.style.display = 'flex';
+                    if (editMaxQuantityRow) editMaxQuantityRow.style.display = 'flex';
                 }
                 
                 // Update price input display

@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'plugins.apps.PluginsConfig',
     'licence.apps.LicenceConfig',
+    'analytics.apps.AnalyticsConfig',
 ]
 
 MIDDLEWARE = [
@@ -209,3 +210,8 @@ STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
 STRIPE_WEBHOOK_SECRET = os.getenv('STRIPE_WEBHOOK_SECRET')
 
 LICENCE_AMOUNT = os.getenv('LICENCE_AMOUNT', 99.99)
+
+
+
+RETELL_BASE_URL = os.getenv('RETELL_BASE_URL')
+RETELL_API_KEY = os.getenv('RETELL_API_KEY')

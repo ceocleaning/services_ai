@@ -34,25 +34,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Toast notifications
+    const toastElements = document.querySelectorAll('.toast');
+    if (toastElements.length > 0) {
+        toastElements.forEach(toast => {
+            new bootstrap.Toast(toast, {
+                autohide: true,
+                delay: 5000
+            }).show();
+        });
+    }
+    
+    // Tooltips initialization
+    const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+    if (tooltipTriggerList.length > 0) {
+        [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+    }
+    
     // Confirm delete
-    const deleteButtons = document.querySelectorAll('.btn-outline-danger[onclick]');
+    const deleteButtons = document.querySelectorAll('.btn-delete-agent');
     deleteButtons.forEach(button => {
         button.addEventListener('click', function(e) {
             if (!confirm('Are you sure you want to delete this agent?')) {
                 e.preventDefault();
             }
-        });
-    });
-    
-    // Card hover effects
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            card.classList.add('shadow-sm');
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            card.classList.remove('shadow-sm');
         });
     });
 });

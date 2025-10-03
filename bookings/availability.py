@@ -9,6 +9,7 @@ from bookings.models import (
     BookingStatus, 
     AVAILABILITY_TYPE, 
     BookingStaffAssignment,
+    StaffServiceAssignment,
     Business
 )
 
@@ -43,51 +44,7 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         end_time = start_time + timedelta(minutes=duration_minutes)
         print(f"[DEBUG] Calculated end time: {end_time}")
         
-        # Check if the business is open during this time
-        weekday = start_time.weekday()
-        business_hours = _get_business_hours(business, weekday)
-        
-        print(f"[DEBUG] Business hours for weekday {weekday}: {business_hours}")
-        
-        if not business_hours:
-            print(f"[DEBUG] Business is closed on this day")
-            return False, "Business is closed on this day", []
-        
-        # Check if the time falls within business hours
-        is_within_hours = False
-        for hours in business_hours:
-            start_hour, start_minute = map(int, hours['start'].split(':'))
-            end_hour, end_minute = map(int, hours['end'].split(':'))
-            
-            business_start = time(start_hour, start_minute)
-            business_end = time(end_hour, end_minute)
-            
-            # Handle time slots that cross midnight
-            booking_start_time = start_time.time()
-            booking_end_time = end_time.time()
-            
-            # Normal case: both start and end times are on the same day
-            if booking_end_time > booking_start_time:
-                if (booking_start_time >= business_start and 
-                    booking_end_time <= business_end):
-                    is_within_hours = True
-                    break
-            # Special case: booking crosses midnight
-            else:
-                # For bookings that cross midnight, we need to check if either:
-                # 1. The start time is within business hours (for the first day)
-                # 2. The end time is within business hours (for the next day)
-                # Since we're only checking one day at a time, we'll only validate
-                # if the start time is within business hours for this day
-                if booking_start_time >= business_start and business_end >= time(23, 59):
-                    is_within_hours = True
-                    break
-                # If business hours don't extend to midnight, this time slot is not valid
-                print(f"[DEBUG] Booking crosses midnight but business hours end before midnight")
-        
-        if not is_within_hours:
-            print(f"[DEBUG] Time is outside business hours")
-            return False, "Time is outside business hours", []
+        # Note: We don't check business hours separately because staff availability IS the business hours
         
         # Check if there are any conflicting bookings
         try:
@@ -135,20 +92,46 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         
         # Check if any staff is available
         try:
-            all_staff = StaffMember.objects.filter(business=business, is_active=True)
+            # Get staff members - filter by service if provided
+            if service:
+                # Get staff members who are assigned to this service
+                staff_with_service = StaffServiceAssignment.objects.filter(
+                    service_offering=service
+                ).values_list('staff_member_id', flat=True)
+                
+                all_staff = StaffMember.objects.filter(
+                    business=business, 
+                    is_active=True,
+                    id__in=staff_with_service
+                )
+                print(f"[DEBUG] Filtering by service: {service.name}")
+            else:
+                all_staff = StaffMember.objects.filter(business=business, is_active=True)
             
             print(f"[DEBUG] Checking availability for {all_staff.count()} staff members")
             
             if not all_staff.exists():
-                print(f"[DEBUG] No staff members found for this business")
-                return False, "No staff members found for this business", []
+                if service:
+                    print(f"[DEBUG] No staff members assigned to service: {service.name}")
+                    return False, f"No staff members available for {service.name}", []
+                else:
+                    print(f"[DEBUG] No staff members found for this business")
+                    return False, "No staff members found for this business", []
             
             # For each staff member, check if they're available
             available_staff = []
             for staff in all_staff:
                 try:
-                    # Use the is_staff_available function from the original implementation
-                    # which works with the existing database schema
+                    # First check if staff has any service assignments
+                    has_service_assignment = StaffServiceAssignment.objects.filter(
+                        staff_member=staff
+                    ).exists()
+                    
+                    if not has_service_assignment:
+                        print(f"[DEBUG] Staff {staff.id} has no service assignments - skipping")
+                        continue
+                    
+                    # Check if staff is available at this time
                     if is_staff_available(staff, start_time.date(), start_time.time(), end_time.time()):
                         available_staff.append(staff)
                         print(f"[DEBUG] Staff {staff.id} is available")
@@ -186,112 +169,8 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
         print(f"[DEBUG] Traceback: {traceback.format_exc()}")
         return False, f"Error checking availability: {str(e)}", []
     
-def _is_staff_available(staff, start_time, end_time):
-    """
-    Check if a staff member is available during a specific time slot.
-    
-    Args:
-        staff: StaffMember object
-        start_time: Datetime object for the start time
-        end_time: Datetime object for the end time
-        
-    Returns:
-        bool: True if staff is available, False otherwise
-    """
-    print(f"[DEBUG] _is_staff_available called with: staff={staff.id}, start_time={start_time}, end_time={end_time}")
-    
-    date = start_time.date()
-    weekday = date.weekday()
-    
-    # First check specific date availability/unavailability (higher priority)
-    try:
-        specific_availabilities = StaffAvailability.objects.filter(
-            staff_member=staff,  # Use staff_member instead of staff
-            specific_date=date
-        )
-        
-        print(f"[DEBUG] Found {specific_availabilities.count()} specific date availabilities")
-        
-        if specific_availabilities.exists():
-            # Check if any specific date rule marks this time as unavailable
-            for avail in specific_availabilities:
-                if not avail.is_available:
-                    # This is an "off day" record - check if time overlaps with the off period
-                    if (start_time < avail.end_time and end_time > avail.start_time):
-                        print(f"[DEBUG] Staff {staff.id} has off day record overlapping with booking time")
-                        return False
-                else:
-                    # This is an "available" record - check if time is fully contained in the available period
-                    if (start_time >= avail.start_time and end_time <= avail.end_time):
-                        print(f"[DEBUG] Staff {staff.id} has available record containing booking time")
-                        return True
-            
-            # If we have specific date rules but none explicitly allow this time, staff is unavailable
-            print(f"[DEBUG] Staff {staff.id} has specific date rules but none allow this time")
-            return False
-        
-        # Check weekly availability if no specific date rules exist
-        weekly_availabilities = StaffAvailability.objects.filter(
-            staff_member=staff,  # Use staff_member instead of staff
-            weekday=weekday,
-            specific_date__isnull=True
-        )
-        
-        print(f"[DEBUG] Found {weekly_availabilities.count()} weekly availabilities")
-        
-        if weekly_availabilities.exists():
-            # Check if any weekly rule marks this time as unavailable
-            for avail in weekly_availabilities:
-                if not avail.is_available:
-                    # This is an "off day" record - check if time overlaps with the off period
-                    if (start_time.time() < avail.end_time and end_time.time() > avail.start_time):
-                        print(f"[DEBUG] Staff {staff.id} has off day record overlapping with booking time")
-                        return False
-                else:
-                    # This is an "available" record - check if time is fully contained in the available period
-                    if (start_time.time() >= avail.start_time and end_time.time() <= avail.end_time):
-                        print(f"[DEBUG] Staff {staff.id} has available record containing booking time")
-                        return True
-            
-            # If we have weekly rules but none explicitly allow this time, staff is unavailable
-            print(f"[DEBUG] Staff {staff.id} has weekly rules but none allow this time")
-            return False
-        
-        # If no availability rules exist for this day, staff is considered available by default
-        print(f"[DEBUG] Staff {staff.id} has no availability rules for this day - considering available by default")
-        return True
-    
-    except Exception as e:
-        import traceback
-        print(f"[DEBUG] Error checking staff availability: {str(e)}")
-        print(f"[DEBUG] Traceback: {traceback.format_exc()}")
-        # If there's an error, assume staff is available to avoid blocking bookings
-        return True
 
-def _get_business_hours(business, weekday):
-    """
-    Get business hours for a specific weekday.
-    
-    Args:
-        business: Business object
-        weekday: Integer representing weekday (0=Monday, 6=Sunday)
-        
-    Returns:
-        List of dicts with start and end times
-    """
-    print(f"[DEBUG] _get_business_hours called with: business={business.id}, weekday={weekday}")
-    
-    # Default business hours (9 AM to 5 PM)
-    default_hours = [{'start': '09:00', 'end': '17:00'}]
-    
-    # TODO: Implement business hours from database
-    # For now, return default hours for weekdays (Monday-Friday)
-    if 0 <= weekday <= 4:  # Monday to Friday
-        print(f"[DEBUG] Returning default weekday hours")
-        return default_hours
-    else:  # Weekend
-        print(f"[DEBUG] Business closed on weekend")
-        return []  # Closed on weekends
+# Business hours are determined by staff availability, not a separate setting
 
 
 def get_alternate_timeslots(business_id, date, start_time, duration_minutes, service_offering_id=None, staff_member_id=None):
@@ -386,6 +265,16 @@ def find_available_slots_on_date(business_id, date, duration_minutes, service_of
     if staff_member_id:
         staff_query &= Q(id=staff_member_id)
     
+    # Filter by service if provided
+    if service_offering_id:
+        # Get staff members who are assigned to this service
+        staff_with_service = StaffServiceAssignment.objects.filter(
+            service_offering_id=service_offering_id
+        ).values_list('staff_member_id', flat=True)
+        
+        staff_query &= Q(id__in=staff_with_service)
+        print(f"[DEBUG] Filtering staff by service offering: {service_offering_id}")
+    
     qualified_staff = StaffMember.objects.filter(staff_query).distinct()
     
     print(f"[DEBUG] Found {qualified_staff.count()} qualified staff members")
@@ -402,9 +291,26 @@ def find_available_slots_on_date(business_id, date, duration_minutes, service_of
     
     print(f"[DEBUG] Found {existing_bookings.count()} existing bookings")
     
-    # Define standard business hours (can be customized based on business settings)
-    business_start = time(9, 0)  # 9:00 AM
-    business_end = time(17, 0)   # 5:00 PM
+    # Get earliest and latest availability from all qualified staff
+    # This determines the "business hours" based on staff availability
+    earliest_start = time(9, 0)  # Default fallback
+    latest_end = time(17, 0)     # Default fallback
+    
+    # Get the actual range from staff availability
+    for staff in qualified_staff:
+        staff_avail = staff.availability.filter(
+            Q(availability_type=AVAILABILITY_TYPE.WEEKLY, weekday=date.weekday()) |
+            Q(availability_type=AVAILABILITY_TYPE.SPECIFIC, specific_date=date)
+        ).exclude(off_day=True)
+        
+        for avail in staff_avail:
+            if avail.start_time < earliest_start:
+                earliest_start = avail.start_time
+            if avail.end_time > latest_end:
+                latest_end = avail.end_time
+    
+    business_start = earliest_start
+    business_end = latest_end
     
     # If checking for today, start from current time
     if date == timezone.now().date() and timezone.now().time() > business_start:
@@ -459,6 +365,15 @@ def find_available_slots_on_date(business_id, date, duration_minutes, service_of
         # Check if any staff member is available for this slot
         for staff in qualified_staff:
             staff_id = str(staff.id)
+            
+            # First check if staff has any service assignments
+            has_service_assignment = StaffServiceAssignment.objects.filter(
+                staff_member=staff
+            ).exists()
+            
+            if not has_service_assignment:
+                print(f"[DEBUG] Staff {staff_id} has no service assignments - skipping")
+                continue
             
             # Check if staff has an overlapping booking
             has_overlap = False
@@ -594,9 +509,10 @@ def is_staff_available(staff, booking_date, booking_start_time, booking_end_time
             print(f"[DEBUG] Staff {staff.id} has weekly rules but none allow this time")
             return False
         
-        # If no availability rules exist for this day, staff is considered available by default
-        print(f"[DEBUG] Staff {staff.id} has no availability rules for this day")
-        return True
+        # If no availability rules exist for this day, staff is NOT available
+        # Staff must have explicit availability set to be bookable
+        print(f"[DEBUG] Staff {staff.id} has no availability rules for this day - NOT AVAILABLE")
+        return False
 
     except Exception as e:
         import traceback

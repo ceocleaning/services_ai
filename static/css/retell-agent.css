@@ -1,6 +1,6 @@
 /* 
  * Retell Agent CSS
- * Custom styles for the Retell Agent module
+ * Custom styles for the Retell Agent module in Services AI
  */
 
 /* Card styling */
@@ -77,4 +77,19 @@
 
 [data-bs-theme="dark"] .table-hover tbody tr:hover {
     background-color: rgba(79, 70, 229, 0.1);
+}
+
+[data-bs-theme="dark"] .retell-agent-card {
+    background-color: var(--bs-dark);
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .info-card {
+    background-color: rgba(79, 70, 229, 0.1);
+    border-color: var(--bs-primary);
+}
+
+[data-bs-theme="dark"] .empty-state-icon {
+    color: var(--bs-light);
+    opacity: 0.5;
 }

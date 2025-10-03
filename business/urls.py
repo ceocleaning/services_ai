@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .import staff_views
 
 
 app_name = 'business'
@@ -59,16 +60,21 @@ urlpatterns = [
     path('payment-gateways/set-default/', views.set_default_payment_gateway, name='set_default_payment_gateway'),
     
     # Staff management
-    path('staff/', views.staff_management, name='staff'),
-    path('staff/add/', views.add_staff, name='add_staff'),
-    path('staff/<str:staff_id>/', views.staff_detail, name='staff_detail'),
-    path('staff/<str:staff_id>/update/', views.update_staff, name='update_staff'),
-    path('staff/update-status/', views.update_staff_status, name='update_staff_status'),
-    path('staff/<staff_id>/add-availability/', views.add_staff_availability, name='add_staff_availability'),
-    path('staff/<staff_id>/update-availability/', views.update_staff_availability, name='update_staff_availability'),
-    path('staff/delete-availability/', views.delete_staff_availability, name='delete_staff_availability'),
-    path('staff/<str:staff_id>/add-off-day/', views.add_staff_off_day, name='add_staff_off_day'),
-    path('staff/<str:staff_id>/update-weekly-off-days/', views.update_weekly_off_days, name='update_weekly_off_days'),
+    path('staff/', staff_views.staff_management, name='staff'),
+    path('staff/add/', staff_views.add_staff, name='add_staff'),
+    path('staff/<str:staff_id>/', staff_views.staff_detail, name='staff_detail'),
+    path('staff/<str:staff_id>/update/', staff_views.update_staff, name='update_staff'),
+    path('staff/update-status/', staff_views.update_staff_status, name='update_staff_status'),
+    path('staff/<staff_id>/add-availability/', staff_views.add_staff_availability, name='add_staff_availability'),
+    path('staff/<staff_id>/update-availability/', staff_views.update_staff_availability, name='update_staff_availability'),
+    path('staff/delete-availability/', staff_views.delete_staff_availability, name='delete_staff_availability'),
+    path('staff/<str:staff_id>/add-off-day/', staff_views.add_staff_off_day, name='add_staff_off_day'),
+    path('staff/<str:staff_id>/update-weekly-off-days/', staff_views.update_weekly_off_days, name='update_weekly_off_days'),
+    
+    # Staff service assignment management
+    path('staff/<str:staff_id>/add-service-assignment/', staff_views.add_service_assignment, name='add_service_assignment'),
+    path('staff/<str:staff_id>/update-service-assignment/', staff_views.update_service_assignment, name='update_service_assignment'),
+    path('staff/<str:staff_id>/delete-service-assignment/', staff_views.delete_service_assignment, name='delete_service_assignment'),
     
     # Staff role management
     path('staff-role/add/', views.add_staff_role, name='add_staff_role'),

@@ -14,12 +14,12 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <div class="d-flex align-items-center">
-                <a href="{% url 'business:staff' %}" class="btn btn-sm btn-outline-secondary me-3">
+                <a href="{% url 'business:staff' %}" class="btn">
                     <i class="fas fa-arrow-left"></i>
                 </a>
-                <div>
+                <div class="ms-3">
                     <h1 class="h3 mb-1">{{ staff.get_full_name }}</h1>
-                    <p class="text-muted">
+                    <p class="text-muted mb-0">
                         {% for role in staff.roles.all %}
                         {% if not forloop.first %} | {% endif %}
                         {{ role.name }}
@@ -29,16 +29,42 @@
             </div>
         </div>
         <div>
-            <button id="editStaffBtn" class="btn btn-primary">
-                <i class="fas fa-edit me-2"></i>Edit Profile
-            </button>
+            <span class="badge {% if staff.is_active %}bg-success{% else %}bg-danger{% endif %} me-2">
+                {% if staff.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="row">
-        <!-- Staff Info Card -->
-        <div class="col-lg-4">
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs mb-4" id="staffDetailTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="true">
+                <i class="fas fa-user me-2"></i>Staff Info
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="availability-tab" data-bs-toggle="tab" data-bs-target="#availability" type="button" role="tab" aria-controls="availability" aria-selected="false">
+                <i class="fas fa-calendar-alt me-2"></i>Availability
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="services-tab" data-bs-toggle="tab" data-bs-target="#services" type="button" role="tab" aria-controls="services" aria-selected="false">
+                <i class="fas fa-briefcase me-2"></i>Services Offered
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="bookings-tab" data-bs-toggle="tab" data-bs-target="#bookings" type="button" role="tab" aria-controls="bookings" aria-selected="false">
+                <i class="fas fa-calendar-check me-2"></i>Bookings
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="staffDetailTabContent">
+        <!-- Staff Info Tab -->
+        <div class="tab-pane fade show active" id="info" role="tabpanel" aria-labelledby="info-tab">
+            <div class="row">
+                <div class="col-lg-4">
             <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Staff Information</h5>
@@ -118,10 +144,47 @@
                     </form>
                 </div>
             </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Quick Actions</h5>
+                            <button id="editStaffBtn" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit me-2"></i>Edit Profile
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-primary" onclick="document.getElementById('availability-tab').click()">
+                                            <i class="fas fa-calendar-alt me-2"></i>Manage Availability
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-primary" onclick="document.getElementById('services-tab').click()">
+                                            <i class="fas fa-briefcase me-2"></i>Assign Services
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <div class="d-grid">
+                                        <button class="btn btn-outline-primary" onclick="document.getElementById('bookings-tab').click()">
+                                            <i class="fas fa-calendar-check me-2"></i>View Bookings
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- Availability & Bookings -->
-        <div class="col-lg-8">
+        <!-- Availability Tab -->
+        <div class="tab-pane fade" id="availability" role="tabpanel" aria-labelledby="availability-tab">
             <!-- Availability Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
@@ -189,7 +252,14 @@
                                         {% else %}
                                         <tr>
                                             <td>{{ day_name }}</td>
-                                            <td colspan="4" class="text-center text-muted">No availability set</td>
+                                            <td colspan="3" class="text-center text-muted">No availability set</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-outline-success add-weekday-availability" 
+                                                        data-weekday="{{ day_num }}"
+                                                        data-weekday-name="{{ day_name }}">
+                                                    <i class="fas fa-plus"></i> Add
+                                                </button>
+                                            </td>
                                         </tr>
                                         {% endif %}
                                         {% endwith %}
@@ -201,7 +271,7 @@
                         
                         <!-- Specific Dates Tab -->
                         <div class="tab-pane fade" id="specific" role="tabpanel" aria-labelledby="specific-tab">
-                            {% if specific_availabilities %}
+                            {% if specific_off_days %}
                             <div class="table-responsive">
                                 <table class="table table-hover">
                                     <thead>
@@ -214,7 +284,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {% for avail in specific_availabilities %}
+                                        {% for avail in specific_off_days %}
                                         <tr>
                                             <td>{{ avail.specific_date|date:"M d, Y" }}</td>
                                             <td>{{ avail.start_time|time:"g:i A" }}</td>
@@ -258,7 +328,71 @@
                     </div>
                 </div>
             </div>
+        </div>
 
+        <!-- Services Offered Tab -->
+        <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
+            <!-- Service Assignments Card -->
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Service Assignments</h5>
+                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceAssignmentModal">
+                        <i class="fas fa-plus me-1"></i> Assign Service
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if service_assignments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Service</th>
+                                    <th>Primary</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in service_assignments %}
+                                <tr>
+                                    <td>{{ assignment.service_offering.name }}</td>
+                                    <td>
+                                        {% if assignment.is_primary %}
+                                        <span class="badge bg-success">Primary</span>
+                                        {% else %}
+                                        <span class="badge bg-secondary">Secondary</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary edit-service-assignment" 
+                                                data-assignment-id="{{ assignment.id }}"
+                                                data-service-id="{{ assignment.service_offering.id }}"
+                                                data-is-primary="{{ assignment.is_primary|yesno:'true,false' }}">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger delete-service-assignment" 
+                                                data-assignment-id="{{ assignment.id }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No services assigned to this staff member</p>
+                        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#addServiceAssignmentModal">
+                            <i class="fas fa-plus me-1"></i> Assign Service
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div class="tab-pane fade" id="bookings" role="tabpanel" aria-labelledby="bookings-tab">
             <!-- Assigned Bookings Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
@@ -281,11 +415,11 @@
                             <tbody>
                                 {% for assignment in assigned_bookings %}
                                 <tr>
-                                    <td>{{ assignment.booking.booking_number }}</td>
+                                    <td>{{ assignment.booking.id }}</td>
                                     <td>{{ assignment.booking.lead.get_full_name }}</td>
                                     <td>{{ assignment.booking.service_offering.name }}</td>
                                     <td>
-                                        {{ assignment.booking.start_time|date:"M d, Y" }}<br>
+                                        {{ assignment.booking.booking_date|date:"M d, Y" }}<br>
                                         <small class="text-muted">{{ assignment.booking.start_time|time:"g:i A" }} - {{ assignment.booking.end_time|time:"g:i A" }}</small>
                                     </td>
                                     <td>
@@ -317,7 +451,9 @@
             </div>
         </div>
     </div>
+    <!-- End Tab Content -->
 </div>
+<!-- End Container -->
 
 <!-- Add Availability Modal -->
 <div class="modal fade" id="addAvailabilityModal" tabindex="-1" aria-labelledby="addAvailabilityModalLabel" aria-hidden="true">
@@ -328,9 +464,18 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form action="{% url 'business:add_staff_availability' staff.id %}" method="post">
+                <form id="addAvailabilityForm" action="{% url 'business:add_staff_availability' staff.id %}" method="post">
                     {% csrf_token %}
                     <input type="hidden" name="availability_type" id="availabilityType" value="specific">
+                    
+                    <!-- Weekly Fields (hidden by default) -->
+                    <div id="weeklyFields" style="display: none;">
+                        <div class="mb-3">
+                            <label for="weekday" class="form-label">Day of Week</label>
+                            <input type="text" class="form-control" id="weekdayDisplay" disabled>
+                            <input type="hidden" id="weekday" name="weekday">
+                        </div>
+                    </div>
                     
                     <!-- Specific Date Fields -->
                     <div id="specificFields">
@@ -445,6 +590,77 @@
                     <button type="submit" class="btn btn-primary">Add Off Day</button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+<!-- Add Service Assignment Modal -->
+<div class="modal fade" id="addServiceAssignmentModal" tabindex="-1" aria-labelledby="addServiceAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addServiceAssignmentModalLabel">Assign Service</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addServiceAssignmentForm" method="post" action="{% url 'business:add_service_assignment' staff.id %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="serviceOffering" class="form-label">Service</label>
+                        <select class="form-select" id="serviceOffering" name="service_offering" required>
+                            <option value="">Select a service...</option>
+                            {% for service in available_services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="isPrimary" name="is_primary">
+                        <label class="form-check-label" for="isPrimary">
+                            Mark as primary service
+                        </label>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Assign Service</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Service Assignment Modal -->
+<div class="modal fade" id="editServiceAssignmentModal" tabindex="-1" aria-labelledby="editServiceAssignmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editServiceAssignmentModalLabel">Edit Service Assignment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editServiceAssignmentForm" method="post" action="{% url 'business:update_service_assignment' staff.id %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="editAssignmentId" name="assignment_id">
+                    <div class="mb-3">
+                        <label for="editServiceOffering" class="form-label">Service</label>
+                        <select class="form-select" id="editServiceOffering" name="service_offering" required>
+                            <option value="">Select a service...</option>
+                            {% for service in available_services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="editIsPrimary" name="is_primary">
+                        <label class="form-check-label" for="editIsPrimary">
+                            Mark as primary service
+                        </label>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Update Assignment</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 </div>

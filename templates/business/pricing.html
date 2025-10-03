@@ -13,198 +13,271 @@
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
             <h1 class="h3 mb-1">Service Pricing</h1>
-            <p class="text-muted">Manage your service prices</p>
-        </div>
-        <div>
-            <button id="addServiceBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-                <i class="fas fa-plus me-2"></i>Add Service
-            </button>
+            <p class="text-muted mb-0">Manage your service prices and offerings</p>
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="row">
-        <!-- Service Pricing Card -->
+        <!-- Main Content Area with Tabs -->
         <div class="col-lg-8">
             <div class="card shadow-sm mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Service Offerings</h5>
-                    <div class="dropdown">
-                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="pricingActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-v"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pricingActionsDropdown">
-                            <li><a class="dropdown-item" href="#" id="bulkEditBtn"><i class="fas fa-edit me-2"></i>Bulk Edit</a></li>
-                            <li><a class="dropdown-item" href="#" id="importPricingBtn"><i class="fas fa-file-import me-2"></i>Import</a></li>
-                            <li><a class="dropdown-item" href="#" id="exportPricingBtn"><i class="fas fa-file-export me-2"></i>Export</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-danger" href="#" id="deleteAllBtn"><i class="fas fa-trash-alt me-2"></i>Delete All</a></li>
-                        </ul>
-                    </div>
+                <!-- Tab Navigation -->
+                <div class="card-header border-0 pb-0">
+                    <ul class="nav nav-tabs pricing-tabs" id="pricingTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="offerings-tab" data-bs-toggle="tab" data-bs-target="#offerings" type="button" role="tab" aria-controls="offerings" aria-selected="true">
+                                <i class="fas fa-concierge-bell me-2"></i>Service Offerings
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="items-tab" data-bs-toggle="tab" data-bs-target="#items" type="button" role="tab" aria-controls="items" aria-selected="false">
+                                <i class="fas fa-list-ul me-2"></i>Service Items
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="info-tab" data-bs-toggle="tab" data-bs-target="#info" type="button" role="tab" aria-controls="info" aria-selected="false">
+                                <i class="fas fa-info-circle me-2"></i>Info
+                            </button>
+                        </li>
+                    </ul>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="servicesTable">
-                            <thead>
-                                <tr>
-                                    <th class="ps-4">Service Name</th>
-                                    <th>Duration</th>
-                                    <th>Price</th>
-                                    <th>Status</th>
-                                    <th class="text-end pe-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if services %}
-                                    {% for service in services %}
-                                    <tr data-service-id="{{ service.id }}">
-                                        <td class="ps-4">
-                                            <div class="d-flex align-items-center">
-                                                <div class="service-icon me-3" style="background-color: {{ service.color|default:'var(--primary-indigo)' }}">
-                                                    <i class="fas fa-{{ service.icon|default:'concierge-bell' }}"></i>
+
+                <!-- Tab Content -->
+                <div class="tab-content" id="pricingTabsContent">
+                    <!-- Service Offerings Tab -->
+                    <div class="tab-pane fade show active" id="offerings" role="tabpanel" aria-labelledby="offerings-tab">
+                        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+                            <h5 class="mb-0">Service Offerings</h5>
+                            <div class="d-flex gap-2">
+                                <button id="addServiceBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                                    <i class="fas fa-plus me-2"></i>Add Service
+                                </button>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="pricingActionsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="pricingActionsDropdown">
+                                        <li><a class="dropdown-item" href="#" id="bulkEditBtn"><i class="fas fa-edit me-2"></i>Bulk Edit</a></li>
+                                        <li><a class="dropdown-item" href="#" id="importPricingBtn"><i class="fas fa-file-import me-2"></i>Import</a></li>
+                                        <li><a class="dropdown-item" href="#" id="exportPricingBtn"><i class="fas fa-file-export me-2"></i>Export</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li><a class="dropdown-item text-danger" href="#" id="deleteAllBtn"><i class="fas fa-trash-alt me-2"></i>Delete All</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="servicesTable">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Service Name</th>
+                                        <th>Duration</th>
+                                        <th>Price</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if services %}
+                                        {% for service in services %}
+                                        <tr data-service-id="{{ service.id }}">
+                                            <td class="ps-4">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="service-icon me-3" style="background-color: {{ service.color|default:'var(--primary-indigo)' }}">
+                                                        <i class="fas fa-{{ service.icon|default:'concierge-bell' }}"></i>
+                                                    </div>
+                                                    <div>
+                                                        <h6 class="mb-0">{{ service.name }}</h6>
+                                                        <small class="text-muted">{{ service.description|truncatechars:60 }}</small>
+                                                    </div>
                                                 </div>
+                                            </td>
+                                            <td>{{ service.duration }} min</td>
+                                            <td>
+                                                {% if service.is_free %}
+                                                <span class="badge bg-success">Free</span>
+                                                {% else %}
+                                                ${{ service.price }}
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if service.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                                {% else %}
+                                                <span class="badge bg-secondary">Inactive</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-outline-primary edit-service-btn" data-service-id="{{ service.id }}">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger delete-service-btn" data-service-id="{{ service.id }}">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5">
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">
+                                                        <i class="fas fa-tags"></i>
+                                                    </div>
+                                                    <h5>No services added yet</h5>
+                                                    <p class="text-muted">Start by adding your first service offering</p>
+                                                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addServiceModal">
+                                                        <i class="fas fa-plus me-2"></i>Add Service
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Service Items Tab -->
+                    <div class="tab-pane fade" id="items" role="tabpanel" aria-labelledby="items-tab">
+                        <div class="d-flex justify-content-between align-items-center px-4 py-3 border-bottom">
+                            <h5 class="mb-0">Service Items</h5>
+                            <button id="addServiceItemBtn" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addServiceItemModal">
+                                <i class="fas fa-plus me-2"></i>Add Item
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0" id="serviceItemsTable">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Item Name</th>
+                                        <th>Price Type</th>
+                                        <th>Value</th>
+                                        <th>Optional</th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if service_items %}
+                                        {% for item in service_items %}
+                                        <tr data-item-id="{{ item.id }}">
+                                            <td class="ps-4">
                                                 <div>
-                                                    <h6 class="mb-0">{{ service.name }}</h6>
-                                                    <small class="text-muted">{{ service.description|truncatechars:60 }}</small>
+                                                    <h6 class="mb-0">{{ item.name }}</h6>
+                                                    <small class="text-muted">{{ item.description|truncatechars:60 }}</small>
                                                 </div>
-                                            </div>
-                                        </td>
-                                        <td>{{ service.duration }} min</td>
-                                        <td>
-                                            {% if service.is_free %}
-                                            <span class="badge bg-success">Free</span>
-                                            {% else %}
-                                            ${{ service.price }}
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if service.is_active %}
-                                            <span class="badge bg-success">Active</span>
-                                            {% else %}
-                                            <span class="badge bg-secondary">Inactive</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-primary edit-service-btn" data-service-id="{{ service.id }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger delete-service-btn" data-service-id="{{ service.id }}">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-5">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">
-                                                    <i class="fas fa-tags"></i>
-                                                </div>
-                                                <h5>No services added yet</h5>
-                                                <p class="text-muted">Start by adding your first service offering</p>
-                                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addServiceModal">
-                                                    <i class="fas fa-plus me-2"></i>Add Service
+                                            </td>
+                                            <td>
+                                                {% if item.price_type == 'fixed' %}
+                                                    <span class="badge bg-primary">Fixed</span>
+                                                {% elif item.price_type == 'percentage' %}
+                                                    <span class="badge bg-info">Percentage</span>
+                                                {% elif item.price_type == 'hourly' %}
+                                                    <span class="badge bg-warning">Hourly</span>
+                                                {% elif item.price_type == 'per_unit' %}
+                                                    <span class="badge bg-secondary">Per Unit</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.price_type == 'fixed' %}
+                                                    ${{ item.price_value }}
+                                                {% elif item.price_type == 'percentage' %}
+                                                    {{ item.price_value }}%
+                                                {% elif item.price_type == 'hourly' %}
+                                                    ${{ item.price_value }}/hr
+                                                {% elif item.price_type == 'per_unit' %}
+                                                    ${{ item.price_value }}/unit
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if item.is_optional %}
+                                                    <span class="badge bg-success">Optional</span>
+                                                {% else %}
+                                                    <span class="badge bg-danger">Required</span>
+                                                {% endif %}
+                                            </td>
+                                            <td class="text-end pe-4">
+                                                <button class="btn btn-sm btn-outline-primary edit-item-btn" data-item-id="{{ item.id }}">
+                                                    <i class="fas fa-edit"></i>
                                                 </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Service Items Card -->
-            <div class="card shadow-sm mb-4">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Service Items</h5>
-                    <div>
-                        <button id="addServiceItemBtn" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addServiceItemModal">
-                            <i class="fas fa-plus me-2"></i>Add Item
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0" id="serviceItemsTable">
-                            <thead>
-                                <tr>
-                                    <th class="ps-4">Item Name</th>
-                                    <th>Price Type</th>
-                                    <th>Value</th>
-                                    <th>Optional</th>
-                                    <th class="text-end pe-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% if service_items %}
-                                    {% for item in service_items %}
-                                    <tr data-item-id="{{ item.id }}">
-                                        <td class="ps-4">
-                                            <div>
-                                                <h6 class="mb-0">{{ item.name }}</h6>
-                                                <small class="text-muted">{{ item.description|truncatechars:60 }}</small>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            {% if item.price_type == 'fixed' %}
-                                                <span class="badge bg-primary">Fixed</span>
-                                            {% elif item.price_type == 'percentage' %}
-                                                <span class="badge bg-info">Percentage</span>
-                                            {% elif item.price_type == 'hourly' %}
-                                                <span class="badge bg-warning">Hourly</span>
-                                            {% elif item.price_type == 'per_unit' %}
-                                                <span class="badge bg-secondary">Per Unit</span>
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if item.price_type == 'fixed' %}
-                                                ${{ item.price_value }}
-                                            {% elif item.price_type == 'percentage' %}
-                                                {{ item.price_value }}%
-                                            {% elif item.price_type == 'hourly' %}
-                                                ${{ item.price_value }}/hr
-                                            {% elif item.price_type == 'per_unit' %}
-                                                ${{ item.price_value }}/unit
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if item.is_optional %}
-                                                <span class="badge bg-success">Optional</span>
-                                            {% else %}
-                                                <span class="badge bg-danger">Required</span>
-                                            {% endif %}
-                                        </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-primary edit-item-btn" data-item-id="{{ item.id }}">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger delete-item-btn" data-item-id="{{ item.id }}">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center py-5">
-                                            <div class="empty-state">
-                                                <div class="empty-state-icon">
-                                                    <i class="fas fa-list-ul"></i>
-                                                </div>
-                                                <h5>No service items added yet</h5>
-                                                <p class="text-muted">Add items that can be included with your services</p>
-                                                <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addServiceItemModal">
-                                                    <i class="fas fa-plus me-2"></i>Add Service Item
+                                                <button class="btn btn-sm btn-outline-danger delete-item-btn" data-item-id="{{ item.id }}">
+                                                    <i class="fas fa-trash-alt"></i>
                                                 </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                {% endif %}
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr>
+                                            <td colspan="5" class="text-center py-5">
+                                                <div class="empty-state">
+                                                    <div class="empty-state-icon">
+                                                        <i class="fas fa-list-ul"></i>
+                                                    </div>
+                                                    <h5>No service items added yet</h5>
+                                                    <p class="text-muted">Add items that can be included with your services</p>
+                                                    <button class="btn btn-primary mt-3" data-bs-toggle="modal" data-bs-target="#addServiceItemModal">
+                                                        <i class="fas fa-plus me-2"></i>Add Service Item
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Info Tab -->
+                    <div class="tab-pane fade" id="info" role="tabpanel" aria-labelledby="info-tab">
+                        <div class="p-4">
+                            <h5 class="mb-4">Pricing Information & Best Practices</h5>
+                            
+                            <div class="info-section mb-4">
+                                <h6 class="text-primary mb-3"><i class="fas fa-lightbulb me-2"></i>Service Offerings</h6>
+                                <p class="text-muted mb-2">Service offerings are the main services you provide to your customers. Each service can have:</p>
+                                <ul class="text-muted">
+                                    <li>A unique name and description</li>
+                                    <li>Fixed or free pricing</li>
+                                    <li>Duration in minutes</li>
+                                    <li>Custom icon and color for branding</li>
+                                    <li>Active/inactive status</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-section mb-4">
+                                <h6 class="text-primary mb-3"><i class="fas fa-puzzle-piece me-2"></i>Service Items</h6>
+                                <p class="text-muted mb-2">Service items are additional components that can be added to your services. They support:</p>
+                                <ul class="text-muted">
+                                    <li><strong>Fixed Price:</strong> A set dollar amount</li>
+                                    <li><strong>Percentage:</strong> A percentage of the base service price</li>
+                                    <li><strong>Hourly Rate:</strong> Charged per hour</li>
+                                    <li><strong>Per Unit:</strong> Charged per quantity</li>
+                                    <li><strong>Free:</strong> No additional charge</li>
+                                </ul>
+                            </div>
+
+                            <div class="info-section mb-4">
+                                <h6 class="text-primary mb-3"><i class="fas fa-chart-line me-2"></i>Pricing Strategy Tips</h6>
+                                <div class="alert alert-info">
+                                    <ul class="mb-0">
+                                        <li>Research competitor pricing in your area</li>
+                                        <li>Consider your costs and desired profit margin</li>
+                                        <li>Offer package deals for better value</li>
+                                        <li>Adjust prices seasonally based on demand</li>
+                                        <li>Highlight your unique value proposition</li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="info-section">
+                                <h6 class="text-primary mb-3"><i class="fas fa-question-circle me-2"></i>Need Help?</h6>
+                                <p class="text-muted mb-3">If you need assistance with pricing strategy or have questions about setting up your services, our support team is here to help.</p>
+                                <a href="#" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-headset me-2"></i>Contact Support
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,7 +288,7 @@
             <!-- Pricing Strategy Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Pricing Strategy</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Pricing Strategy</h5>
                 </div>
                 <div class="card-body">
                     <p class="text-muted mb-4">Optimize your pricing strategy to maximize bookings and revenue.</p>
@@ -251,19 +324,45 @@
                 </div>
             </div>
 
-            <!-- Pricing Tips Card -->
+            <!-- Quick Stats Card -->
             <div class="card shadow-sm mb-4">
                 <div class="card-header">
-                    <h5 class="mb-0">Pricing Tips</h5>
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Quick Stats</h5>
                 </div>
                 <div class="card-body">
-                    <p class="text-muted mb-3">Optimize your pricing to attract more customers:</p>
-                    <ul class="list-unstyled">
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Set competitive prices based on your market</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Consider your costs and desired profit margin</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Adjust prices seasonally for optimal bookings</li>
-                        <li class="mb-2"><i class="fas fa-check-circle text-success me-2"></i> Highlight your unique value proposition</li>
-                    </ul>
+                    <div class="stat-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Total Services</p>
+                                <h4 class="mb-0">{{ services|length }}</h4>
+                            </div>
+                            <div class="stat-icon bg-primary">
+                                <i class="fas fa-concierge-bell"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-item mb-3 pb-3 border-bottom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Service Items</p>
+                                <h4 class="mb-0">{{ service_items|length }}</h4>
+                            </div>
+                            <div class="stat-icon bg-success">
+                                <i class="fas fa-list-ul"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <p class="text-muted mb-1 small">Active Services</p>
+                                <h4 class="mb-0">{{ services|length }}</h4>
+                            </div>
+                            <div class="stat-icon bg-info">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -272,7 +371,7 @@
 
 <!-- Add Service Modal -->
 <div class="modal fade" id="addServiceModal" tabindex="-1" aria-labelledby="addServiceModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addServiceModalLabel">Add New Service</h5>
@@ -289,13 +388,23 @@
                         <label for="serviceDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="serviceDescription" name="description" rows="3"></textarea>
                     </div>
-                    <div class="mb-3 form-check">
-                        <input type="checkbox" class="form-check-input" id="serviceIsFree" name="is_free">
-                        <label class="form-check-label" for="serviceIsFree">Free Service</label>
-                        <small class="form-text text-muted d-block">Check this if the service is free (no payment required)</small>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Pricing Type</label>
+                        <div class="btn-group pricing-type-toggle w-100" role="group" aria-label="Pricing type">
+                            <input type="radio" class="btn-check" name="pricing_type" id="servicePaid" value="paid" checked>
+                            <label class="btn btn-outline-primary" for="servicePaid">
+                                <i class="fas fa-dollar-sign me-2"></i>Paid
+                            </label>
+                            
+                            <input type="radio" class="btn-check" name="pricing_type" id="serviceFree" value="free">
+                            <label class="btn btn-outline-success" for="serviceFree">
+                                <i class="fas fa-gift me-2"></i>Free
+                            </label>
+                        </div>
+                        <input type="hidden" id="serviceIsFree" name="is_free" value="">
                     </div>
                     <div class="row mb-3">
-                        <div class="col-md-6">
+                        <div class="col-md-6" id="servicePriceContainer">
                             <label for="servicePrice" class="form-label">Price ($)</label>
                             <input type="number" class="form-control" id="servicePrice" name="price" min="0" step="0.01" required>
                         </div>
@@ -341,7 +450,7 @@
 
 <!-- Add Service Item Modal -->
 <div class="modal fade" id="addServiceItemModal" tabindex="-1" aria-labelledby="addServiceItemModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="addServiceItemModalLabel">Add Service Item</h5>
@@ -368,6 +477,7 @@
                                 <option value="boolean">Yes/No Checkbox</option>
                                 <option value="select">Dropdown Select</option>
                             </select>
+                            <small class="text-muted">For pricing options, select Number Input</small>
                         </div>
                         <div class="col-md-6" id="fieldOptionsContainer" style="display: none;">
                             <label for="fieldOptions" class="form-label">Field Options</label>
@@ -375,7 +485,7 @@
                             <small class="text-muted">Comma separated options for dropdown</small>
                         </div>
                     </div>
-                    <div class="row mb-3">
+                    <div class="row mb-3" id="priceTypeRow">
                         <div class="col-md-6">
                             <label for="priceType" class="form-label">Price Type</label>
                             <select class="form-select" id="priceType" name="price_type" required>
@@ -425,7 +535,7 @@
 
 <!-- Edit Service Item Modal -->
 <div class="modal fade" id="editServiceItemModal" tabindex="-1" aria-labelledby="editServiceItemModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="editServiceItemModalLabel">Edit Service Item</h5>
@@ -453,6 +563,7 @@
                                 <option value="boolean">Yes/No Checkbox</option>
                                 <option value="select">Dropdown Select</option>
                             </select>
+                            <small class="text-muted">For pricing options, select Number Input</small>
                         </div>
                         <div class="col-md-6" id="editFieldOptionsContainer" style="display: none;">
                             <label for="editFieldOptions" class="form-label">Field Options</label>
@@ -460,7 +571,7 @@
                             <small class="text-muted">Comma separated options for dropdown</small>
                         </div>
                     </div>
-                    <div class="row mb-3">
+                    <div class="row mb-3" id="editPriceRow">
                         <div class="col-md-6">
                             <label for="editPriceType" class="form-label">Price Type</label>
                             <select class="form-select" id="editPriceType" name="price_type" required>
@@ -480,7 +591,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row mb-3">
+                    <div class="row mb-3" id="editQuantityRow">
                         <div class="col-md-6">
                             <label for="editDurationMinutes" class="form-label">Additional Duration (minutes)</label>
                             <input type="number" class="form-control" id="editDurationMinutes" name="duration_minutes" min="0" step="5">

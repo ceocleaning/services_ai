@@ -93,8 +93,6 @@ class StaffMember(models.Model):
         super().save(*args, **kwargs)
     
 
-
-
 class StaffServiceAssignment(models.Model):
     """
     Maps which staff members can perform which services.

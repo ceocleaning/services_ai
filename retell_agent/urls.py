@@ -3,9 +3,14 @@ from . import views
 
 app_name = 'retell_agent'
 
+
 urlpatterns = [
-    path('', views.index, name='index'),
-    path('create/', views.create_agent, name='create_agent'),
-    path('edit/<int:agent_id>/', views.edit_agent, name='edit_agent'),
-    path('delete/<int:agent_id>/', views.delete_agent, name='delete_agent'),
-]
+    path('setup/', views.setup_retell_agent, name='setup_retell_agent'),
+    path('create-llm/', views.create_retell_llm, name='create_retell_llm'),
+    path('list-voices/', views.list_retell_voices, name='list_retell_voices'),
+    path('', views.list_retell_agents, name='list_retell_agents'),
+    path('agents/update/<str:agent_id>/', views.update_retell_agent, name='update_retell_agent'),
+    path('agents/delete/<str:agent_id>/', views.delete_retell_agent, name='delete_retell_agent'),
+    path('agents/assign-number/', views.assign_phone_number, name='assign_phone_number'),
+    path('voice-conversations/', views.voice_conversations, name='voice_conversations'),
+] 

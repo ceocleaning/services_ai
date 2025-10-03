@@ -3,18 +3,32 @@
 
 :root {
     /* Primary Colors */
-    --primary-indigo: #4F46E5;
-    --primary-indigo-light: #E0E7FF;
-    --primary-indigo-medium-light: #A5B4FC;
-    --primary-indigo-medium-dark: #4338CA;
-    --primary-indigo-dark: #312E81;
+    --primary-indigo: var(--primary);
+    --primary-indigo-light: var(--primary-light);
+    --primary-indigo-medium-light: var(--primary-medium-light);
+    --primary-indigo-medium-dark: var(--primary-medium-dark);
+    --primary-indigo-dark: var(--primary-dark);
+
+    --primary: #4F46E5;
+    --primary-light: #E0E7FF;
+    --primary-medium-light: #A5B4FC;
+    --primary-medium-dark: #4338CA;
+    --primary-dark: #312E81;
+
     
-    /* Secondary Colors */
-    --secondary-teal: #0CA5E9;
-    --secondary-teal-light: #BAE6FD;
-    --secondary-teal-medium-light: #38BDF8;
-    --secondary-teal-medium-dark: #0369A1;
-    --secondary-teal-dark: #075985;
+    /* For backward Compatibility */
+    --secondary-teal: var(--secondary);
+    --secondary-teal-light: var(--secondary-light);
+    --secondary-teal-medium-light: var(--secondary-medium-light);
+    --secondary-teal-medium-dark: var(--secondary-medium-dark);
+    --secondary-teal-dark: var(--secondary-dark);
+
+    /* New Secondary Colors */
+    --secondary: #0CA5E9;
+    --secondary-light: #BAE6FD;
+    --secondary-medium-light: #38BDF8;
+    --secondary-medium-dark: #0369A1;
+    --secondary-dark: #075985;
     
     /* Neutral Colors */
     --gray: #6B7280;
@@ -30,8 +44,7 @@
     --success: #10B981;
     --success-light: #D1FAE5;
     
-    /* Application Colors */
-    --color-primary: var(--primary-indigo);
+
     --warning: #F59E0B;
     --warning-light: #FEF3C7;
     --error: #EF4444;
@@ -46,11 +59,11 @@
     --wellness: #06B6D4;
     
     /* Light Mode Theme Variables */
-    --color-background: var(--gray-lightest);
+    --color-background: transparent;
     --color-surface: white;
     --color-surface-elevated: white;
-    --color-primary: var(--primary-indigo);
-    --color-secondary: var(--secondary-teal);
+    --color-primary: var(--primary);
+    --color-secondary: var(--secondary);
     --color-border: var(--gray-medium-light);
     --color-text-primary: var(--gray-darkest);
     --color-text-secondary: var(--gray);
@@ -68,8 +81,23 @@
 
 
 .form-control{
-    background-color: var(--gray-dark);
+    border: 1px solid var(--gray-medium-dark) !important;
+    background: transparent !important;
     color: var(--gray-light);
+    padding: 10px !important;
+}
+
+.form-select{
+    border: 1px solid var(--gray-medium-dark) !important;
+    background: transparent !important;
+    color: var(--gray-light);
+    padding: 10px !important;
+}
+
+select option{
+    background-color: var(--gray-dark) !important;
+    padding: 10px !important;
+    border: 1px solid var(--gray-medium-dark) !important;
 }
 
 /* Dark Mode Theme Variables */
@@ -83,6 +111,12 @@
     --color-text-primary: var(--gray-light);
     --color-text-secondary: var(--gray-medium);
 }
+
+
+table td, table tr{
+    background-color: transparent !important;
+}
+
 
 /* Typography */
 body {
@@ -304,17 +338,29 @@ small, .text-small {
 }
 
 /* Custom Table Background - Modern alternative to default Bootstrap table styling */
-.custom-table-bg {
+.custom-table-bg thead tr th {
     background-color: var(--primary-indigo-dark);
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: white;
+    padding: 20px;
 }
 
+thead tr:first-child th:first-child {
+    border-top-left-radius: 10px;
+  }
+  thead tr:first-child th:last-child {
+    border-top-right-radius: 10px;
+  }
+
+
 .custom-table-bg tbody tr {
-    background-color: var(--primary-indigo-medium-dark);
+    background-color: transparent;
     transition: background-color 0.2s ease;
 }
 
 .custom-table-bg tbody tr:hover {
-    background-color: var(--primary-indigo-light);
+    background-color: var(--primary-indigo-medium-dark);
 }
 
 /* Dark mode support */

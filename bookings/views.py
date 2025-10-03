@@ -386,17 +386,7 @@ def booking_detail(request, booking_id):
             'total_price': total_price,
             'timeline': timeline
         })
-        timeline_events.sort(key=lambda x: x['timestamp'], reverse=True)
-        
-        return render(request, 'bookings/booking_detail.html', {
-            'title': f'Booking: {booking.name}',
-            'booking': booking,
-            'custom_fields': custom_fields,
-            'industry_fields': industry_fields,
-            'service_items': service_items,
-            'total_price': total_price,
-            'timeline_events': timeline_events
-        })
+       
     except Booking.DoesNotExist:
         messages.error(request, 'Booking not found.')
         return redirect('bookings:index')
@@ -510,6 +500,8 @@ def check_availability(request):
     duration_minutes = request.GET.get('duration_minutes', 60)
     service_offering_id = request.GET.get('service_offering_id')
     staff_member_id = request.GET.get('staff_member_id')
+
+    print(request.GET)
     
     # Validate required parameters
     if not date_str or not time_str:
