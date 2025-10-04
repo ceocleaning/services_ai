@@ -142,19 +142,8 @@
                                             </button>
                                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ booking.id }}">
                                                 <li><a class="dropdown-item" href="{% url 'bookings:booking_detail' booking.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
-                                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                {% if booking.status == 'pending' %}
-                                                    <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Confirm</a></li>
-                                                {% endif %}
-                                                {% if booking.status != 'cancelled' and booking.status != 'completed' %}
-                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Cancel</a></li>
-                                                {% endif %}
-                                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
-                                                    <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Reschedule</a></li>
-                                                    <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-check-double me-2"></i> Mark Completed</a></li>
-                                                    <li><a class="dropdown-item text-dark" href="#"><i class="fas fa-user-times me-2"></i> Mark No-Show</a></li>
-                                                {% endif %}
+                                                <li><a class="dropdown-item" href="{% url 'bookings:edit_booking' booking.id %}"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                               
                                             </ul>
                                         </div>
                                     </td>

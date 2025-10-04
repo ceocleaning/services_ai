@@ -6,6 +6,7 @@ app_name = 'bookings'
 urlpatterns = [
     path('', views.index, name='index'),
     path('create/', views.create_booking, name='create_booking'),
+    path('<str:booking_id>/edit/', views.edit_booking, name='edit_booking'),
     path('<str:booking_id>/', views.booking_detail, name='booking_detail'),
     
     # API endpoints

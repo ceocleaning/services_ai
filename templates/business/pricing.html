@@ -152,6 +152,7 @@
                                 <thead>
                                     <tr>
                                         <th class="ps-4">Item Name</th>
+                                        <th>Service Type</th>
                                         <th>Price Type</th>
                                         <th>Value</th>
                                         <th>Optional</th>
@@ -167,6 +168,13 @@
                                                     <h6 class="mb-0">{{ item.name }}</h6>
                                                     <small class="text-muted">{{ item.description|truncatechars:60 }}</small>
                                                 </div>
+                                            </td>
+                                            <td>
+                                                {% if item.service_offering %}
+                                                    <span class="badge bg-info">{{ item.service_offering.name }}</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">Not Linked</span>
+                                                {% endif %}
                                             </td>
                                             <td>
                                                 {% if item.price_type == 'fixed' %}
@@ -467,6 +475,16 @@
                         <label for="itemDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="itemDescription" name="description" rows="2"></textarea>
                     </div>
+                    <div class="mb-3">
+                        <label for="serviceOfferingSelect" class="form-label">Service Type/Offering <span class="text-danger">*</span></label>
+                        <select class="form-select" id="serviceOfferingSelect" name="service_offering_id" required>
+                            <option value="">Select a service offering...</option>
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Link this item to a specific service offering</small>
+                    </div>
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="fieldType" class="form-label">Field Type</label>
@@ -552,6 +570,16 @@
                     <div class="mb-3">
                         <label for="editItemDescription" class="form-label">Description</label>
                         <textarea class="form-control" id="editItemDescription" name="description" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editServiceOfferingSelect" class="form-label">Service Type/Offering <span class="text-danger">*</span></label>
+                        <select class="form-select" id="editServiceOfferingSelect" name="service_offering_id" required>
+                            <option value="">Select a service offering...</option>
+                            {% for service in services %}
+                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Link this item to a specific service offering</small>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-6">

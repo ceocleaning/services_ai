@@ -273,7 +273,7 @@ class ServiceItem(models.Model):
     """
     Represents individual service items that can be added to service offerings.
     This allows for modular and dynamic pricing based on selected items.
-    Items are independent of specific service offerings for maximum flexibility.
+    Each item is linked to a specific service offering for better organization.
     """
     PRICE_TYPE_CHOICES = (
         ('fixed', 'Fixed Price'),
@@ -292,6 +292,7 @@ class ServiceItem(models.Model):
     )
     
     business = models.ForeignKey(Business, on_delete=models.CASCADE, related_name='service_items')
+    service_offering = models.ForeignKey(ServiceOffering, on_delete=models.CASCADE, related_name='service_items', null=True, blank=True, help_text="Link this item to a specific service offering")
     name = models.CharField(max_length=100)
     identifier = models.SlugField(max_length=120, blank=True, help_text="Unique identifier for this service item (e.g., number_of_bedrooms)")
     description = models.TextField(blank=True, null=True)

@@ -248,6 +248,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('editItemId').value = data.id;
                 document.getElementById('editItemName').value = data.name;
                 document.getElementById('editItemDescription').value = data.description || '';
+                
+                // Set service offering if available
+                if (data.service_offering_id) {
+                    document.getElementById('editServiceOfferingSelect').value = data.service_offering_id;
+                }
+                
                 document.getElementById('editPriceType').value = data.price_type;
                 document.getElementById('editPriceValue').value = data.price_value;
                 document.getElementById('editDurationMinutes').value = data.duration_minutes;

@@ -1,0 +1,577 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Edit Booking{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/bookings-create-booking.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4 py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">Edit Booking</h2>
+            <p class="text-muted mb-0">Update the booking details below</p>
+        </div>
+        <a href="{% url 'bookings:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Back to Bookings
+        </a>
+    </div>
+
+    <!-- Multi-Step Form Layout -->
+    <div class="row">
+        <!-- Left Column - Form Steps -->
+        <div class="col-lg-8">
+            <!-- Progress Steps -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-body p-3">
+                    <div class="steps-progress">
+                        <div class="step active" data-step="1">
+                            <div class="step-number">1</div>
+                            <div class="step-label">Client Info</div>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="2">
+                            <div class="step-number">2</div>
+                            <div class="step-label">Service Details</div>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="3">
+                            <div class="step-number">3</div>
+                            <div class="step-label">Service Items</div>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="4">
+                            <div class="step-number">4</div>
+                            <div class="step-label">Date & Time</div>
+                        </div>
+                        <div class="step-line"></div>
+                        <div class="step" data-step="5">
+                            <div class="step-number">5</div>
+                            <div class="step-label">Notes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Card -->
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <form id="create-booking-form" method="post" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Step 1: Client Information -->
+                        <div class="form-step active" id="step-1">
+                            <h4 class="mb-4"><i class="fas fa-user me-2"></i>Client Information</h4>
+                            
+                            <div class="mb-3">
+                                <label for="lead_id" class="form-label">Select Existing Lead (Optional)</label>
+                                <select name="lead_id" id="lead_id" class="form-select">
+                                    <option value="">Create new client or select existing...</option>
+                                </select>
+                                <div class="form-text">Select an existing lead to auto-fill client information</div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="client_name" class="form-label">Client Name <span class="text-danger">*</span></label>
+                                    <input type="text" name="client_name" id="client_name" class="form-control" value="{{ booking.name }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="client_email" class="form-label">Client Email <span class="text-danger">*</span></label>
+                                    <input type="email" name="client_email" id="client_email" class="form-control" value="{{ booking.email }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="client_phone" class="form-label">Client Phone <span class="text-danger">*</span></label>
+                                    <input type="tel" name="client_phone" id="client_phone" class="form-control" value="{{ booking.phone_number }}" required>
+                                </div>
+                            </div>
+                            
+                            <!-- Dynamic Custom Fields -->
+                            <div id="custom-fields-container">
+                                {% for field in custom_fields %}
+                                    <div class="mb-3 custom-field">
+                                        <label for="custom_{{ field.slug }}" class="form-label">{{ field.name }}{% if field.required %} <span class="text-danger">*</span>{% endif %}</label>
+                                        {% if field.field_type == 'text' %}
+                                            <input type="text" name="custom_{{ field.slug }}" id="custom_{{ field.slug }}" class="form-control" {% if field.required %}required{% endif %} placeholder="{{ field.placeholder }}">
+                                        {% elif field.field_type == 'number' %}
+                                            <input type="number" name="custom_{{ field.slug }}" id="custom_{{ field.slug }}" class="form-control" {% if field.required %}required{% endif %} placeholder="{{ field.placeholder }}">
+                                        {% elif field.field_type == 'select' %}
+                                            <select name="custom_{{ field.slug }}" id="custom_{{ field.slug }}" class="form-select" {% if field.required %}required{% endif %}>
+                                                <option value="">Select an option</option>
+                                                {% for option in field.options %}
+                                                    <option value="{{ option }}">{{ option }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        {% elif field.field_type == 'textarea' %}
+                                            <textarea name="custom_{{ field.slug }}" id="custom_{{ field.slug }}" class="form-control" rows="3" {% if field.required %}required{% endif %} placeholder="{{ field.placeholder }}"></textarea>
+                                        {% elif field.field_type == 'boolean' %}
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="true" name="custom_{{ field.slug }}" id="custom_{{ field.slug }}">
+                                                <label class="form-check-label" for="custom_{{ field.slug }}">Yes</label>
+                                            </div>
+                                        {% else %}
+                                            <input type="text" name="custom_{{ field.slug }}" id="custom_{{ field.slug }}" class="form-control" {% if field.required %}required{% endif %} placeholder="{{ field.placeholder }}">
+                                        {% endif %}
+                                        {% if field.help_text %}
+                                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            </div>
+                            
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="button" class="btn btn-primary next-step" data-next="2">
+                                    Next: Service Details <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 2: Service Details -->
+                        <div class="form-step" id="step-2">
+                            <h4 class="mb-4"><i class="fas fa-briefcase me-2"></i>Service Details</h4>
+                            
+                            <div class="mb-4">
+                                <label class="form-label d-block mb-3">Service Type <span class="text-danger">*</span></label>
+                                <div class="service-tabs-container">
+                                    {% for service in service_offerings %}
+                                    <div class="service-tab-wrapper">
+                                        <input type="radio" 
+                                               name="service_type" 
+                                               id="service_{{ service.id }}" 
+                                               value="{{ service.id }}"
+                                               data-duration="{{ service.duration }}" 
+                                               data-price="{{ service.price }}"
+                                               data-name="{{ service.name }}"
+                                               class="service-tab-input"
+                                               {% if booking.service_offering.id == service.id %}checked{% endif %}
+                                               required>
+                                        <label for="service_{{ service.id }}" class="service-tab-label">
+                                            <div class="service-tab-icon">
+                                                <i class="fas fa-briefcase"></i>
+                                            </div>
+                                            <div class="service-tab-content">
+                                                <div class="service-tab-name">{{ service.name }}</div>
+                                                <div class="service-tab-details">
+                                                    <span class="service-tab-price">${{ service.price }}</span>
+                                                    <span class="service-tab-duration">{{ service.duration }} min</span>
+                                                </div>
+                                            </div>
+                                        </label>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="location_type" class="form-label">Location Type <span class="text-danger">*</span></label>
+                                    <select name="location_type" id="location_type" class="form-select" required>
+                                        <option value="business" {% if booking.location_type == 'business' %}selected{% endif %}>Business Location</option>
+                                        <option value="onsite" {% if booking.location_type == 'onsite' %}selected{% endif %}>On-site (Client Location)</option>
+                                        <option value="virtual" {% if booking.location_type == 'virtual' %}selected{% endif %}>Virtual Meeting</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="location_details" class="form-label">Location Details</label>
+                                    <input type="text" name="location_details" id="location_details" class="form-control" value="{{ booking.location_details }}" placeholder="Enter address or meeting link">
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="1">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="3">
+                                    Next: Service Items <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 3: Service Items -->
+                        <div class="form-step" id="step-3">
+                            <h4 class="mb-4"><i class="fas fa-list me-2"></i>Service Items</h4>
+                            
+                            <div id="service-items-container">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>Please select a service in the previous step to view available items
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="2">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="4">
+                                    Next: Date & Time <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 4: Date & Time Selection -->
+                        <div class="form-step" id="step-4">
+                            <h4 class="mb-4"><i class="fas fa-calendar-alt me-2"></i>Date & Time Selection</h4>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="booking_date" class="form-label">Booking Date <span class="text-danger">*</span></label>
+                                    <input type="date" name="booking_date" id="booking_date" class="form-control" value="{{ booking.booking_date|date:'Y-m-d' }}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="start_time" class="form-label">Start Time <span class="text-danger">*</span></label>
+                                    <input type="time" name="start_time" id="start_time" class="form-control" value="{{ booking.start_time|time:'H:i' }}" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="end_time" class="form-label">End Time <span class="text-danger">*</span></label>
+                                    <input type="time" name="end_time" id="end_time" class="form-control" value="{{ booking.end_time|time:'H:i' }}" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="staff_member_id" class="form-label">Select Staff Member <span class="text-danger">*</span></label>
+                                <select name="staff_member_id" id="staff_member_id" class="form-select" required>
+                                    <option value="">Select a staff member...</option>
+                                </select>
+                                <div id="staff-availability-message" class="form-text mt-2"></div>
+                            </div>
+                            
+                            <!-- Alternate Timeslots Section -->
+                            <div id="alternate-timeslots-container" class="mt-3 d-none">
+                                <div class="alert alert-warning">
+                                    <h6><i class="fas fa-exclamation-triangle me-2"></i>No staff available at selected time</h6>
+                                    <p class="mb-2">Consider these alternatives:</p>
+                                    <div id="alternate-timeslots">
+                                        <!-- Alternate timeslots will be populated via JavaScript -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="3">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="button" class="btn btn-primary next-step" data-next="5">
+                                    Next: Notes <i class="fas fa-arrow-right ms-2"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Step 5: Notes -->
+                        <div class="form-step" id="step-5">
+                            <h4 class="mb-4"><i class="fas fa-sticky-note me-2"></i>Additional Notes</h4>
+                            
+                            <div class="mb-3">
+                                <label for="notes" class="form-label">Booking Notes</label>
+                                <textarea name="notes" id="notes" class="form-control" rows="4" placeholder="Add any special instructions or notes for this booking...">{{ booking.notes }}</textarea>
+                                <div class="form-text">Optional: Add any additional information or special requests</div>
+                            </div>
+                            
+                            <div class="d-flex justify-content-between mt-4">
+                                <button type="button" class="btn btn-outline-secondary prev-step" data-prev="4">
+                                    <i class="fas fa-arrow-left me-2"></i>Previous
+                                </button>
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-save me-2"></i>Update Booking
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Booking Summary -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm sticky-summary">
+                <div class="card-header text-white">
+                    <h5 class="mb-0"><i class="fas fa-receipt me-2"></i>Booking Summary</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Date & Time Summary -->
+                    <div class="summary-section mb-3">
+                        <h6 class="text-muted mb-2">Date & Time</h6>
+                        <div id="summary-datetime" class="summary-value">
+                            <i class="fas fa-calendar text-muted me-2"></i>Not selected yet
+                        </div>
+                    </div>
+                    
+                    <!-- Duration Summary -->
+                    <div class="summary-section mb-3">
+                        <h6 class="text-muted mb-2">Duration</h6>
+                        <div id="summary-duration" class="summary-value">
+                            <i class="fas fa-clock text-muted me-2"></i>0 minutes
+                        </div>
+                    </div>
+                    
+                    <!-- Service Summary -->
+                    <div class="summary-section mb-3">
+                        <h6 class="text-muted mb-2">Service Type</h6>
+                        <div id="summary-service" class="summary-value">
+                            <i class="fas fa-briefcase text-muted me-2"></i>Not selected yet
+                        </div>
+                    </div>
+                    
+                    <!-- Service Items Summary -->
+                    <div class="summary-section mb-3">
+                        <h6 class="text-muted mb-2">Service Items</h6>
+                        <div id="summary-items" class="summary-value">
+                            <i class="fas fa-list text-muted me-2"></i>No items selected
+                        </div>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="price-breakdown">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Service Base Price:</span>
+                            <span id="summary-base-price" class="fw-bold">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Service Items Total:</span>
+                            <span id="summary-items-price" class="fw-bold">$0.00</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tax:</span>
+                            <span id="summary-tax" class="fw-bold">$0.00</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <h5 class="mb-0">Grand Total:</h5>
+                            <h5 class="mb-0 text-primary" id="summary-grand-total">$0.00</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/bookings-create-booking.js' %}"></script>
+<script src="{% static 'js/bookings-create-booking-multistep.js' %}"></script>
+<script>
+    // Edit booking pre-population and lead selection functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const leadSelect = document.getElementById('lead_id');
+        const clientNameInput = document.getElementById('client_name');
+        const clientEmailInput = document.getElementById('client_email');
+        const clientPhoneInput = document.getElementById('client_phone');
+        
+        // Booking data for pre-population
+        const bookingFieldsData = {{ booking_fields_data_json|safe }};
+        const bookingServiceItems = {{ booking_service_items_json|safe }};
+        const bookingLeadId = '{{ booking.lead.id|default:"" }}';
+        const bookingStaffId = '{{ staff_assignment.staff_member.id|default:"" }}';
+        const originalServiceId = '{{ booking.service_offering.id }}';
+        
+        console.log('=== EDIT BOOKING DEBUG ===');
+        console.log('Original Service ID:', originalServiceId);
+        console.log('Booking Service Items:', bookingServiceItems);
+        console.log('Booking Fields Data:', bookingFieldsData);
+        
+        // Function to fetch leads from the API
+        function fetchLeads() {
+            fetch('{% url "bookings:get_leads" %}')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.leads && data.leads.length > 0) {
+                        // Clear existing options except the default one
+                        while (leadSelect.options.length > 1) {
+                            leadSelect.remove(1);
+                        }
+                        
+                        // Add lead options
+                        data.leads.forEach(lead => {
+                            const option = document.createElement('option');
+                            option.value = lead.id;
+                            option.textContent = `${lead.name} (${lead.email})`;
+                            option.dataset.email = lead.email;
+                            option.dataset.phone = lead.phone;
+                            option.dataset.name = lead.name;
+                            
+                            // Pre-select the booking's lead if it exists
+                            if (bookingLeadId && lead.id === bookingLeadId) {
+                                option.selected = true;
+                            }
+                            
+                            leadSelect.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching leads:', error));
+        }
+        
+        // Fetch leads when the page loads
+        fetchLeads();
+        
+        // Update client fields when a lead is selected
+        leadSelect.addEventListener('change', function() {
+            if (this.value) {
+                const selectedOption = this.options[this.selectedIndex];
+                clientNameInput.value = selectedOption.dataset.name;
+                clientEmailInput.value = selectedOption.dataset.email;
+                clientPhoneInput.value = selectedOption.dataset.phone;
+            } else {
+                // Don't clear fields in edit mode, just keep current values
+            }
+        });
+        
+        // Pre-populate custom fields
+        if (bookingFieldsData && Object.keys(bookingFieldsData).length > 0) {
+            Object.keys(bookingFieldsData).forEach(fieldSlug => {
+                const fieldElement = document.getElementById(fieldSlug);
+                if (fieldElement) {
+                    if (fieldElement.type === 'checkbox') {
+                        fieldElement.checked = bookingFieldsData[fieldSlug] === 'true';
+                    } else {
+                        fieldElement.value = bookingFieldsData[fieldSlug];
+                    }
+                }
+            });
+        }
+        
+        // Wait for service items to load, then pre-populate them
+        // We need to wait for the service change event to trigger and load items first
+        const serviceRadio = document.querySelector('input[name="service_type"]:checked');
+        if (serviceRadio) {
+            console.log('Initial service radio found:', serviceRadio.value);
+            
+            // Trigger the change event to load service items
+            serviceRadio.dispatchEvent(new Event('change', { bubbles: true }));
+            
+            // Wait a bit for items to load, then pre-populate
+            setTimeout(() => {
+                prePopulateServiceItems();
+            }, 1000);
+        }
+        
+        // Listen for service type changes to re-populate when switching back to original service
+        document.querySelectorAll('input[name="service_type"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                console.log('Service changed to:', this.value);
+                console.log('Original service was:', originalServiceId);
+                console.log('Is same service?', this.value === originalServiceId);
+                
+                // If user switches back to the original service, re-populate the items
+                if (this.value === originalServiceId) {
+                    console.log('User switched back to original service, re-populating items');
+                    // Wait for the new service items to load, then pre-populate
+                    setTimeout(() => {
+                        prePopulateServiceItems();
+                    }, 1000);
+                }
+            });
+        });
+        
+        // Function to pre-populate service items
+        function prePopulateServiceItems() {
+            console.log('=== PRE-POPULATE SERVICE ITEMS ===');
+            
+            if (!bookingServiceItems || bookingServiceItems.length === 0) {
+                console.log('No booking service items to pre-populate');
+                return;
+            }
+            
+            // Check if we're still on the original service
+            const currentServiceRadio = document.querySelector('input[name="service_type"]:checked');
+            if (!currentServiceRadio || currentServiceRadio.value !== originalServiceId) {
+                console.log('Service has changed, skipping pre-population');
+                console.log('Current service:', currentServiceRadio?.value, 'Original:', originalServiceId);
+                return;
+            }
+            
+            console.log('Pre-populating', bookingServiceItems.length, 'service items');
+            
+            // First pass: Check all checkboxes without triggering events
+            bookingServiceItems.forEach(item => {
+                console.log('Pre-populating item:', item);
+                
+                const checkbox = document.getElementById(`item_${item.id}`);
+                if (checkbox) {
+                    checkbox.checked = true;
+                } else {
+                    console.log('Checkbox not found for item:', item.id);
+                }
+            });
+            
+            // Second pass: Set all field values after a delay
+            setTimeout(() => {
+                bookingServiceItems.forEach(item => {
+                    const fieldInput = document.getElementById(`field_${item.id}`);
+                    if (fieldInput && item.response_value) {
+                        console.log('Setting field value:', item.id, 'to', item.response_value);
+                        
+                        if (fieldInput.type === 'radio') {
+                            // Handle radio buttons
+                            const radioButton = document.querySelector(`input[name="item_field_${item.id}"][value="${item.response_value}"]`);
+                            if (radioButton) {
+                                radioButton.checked = true;
+                            }
+                        } else if (fieldInput.type === 'checkbox') {
+                            fieldInput.checked = item.response_value === 'true';
+                        } else {
+                            // For number and text inputs, just set the value
+                            fieldInput.value = item.response_value;
+                        }
+                    }
+                    
+                    // Set the quantity if it exists (for items with separate quantity controls)
+                    const quantityInput = document.getElementById(`quantity_${item.id}`);
+                    if (quantityInput && item.quantity) {
+                        console.log('Setting quantity:', item.id, 'to', item.quantity);
+                        quantityInput.value = item.quantity;
+                    }
+                });
+                
+                // Third pass: Trigger all change events at once after another delay
+                setTimeout(() => {
+                    console.log('Triggering change events for all items');
+                    
+                    bookingServiceItems.forEach(item => {
+                        const fieldInput = document.getElementById(`field_${item.id}`);
+                        if (fieldInput && item.response_value) {
+                            // Trigger input event for number fields (this is what the listener uses)
+                            if (fieldInput.type === 'number') {
+                                fieldInput.dispatchEvent(new Event('input', { bubbles: true }));
+                            } else {
+                                fieldInput.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        }
+                    });
+                    
+                    console.log('Pre-population complete');
+                }, 200);
+            }, 300);
+        }
+        
+        // Pre-populate staff member after availability check
+        // We'll need to wait for the staff dropdown to be populated
+        if (bookingStaffId) {
+            // Check periodically if staff dropdown has options
+            const checkStaffInterval = setInterval(() => {
+                const staffSelect = document.getElementById('staff_member_id');
+                if (staffSelect && staffSelect.options.length > 1) {
+                    // Try to select the booking's staff member
+                    for (let i = 0; i < staffSelect.options.length; i++) {
+                        if (staffSelect.options[i].value === bookingStaffId) {
+                            staffSelect.selectedIndex = i;
+                            clearInterval(checkStaffInterval);
+                            break;
+                        }
+                    }
+                }
+            }, 500);
+            
+            // Clear interval after 10 seconds to prevent infinite checking
+            setTimeout(() => clearInterval(checkStaffInterval), 10000);
+        }
+    });
+</script>
+{% endblock %}

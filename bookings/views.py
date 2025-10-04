@@ -10,6 +10,7 @@ from leads.models import Lead
 from django.utils import timezone
 import json
 import datetime
+from decimal import Decimal
 from .availability import check_timeslot_availability
 
 # Create your views here.
@@ -289,6 +290,251 @@ def create_booking(request):
     })
 
 @login_required
+def edit_booking(request, booking_id):
+    """Edit an existing booking"""
+    business = getattr(request.user, 'business', None)
+    if not business:
+        messages.error(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    # Get the booking
+    try:
+        booking = Booking.objects.select_related(
+            'service_offering', 
+            'lead'
+        ).prefetch_related(
+            'fields',
+            'fields__business_field',
+            'service_items',
+            'service_items__service_item',
+            'staff_assignments',
+            'staff_assignments__staff_member'
+        ).get(id=booking_id, business=business)
+    except Booking.DoesNotExist:
+        messages.error(request, 'Booking not found.')
+        return redirect('bookings:index')
+    
+    service_offerings = ServiceOffering.objects.filter(business=business, is_active=True).order_by('name')
+    custom_fields = BusinessCustomField.objects.filter(business=business, is_active=True).order_by('display_order', 'name')
+    
+    if request.method == 'POST':
+        # Basic Booking fields
+        service_type_id = request.POST.get('service_type')
+        booking_date = request.POST.get('booking_date')
+        start_time = request.POST.get('start_time')
+        end_time = request.POST.get('end_time')
+        location_type = request.POST.get('location_type')
+        location_details = request.POST.get('location_details')
+        notes = request.POST.get('notes')
+        staff_member_id = request.POST.get('staff_member_id')
+        
+        # Debug: Print received date/time values
+        print(f"=== EDIT BOOKING POST DATA ===")
+        print(f"Booking Date: {booking_date}")
+        print(f"Start Time: {start_time}")
+        print(f"End Time: {end_time}")
+        
+        # Client information
+        client_name = request.POST.get('client_name')
+        client_email = request.POST.get('client_email')
+        client_phone = request.POST.get('client_phone')
+        selected_lead_id = request.POST.get('lead_id')
+
+        # Validation
+        errors = []
+        if not service_type_id:
+            errors.append('Service type is required.')
+        if not booking_date:
+            errors.append('Booking date is required.')
+        if not start_time or not end_time:
+            errors.append('Start and end time are required.')
+        if not client_name:
+            errors.append('Client name is required.')
+        if not client_email:
+            errors.append('Client email is required.')
+        if not client_phone:
+            errors.append('Client phone is required.')
+        if not staff_member_id:
+            errors.append('Staff member selection is required.')
+            
+        if errors:
+            for err in errors:
+                messages.error(request, err)
+            return redirect('bookings:edit_booking', booking_id=booking_id)
+
+        try:
+            service_offering = ServiceOffering.objects.get(id=service_type_id, business=business)
+        except ServiceOffering.DoesNotExist:
+            messages.error(request, 'Invalid service selected.')
+            return redirect('bookings:edit_booking', booking_id=booking_id)
+
+        # Get the lead if selected
+        lead = None
+        if selected_lead_id:
+            try:
+                lead = Lead.objects.get(id=selected_lead_id, business=business)
+            except Lead.DoesNotExist:
+                pass
+        
+        # Update Booking
+        booking.lead = lead
+        booking.service_offering = service_offering
+        booking.booking_date = booking_date
+        booking.start_time = start_time
+        booking.end_time = end_time
+        booking.location_type = location_type
+        booking.location_details = location_details
+        booking.notes = notes
+        booking.name = client_name
+        booking.email = client_email
+        booking.phone_number = client_phone
+        booking.save()
+        
+        # Debug: Confirm saved values
+        print(f"=== BOOKING SAVED ===")
+        print(f"Saved Booking Date: {booking.booking_date}")
+        print(f"Saved Start Time: {booking.start_time}")
+        print(f"Saved End Time: {booking.end_time}")
+
+        # Update staff assignment
+        try:
+            staff_member = StaffMember.objects.get(id=staff_member_id, business=business)
+            # Delete existing staff assignments
+            BookingStaffAssignment.objects.filter(booking=booking).delete()
+            # Create new staff assignment
+            BookingStaffAssignment.objects.create(
+                booking=booking,
+                staff_member=staff_member,
+                is_primary=True
+            )
+        except StaffMember.DoesNotExist:
+            messages.error(request, 'Selected staff member not found.')
+            return redirect('bookings:edit_booking', booking_id=booking_id)
+
+        # Update custom fields
+        # Delete existing custom fields
+        BookingField.objects.filter(booking=booking).delete()
+        
+        for field in custom_fields:
+            val = request.POST.get(f'custom_{field.slug}', '')
+            if field.required and not val and field.field_type != 'boolean':
+                messages.error(request, f'{field.name} is required.')
+                return redirect('bookings:edit_booking', booking_id=booking_id)
+                
+            # Handle boolean fields (checkboxes) properly
+            if field.field_type == 'boolean':
+                val = 'true' if request.POST.get(f'custom_{field.slug}') else 'false'
+                
+            BookingField.objects.create(
+                booking=booking,
+                field_type='business',
+                business_field=field,
+                value=val,
+            )
+        
+        # Update service items
+        # Delete existing service items
+        BookingServiceItem.objects.filter(booking=booking).delete()
+        
+        service_items = request.POST.getlist('service_items[]')
+        selected_items_data = {}
+        
+        # Check if we have the JSON data for selected items
+        if request.POST.get('selected_items_data'):
+            try:
+                selected_items_data = json.loads(request.POST.get('selected_items_data'))
+            except json.JSONDecodeError:
+                pass
+        
+        # Combine service_items list with any additional items in selected_items_data
+        all_service_items = set(service_items)
+        for item_id in selected_items_data.keys():
+            if item_id not in all_service_items and selected_items_data[item_id].get('value'):
+                all_service_items.add(item_id)
+        
+        for item_id in all_service_items:
+            try:
+                service_item = ServiceItem.objects.get(id=item_id, business=business)
+                
+                # Get quantity and field value from the selected_items_data
+                quantity = 1
+                field_value = ''
+                
+                if item_id in selected_items_data:
+                    item_data = selected_items_data[item_id]
+                    
+                    # For non-free items with field_type='number', use the field value as the quantity
+                    if service_item.price_type != 'free' and service_item.field_type == 'number':
+                        if 'value' in item_data and item_data['value']:
+                            try:
+                                quantity = int(float(item_data['value']))
+                                field_value = str(quantity)
+                            except (ValueError, TypeError):
+                                pass
+                    else:
+                        quantity = int(item_data.get('quantity', 1))
+                        field_value = item_data.get('value', '')
+                else:
+                    quantity = int(request.POST.get(f'item_quantity_{item_id}', 1))
+                
+                # Calculate price at booking time
+                price_at_booking = service_item.calculate_price(base_price=service_offering.price, quantity=quantity)
+                
+                # Create the booking service item
+                booking_service_item = BookingServiceItem.objects.create(
+                    booking=booking,
+                    service_item=service_item,
+                    quantity=quantity,
+                    price_at_booking=price_at_booking
+                )
+                
+                # Set the appropriate field value based on field type
+                booking_service_item.set_response_value(field_value)
+                booking_service_item.save()
+            except (ServiceItem.DoesNotExist, ValueError):
+                pass
+
+        messages.success(request, 'Booking updated successfully!')
+        return redirect(reverse('bookings:booking_detail', kwargs={'booking_id': booking_id}))
+
+    # GET - Prepare data for the form
+    # Get booking fields data
+    booking_fields_data = {}
+    for booking_field in booking.fields.all():
+        if booking_field.business_field:
+            booking_fields_data[f'custom_{booking_field.business_field.slug}'] = booking_field.value
+    
+    # Get booking service items data
+    booking_service_items = []
+    for bsi in booking.service_items.all():
+        response_value = bsi.get_response_value()
+        # Convert Decimal to string for JSON serialization
+        if isinstance(response_value, Decimal):
+            response_value = str(response_value)
+        
+        booking_service_items.append({
+            'id': str(bsi.service_item.id),
+            'quantity': bsi.quantity,
+            'response_value': response_value if response_value else ''
+        })
+    
+    # Get staff assignment
+    staff_assignment = booking.staff_assignments.filter(is_primary=True).first()
+    
+    # Convert to JSON with proper encoding
+    booking_fields_data_json = json.dumps(booking_fields_data) if booking_fields_data else '{}'
+    booking_service_items_json = json.dumps(booking_service_items) if booking_service_items else '[]'
+    
+    return render(request, 'bookings/edit_booking.html', {
+        'booking': booking,
+        'service_offerings': service_offerings,
+        'custom_fields': custom_fields,
+        'booking_fields_data_json': booking_fields_data_json,
+        'booking_service_items_json': booking_service_items_json,
+        'staff_assignment': staff_assignment,
+    })
+
+@login_required
 def booking_detail(request, booking_id):
     """View for displaying detailed information about a booking"""
     business = getattr(request.user, 'business', None)
@@ -393,7 +639,7 @@ def booking_detail(request, booking_id):
 
 @login_required
 def get_service_items(request, service_id):
-    """API endpoint to get all service items for a business"""
+    """API endpoint to get service items filtered by service offering"""
     business = getattr(request.user, 'business', None)
     if not business:
         return JsonResponse({'error': 'Business not found'}, status=404)
@@ -402,8 +648,12 @@ def get_service_items(request, service_id):
         # Get the service offering for reference
         service_offering = ServiceOffering.objects.get(id=service_id, business=business)
         
-        # Get all service items for this business
-        service_items = ServiceItem.objects.filter(business=business, is_active=True)
+        # Get service items linked to this specific service offering
+        service_items = ServiceItem.objects.filter(
+            business=business, 
+            service_offering=service_offering,
+            is_active=True
+        )
         
         items = []
         for service_item in service_items:

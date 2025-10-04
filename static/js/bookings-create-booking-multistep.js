@@ -109,11 +109,19 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateDateTimeSummary() {
-        const date = document.getElementById('booking_date').value;
-        const startTime = document.getElementById('start_time').value;
-        const endTime = document.getElementById('end_time').value;
-        
+        const dateEl = document.getElementById('booking_date');
+        const startTimeEl = document.getElementById('start_time');
+        const endTimeEl = document.getElementById('end_time');
         const summaryEl = document.getElementById('summary-datetime');
+        
+        // Check if elements exist (they won't exist in edit booking page)
+        if (!dateEl || !startTimeEl || !summaryEl) {
+            return;
+        }
+        
+        const date = dateEl.value;
+        const startTime = startTimeEl.value;
+        const endTime = endTimeEl ? endTimeEl.value : '';
         
         if (date && startTime) {
             const dateObj = new Date(date);
@@ -272,17 +280,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Service items handling (will be integrated with existing service items logic)
     window.updateServiceItemsSummary = function(items) {
+        console.log('=== UPDATE SERVICE ITEMS SUMMARY ===');
+        console.log('Items to update:', items);
+        console.log('Previous items:', summaryData.items);
+        
         summaryData.items = items;
         summaryData.itemsPrice = items.reduce((total, item) => total + (item.price * item.quantity), 0);
         summaryData.itemsDuration = items.reduce((total, item) => total + (item.duration * item.quantity), 0);
+        
+        console.log('New items price:', summaryData.itemsPrice);
+        console.log('New items duration:', summaryData.itemsDuration);
+        
         updateSummary();
     };
     
     // Listen for service item changes from the main booking script
     // This function will be called when service items are selected/deselected
     document.addEventListener('serviceItemsUpdated', function(event) {
-        const items = event.detail.items || [];
+        const items = event.detail.items || {};
         const itemsArray = [];
+        
+        console.log('=== SERVICE ITEMS UPDATED EVENT ===');
+        console.log('Items received:', items);
+        console.log('Items count:', Object.keys(items).length);
         
         // Convert the items object to array format for summary
         Object.values(items).forEach(item => {
@@ -294,6 +314,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 inputValue: item.inputValue || null  // Include user input value
             });
         });
+        
+        console.log('Items array for summary:', itemsArray);
+        console.log('Items array length:', itemsArray.length);
         
         updateServiceItemsSummary(itemsArray);
     });

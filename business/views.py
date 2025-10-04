@@ -409,6 +409,7 @@ def add_service_item(request):
         # Get form data
         name = request.POST.get('name')
         description = request.POST.get('description', '')
+        service_offering_id = request.POST.get('service_offering_id')
         price_type = request.POST.get('price_type')
         price_value = request.POST.get('price_value', '0')
         duration_minutes = request.POST.get('duration_minutes', 0)
@@ -435,9 +436,19 @@ def add_service_item(request):
             messages.error(request, 'Please fill in all required fields.')
             return redirect('business:pricing')
         
+        # Get service offering if provided
+        service_offering = None
+        if service_offering_id:
+            try:
+                service_offering = ServiceOffering.objects.get(id=service_offering_id, business=business)
+            except ServiceOffering.DoesNotExist:
+                messages.error(request, 'Invalid service offering selected.')
+                return redirect('business:pricing')
+        
         # Create service item
         ServiceItem.objects.create(
             business=business,
+            service_offering=service_offering,
             name=name,
             description=description,
             field_type=field_type,
@@ -476,6 +487,7 @@ def edit_service_item(request):
         item_id = request.POST.get('item_id')
         name = request.POST.get('name')
         description = request.POST.get('description', '')
+        service_offering_id = request.POST.get('service_offering_id')
         price_type = request.POST.get('price_type')
         price_value = request.POST.get('price_value', '0')
         duration_minutes = request.POST.get('duration_minutes', 0)
@@ -508,9 +520,19 @@ def edit_service_item(request):
             messages.error(request, 'You do not have permission to edit this service item.')
             return redirect('business:pricing')
         
+        # Get service offering if provided
+        service_offering = None
+        if service_offering_id:
+            try:
+                service_offering = ServiceOffering.objects.get(id=service_offering_id, business=business)
+            except ServiceOffering.DoesNotExist:
+                messages.error(request, 'Invalid service offering selected.')
+                return redirect('business:pricing')
+        
         # Update service item
         service_item.name = name
         service_item.description = description
+        service_item.service_offering = service_offering
         service_item.field_type = field_type
         service_item.field_options = field_options
         service_item.price_type = price_type
@@ -594,6 +616,7 @@ def get_service_item_details(request, item_id):
             'id': str(service_item.id),
             'name': service_item.name,
             'description': service_item.description,
+            'service_offering_id': str(service_item.service_offering.id) if service_item.service_offering else '',
             'field_type': service_item.field_type,
             'field_options': service_item.field_options,
             'price_type': service_item.price_type,

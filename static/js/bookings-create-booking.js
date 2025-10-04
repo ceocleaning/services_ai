@@ -92,6 +92,16 @@ document.addEventListener('DOMContentLoaded', function() {
             baseDuration = parseInt(duration);
             totalDuration = baseDuration;
             
+            // Clear selected items when service changes
+            console.log('=== SERVICE CHANGE ===');
+            console.log('New Service ID:', serviceId);
+            console.log('Clearing selected items. Previous items:', Object.keys(selectedItems).length);
+            selectedItems = {};
+            console.log('Selected items cleared');
+            
+            // Immediately update the summary with cleared items
+            updateTotalPrice();
+            
             // Calculate end time based on start time and duration
             if (startTimeInput.value) {
                 calculateEndTime(startTimeInput.value, totalDuration);
@@ -118,6 +128,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (bookingSummary) bookingSummary.classList.add('d-none');
             basePrice = 0;
             totalPrice = 0;
+            selectedItems = {};
             updateTotalPrice();
             
             // Reset staff selection
@@ -693,8 +704,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
         
         // Initialize selected items from required items
+        console.log('=== INITIALIZING REQUIRED ITEMS ===');
         items.forEach(item => {
             if (!item.is_optional) {  // Required items (is_optional = false)
+                console.log('Adding required item:', item.id, item.name);
                 selectedItems[item.id] = {
                     name: item.name,
                     price: parseFloat(item.price_value),
@@ -704,6 +717,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 };
             }
         });
+        console.log('Total selected items after initialization:', Object.keys(selectedItems).length);
         
         updateTotalPrice();
     }
@@ -725,6 +739,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Dispatch event for multi-step form to update summary
         if (isMultiStepForm) {
+            console.log('=== DISPATCHING SERVICE ITEMS UPDATED EVENT ===');
+            console.log('Selected items to dispatch:', selectedItems);
+            console.log('Selected items count:', Object.keys(selectedItems).length);
+            
             const event = new CustomEvent('serviceItemsUpdated', {
                 detail: { items: selectedItems }
             });
