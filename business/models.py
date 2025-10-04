@@ -276,11 +276,8 @@ class ServiceItem(models.Model):
     Each item is linked to a specific service offering for better organization.
     """
     PRICE_TYPE_CHOICES = (
-        ('fixed', 'Fixed Price'),
-        ('percentage', 'Percentage of Base Price'),
-        ('hourly', 'Hourly Rate'),
-        ('per_unit', 'Per Unit'),
         ('free', 'Free'),
+        ('paid', 'Paid'),
     )
     
     FIELD_TYPE_CHOICES = (
@@ -324,19 +321,13 @@ class ServiceItem(models.Model):
     def calculate_price(self, base_price=None, quantity=1):
         """
         Calculate the price for this service item based on its price type.
+        For 'paid' items, price is calculated as price_value * quantity.
+        For 'free' items, price is always 0.
         """
         if quantity <= 0:
             return Decimal('0.00')
             
-        if self.price_type == 'fixed':
-            return self.price_value * quantity
-        elif self.price_type == 'percentage' and base_price:
-            return (base_price * self.price_value / 100) * quantity
-        elif self.price_type == 'hourly':
-            # Convert duration_minutes to hours and multiply by hourly rate
-            hours = self.duration_minutes / 60
-            return self.price_value * hours * quantity
-        elif self.price_type == 'per_unit':
+        if self.price_type == 'paid':
             return self.price_value * quantity
         elif self.price_type == 'free':
             return Decimal('0.00')

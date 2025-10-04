@@ -88,29 +88,21 @@
 .strategy-item {
     padding: 1rem;
     border-radius: 0.5rem;
-    background-color: rgba(0, 0, 0, 0.03);
     margin-bottom: 1rem;
-    transition: all 0.3s ease;
 }
 
-.strategy-item:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-    transform: translateY(-2px);
-}
-
-.strategy-item h6 {
-    font-weight: 600;
+.empty-state h5 {
     color: var(--color-text-primary);
+    margin-bottom: 0.5rem;
 }
 
-.strategy-item .badge {
-    font-weight: 500;
-    padding: 0.35rem 0.65rem;
+.empty-state p {
+    color: var(--gray-light);
 }
 
-/* Quick Stats */
+/* Stat Cards */
 .stat-item {
-    transition: all 0.3s ease;
+    padding: 0;
 }
 
 .stat-icon {
@@ -121,7 +113,107 @@
     align-items: center;
     justify-content: center;
     color: white;
+}
+
+.stat-icon i {
     font-size: 1.25rem;
+}
+
+/* Custom Radio Buttons */
+.service-type-radio-group,
+.price-type-radio-group,
+.item-type-radio-group,
+.status-radio-group,
+.field-type-radio-group {
+    display: grid;
+    gap: 12px;
+}
+
+.custom-radio-wrapper {
+    position: relative;
+}
+
+.custom-radio-input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.custom-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    border: 2px solid #2d3748;
+    border-radius: 8px;
+    background: #1a202c;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    color: #a0aec0;
+}
+
+.custom-radio-label:hover {
+    border-color: #4a5568;
+    background: #2d3748;
+    color: #e2e8f0;
+}
+
+.custom-radio-input:checked + .custom-radio-label {
+    border-color: #667eea;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+}
+
+.custom-radio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(99, 102, 241, 0.15);
+    transition: all 0.3s ease;
+}
+
+.custom-radio-input:checked + .custom-radio-label .custom-radio-icon {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.custom-radio-icon i {
+    font-size: 12px;
+    color: #667eea;
+}
+
+.custom-radio-input:checked + .custom-radio-label .custom-radio-icon i {
+    color: #fff;
+}
+
+.custom-radio-text {
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* Service Type Radio Group - 2 columns Grid */
+.service-type-radio-group {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* Price Type Radio Group - 2 columns Grid */
+.price-type-radio-group {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+/* Field Type Radio Group - 3 columns Grid */
+.field-type-radio-group {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* Item Type and Status Radio Groups - 2 columns Grid */
+.item-type-radio-group,
+.status-radio-group {
+    grid-template-columns: repeat(2, 1fr);
 }
 
 /* Info Section */
@@ -129,7 +221,6 @@
     padding: 1.5rem;
     border-radius: 0.5rem;
     background-color: rgba(0, 0, 0, 0.02);
-}
 
 .info-section h6 {
     font-weight: 600;

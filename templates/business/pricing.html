@@ -153,7 +153,6 @@
                                     <tr>
                                         <th class="ps-4">Item Name</th>
                                         <th>Service Type</th>
-                                        <th>Price Type</th>
                                         <th>Value</th>
                                         <th>Optional</th>
                                         <th class="text-end pe-4">Actions</th>
@@ -176,26 +175,13 @@
                                                     <span class="badge bg-secondary">Not Linked</span>
                                                 {% endif %}
                                             </td>
+                                          
                                             <td>
-                                                {% if item.price_type == 'fixed' %}
-                                                    <span class="badge bg-primary">Fixed</span>
-                                                {% elif item.price_type == 'percentage' %}
-                                                    <span class="badge bg-info">Percentage</span>
-                                                {% elif item.price_type == 'hourly' %}
-                                                    <span class="badge bg-warning">Hourly</span>
-                                                {% elif item.price_type == 'per_unit' %}
-                                                    <span class="badge bg-secondary">Per Unit</span>
-                                                {% endif %}
-                                            </td>
-                                            <td>
-                                                {% if item.price_type == 'fixed' %}
+                                                {% if item.price_type == 'paid' %}
                                                     ${{ item.price_value }}
-                                                {% elif item.price_type == 'percentage' %}
-                                                    {{ item.price_value }}%
-                                                {% elif item.price_type == 'hourly' %}
-                                                    ${{ item.price_value }}/hr
-                                                {% elif item.price_type == 'per_unit' %}
-                                                    ${{ item.price_value }}/unit
+                                                {% elif item.price_type == 'free' %}
+                                                    Free
+                                             
                                                 {% endif %}
                                             </td>
                                             <td>
@@ -476,43 +462,138 @@
                         <textarea class="form-control" id="itemDescription" name="description" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="serviceOfferingSelect" class="form-label">Service Type/Offering <span class="text-danger">*</span></label>
-                        <select class="form-select" id="serviceOfferingSelect" name="service_offering_id" required>
-                            <option value="">Select a service offering...</option>
+                        <label class="form-label d-block">Service Type/Offering <span class="text-danger">*</span></label>
+                        <div class="service-type-radio-group">
                             {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="serviceOffering_{{ service.id }}" 
+                                       name="service_offering_id" 
+                                       value="{{ service.id }}" 
+                                       class="custom-radio-input"
+                                       required>
+                                <label for="serviceOffering_{{ service.id }}" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-{{ service.icon|default:'concierge-bell' }}"></i>
+                                    </span>
+                                    <span class="custom-radio-text">{{ service.name }}</span>
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                         <small class="text-muted">Link this item to a specific service offering</small>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="fieldType" class="form-label">Field Type</label>
-                            <select class="form-select" id="fieldType" name="field_type">
-                                <option value="text">Text Input</option>
-                                <option value="textarea">Text Area</option>
-                                <option value="number">Number Input</option>
-                                <option value="boolean">Yes/No Checkbox</option>
-                                <option value="select">Dropdown Select</option>
-                            </select>
-                            <small class="text-muted">For pricing options, select Number Input</small>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Field Type</label>
+                        <div class="field-type-radio-group">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="fieldTypeText" 
+                                       name="field_type" 
+                                       value="text" 
+                                       class="custom-radio-input"
+                                       checked>
+                                <label for="fieldTypeText" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-font"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Text</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="fieldTypeTextarea" 
+                                       name="field_type" 
+                                       value="textarea" 
+                                       class="custom-radio-input">
+                                <label for="fieldTypeTextarea" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-align-left"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Text Area</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="fieldTypeNumber" 
+                                       name="field_type" 
+                                       value="number" 
+                                       class="custom-radio-input">
+                                <label for="fieldTypeNumber" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-hashtag"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Number</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="fieldTypeBoolean" 
+                                       name="field_type" 
+                                       value="boolean" 
+                                       class="custom-radio-input">
+                                <label for="fieldTypeBoolean" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-check-square"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Yes/No</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="fieldTypeSelect" 
+                                       name="field_type" 
+                                       value="select" 
+                                       class="custom-radio-input">
+                                <label for="fieldTypeSelect" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-list"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Dropdown</span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="col-md-6" id="fieldOptionsContainer" style="display: none;">
-                            <label for="fieldOptions" class="form-label">Field Options</label>
-                            <input type="text" class="form-control" id="fieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
-                            <small class="text-muted">Comma separated options for dropdown</small>
-                        </div>
+                        <small class="text-muted">For pricing options, select Number Input</small>
+                    </div>
+                    <div class="mb-3" id="fieldOptionsContainer" style="display: none;">
+                        <label for="fieldOptions" class="form-label">Field Options</label>
+                        <input type="text" class="form-control" id="fieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
+                        <small class="text-muted">Comma separated options for dropdown</small>
                     </div>
                     <div class="row mb-3" id="priceTypeRow">
                         <div class="col-md-6">
-                            <label for="priceType" class="form-label">Price Type</label>
-                            <select class="form-select" id="priceType" name="price_type" required>
-                                <option value="fixed">Fixed Price</option>
-                                <option value="percentage">Percentage of Base Price</option>
-                                <option value="hourly">Hourly Rate</option>
-                                <option value="per_unit">Per Unit</option>
-                                <option value="free">Free</option>
-                            </select>
+                            <label class="form-label d-block">Price Type</label>
+                            <div class="price-type-radio-group">
+                                <div class="custom-radio-wrapper">
+                                    <input type="radio" 
+                                           id="priceTypeFree" 
+                                           name="price_type" 
+                                           value="free" 
+                                           class="custom-radio-input"
+                                           required>
+                                    <label for="priceTypeFree" class="custom-radio-label">
+                                        <span class="custom-radio-icon">
+                                            <i class="fas fa-gift"></i>
+                                        </span>
+                                        <span class="custom-radio-text">Free</span>
+                                    </label>
+                                </div>
+                                <div class="custom-radio-wrapper">
+                                    <input type="radio" 
+                                           id="priceTypePaid" 
+                                           name="price_type" 
+                                           value="paid" 
+                                           class="custom-radio-input"
+                                           checked
+                                           required>
+                                    <label for="priceTypePaid" class="custom-radio-label">
+                                        <span class="custom-radio-icon">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </span>
+                                        <span class="custom-radio-text">Paid</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label for="priceValue" class="form-label">Price Value</label>
@@ -533,13 +614,69 @@
                             <input type="number" class="form-control" id="maxQuantity" name="max_quantity" min="1" value="1">
                         </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="itemOptional" name="is_optional" checked>
-                        <label class="form-check-label" for="itemOptional">Optional Item</label>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Item Type</label>
+                        <div class="item-type-radio-group">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="itemRequired" 
+                                       name="is_optional" 
+                                       value="false" 
+                                       class="custom-radio-input">
+                                <label for="itemRequired" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Required</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="itemOptional" 
+                                       name="is_optional" 
+                                       value="true" 
+                                       class="custom-radio-input"
+                                       checked>
+                                <label for="itemOptional" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Optional</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="itemActive" name="is_active" checked>
-                        <label class="form-check-label" for="itemActive">Active</label>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Status</label>
+                        <div class="status-radio-group">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="itemActive" 
+                                       name="is_active" 
+                                       value="true" 
+                                       class="custom-radio-input"
+                                       checked>
+                                <label for="itemActive" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Active</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="itemInactive" 
+                                       name="is_active" 
+                                       value="false" 
+                                       class="custom-radio-input">
+                                <label for="itemInactive" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Inactive</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -572,43 +709,136 @@
                         <textarea class="form-control" id="editItemDescription" name="description" rows="2"></textarea>
                     </div>
                     <div class="mb-3">
-                        <label for="editServiceOfferingSelect" class="form-label">Service Type/Offering <span class="text-danger">*</span></label>
-                        <select class="form-select" id="editServiceOfferingSelect" name="service_offering_id" required>
-                            <option value="">Select a service offering...</option>
+                        <label class="form-label d-block">Service Type/Offering <span class="text-danger">*</span></label>
+                        <div class="service-type-radio-group" id="editServiceTypeRadioGroup">
                             {% for service in services %}
-                            <option value="{{ service.id }}">{{ service.name }}</option>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editServiceOffering_{{ service.id }}" 
+                                       name="service_offering_id" 
+                                       value="{{ service.id }}" 
+                                       class="custom-radio-input"
+                                       required>
+                                <label for="editServiceOffering_{{ service.id }}" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-{{ service.icon|default:'concierge-bell' }}"></i>
+                                    </span>
+                                    <span class="custom-radio-text">{{ service.name }}</span>
+                                </label>
+                            </div>
                             {% endfor %}
-                        </select>
+                        </div>
                         <small class="text-muted">Link this item to a specific service offering</small>
                     </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="editFieldType" class="form-label">Field Type</label>
-                            <select class="form-select" id="editFieldType" name="field_type">
-                                <option value="text">Text Input</option>
-                                <option value="textarea">Text Area</option>
-                                <option value="number">Number Input</option>
-                                <option value="boolean">Yes/No Checkbox</option>
-                                <option value="select">Dropdown Select</option>
-                            </select>
-                            <small class="text-muted">For pricing options, select Number Input</small>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Field Type</label>
+                        <div class="field-type-radio-group" id="editFieldTypeRadioGroup">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editFieldTypeText" 
+                                       name="field_type" 
+                                       value="text" 
+                                       class="custom-radio-input edit-field-type-radio">
+                                <label for="editFieldTypeText" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-font"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Text</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editFieldTypeTextarea" 
+                                       name="field_type" 
+                                       value="textarea" 
+                                       class="custom-radio-input edit-field-type-radio">
+                                <label for="editFieldTypeTextarea" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-align-left"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Text Area</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editFieldTypeNumber" 
+                                       name="field_type" 
+                                       value="number" 
+                                       class="custom-radio-input edit-field-type-radio">
+                                <label for="editFieldTypeNumber" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-hashtag"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Number</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editFieldTypeBoolean" 
+                                       name="field_type" 
+                                       value="boolean" 
+                                       class="custom-radio-input edit-field-type-radio">
+                                <label for="editFieldTypeBoolean" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-check-square"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Yes/No</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editFieldTypeSelect" 
+                                       name="field_type" 
+                                       value="select" 
+                                       class="custom-radio-input edit-field-type-radio">
+                                <label for="editFieldTypeSelect" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-list"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Dropdown</span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="col-md-6" id="editFieldOptionsContainer" style="display: none;">
-                            <label for="editFieldOptions" class="form-label">Field Options</label>
-                            <input type="text" class="form-control" id="editFieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
-                            <small class="text-muted">Comma separated options for dropdown</small>
-                        </div>
+                        <small class="text-muted">For pricing options, select Number Input</small>
+                    </div>
+                    <div class="mb-3" id="editFieldOptionsContainer" style="display: none;">
+                        <label for="editFieldOptions" class="form-label">Field Options</label>
+                        <input type="text" class="form-control" id="editFieldOptions" name="field_options" placeholder="Option1, Option2, Option3">
+                        <small class="text-muted">Comma separated options for dropdown</small>
                     </div>
                     <div class="row mb-3" id="editPriceRow">
                         <div class="col-md-6">
-                            <label for="editPriceType" class="form-label">Price Type</label>
-                            <select class="form-select" id="editPriceType" name="price_type" required>
-                                <option value="fixed">Fixed Price</option>
-                                <option value="percentage">Percentage of Base Price</option>
-                                <option value="hourly">Hourly Rate</option>
-                                <option value="per_unit">Per Unit</option>
-                                <option value="free">Free</option>
-                            </select>
+                            <label class="form-label d-block">Price Type</label>
+                            <div class="price-type-radio-group">
+                                <div class="custom-radio-wrapper">
+                                    <input type="radio" 
+                                           id="editPriceTypeFree" 
+                                           name="price_type" 
+                                           value="free" 
+                                           class="custom-radio-input edit-price-type-radio"
+                                           required>
+                                    <label for="editPriceTypeFree" class="custom-radio-label">
+                                        <span class="custom-radio-icon">
+                                            <i class="fas fa-gift"></i>
+                                        </span>
+                                        <span class="custom-radio-text">Free</span>
+                                    </label>
+                                </div>
+                                <div class="custom-radio-wrapper">
+                                    <input type="radio" 
+                                           id="editPriceTypePaid" 
+                                           name="price_type" 
+                                           value="paid" 
+                                           class="custom-radio-input edit-price-type-radio"
+                                           required>
+                                    <label for="editPriceTypePaid" class="custom-radio-label">
+                                        <span class="custom-radio-icon">
+                                            <i class="fas fa-dollar-sign"></i>
+                                        </span>
+                                        <span class="custom-radio-text">Paid</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label for="editPriceValue" class="form-label">Price Value</label>
@@ -629,13 +859,67 @@
                             <input type="number" class="form-control" id="editMaxQuantity" name="max_quantity" min="1">
                         </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="editItemOptional" name="is_optional">
-                        <label class="form-check-label" for="editItemOptional">Optional Item</label>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Item Type</label>
+                        <div class="item-type-radio-group">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editItemRequired" 
+                                       name="is_optional" 
+                                       value="false" 
+                                       class="custom-radio-input">
+                                <label for="editItemRequired" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-star"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Required</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editItemOptional" 
+                                       name="is_optional" 
+                                       value="true" 
+                                       class="custom-radio-input">
+                                <label for="editItemOptional" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Optional</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="form-check form-switch mb-3">
-                        <input class="form-check-input" type="checkbox" id="editItemActive" name="is_active">
-                        <label class="form-check-label" for="editItemActive">Active</label>
+                    <div class="mb-3">
+                        <label class="form-label d-block">Status</label>
+                        <div class="status-radio-group">
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editItemActive" 
+                                       name="is_active" 
+                                       value="true" 
+                                       class="custom-radio-input">
+                                <label for="editItemActive" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-check-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Active</span>
+                                </label>
+                            </div>
+                            <div class="custom-radio-wrapper">
+                                <input type="radio" 
+                                       id="editItemInactive" 
+                                       name="is_active" 
+                                       value="false" 
+                                       class="custom-radio-input">
+                                <label for="editItemInactive" class="custom-radio-label">
+                                    <span class="custom-radio-icon">
+                                        <i class="fas fa-times-circle"></i>
+                                    </span>
+                                    <span class="custom-radio-text">Inactive</span>
+                                </label>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
