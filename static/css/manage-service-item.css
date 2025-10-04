@@ -1,0 +1,147 @@
+/* Manage Service Item Page Styles */
+
+.service-item-card {
+    background: var(--gray-darkest);
+    border: 1px solid var(--gray-medium-dark);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.form-section {
+    padding: 1.5rem;
+    background: var(--gray-dark);
+    border-radius: 8px;
+    border: 1px solid var(--gray-medium-dark);
+}
+
+.section-title {
+    color: var(--gray-lightest);
+    font-weight: 600;
+    font-size: 1.2rem;
+    margin-bottom: 2rem !important;
+}
+
+.section-title i {
+    color: var(--primary);
+}
+
+.form-actions {
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--gray-medium-dark);
+}
+
+/* Form Controls */
+.form-control,
+.form-select {
+    background-color: var(--gray-medium-dark);
+    border-color: var(--gray-medium);
+    color: var(--gray-lightest);
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: var(--gray-medium-dark);
+    border-color: var(--primary);
+    color: var(--gray-lightest);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--gray-medium);
+}
+
+.form-label {
+    color: var(--gray-light);
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+/* Input Group */
+.input-group-text {
+    background-color: var(--gray-medium-dark);
+    border-color: var(--gray-medium);
+    color: var(--gray-light);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    border: none;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-outline-secondary {
+    border-color: var(--gray-medium);
+    color: var(--gray-light);
+}
+
+.btn-outline-secondary:hover {
+    background-color: var(--gray-medium-dark);
+    border-color: var(--gray-light);
+    color: var(--gray-lightest);
+}
+
+.btn-outline-primary {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary);
+    border-color: var(--primary);
+    color: white;
+}
+
+/* Radio Groups - Reuse existing styles */
+.service-type-radio-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.field-type-radio-group {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+}
+
+.price-type-radio-group,
+.item-type-radio-group,
+.status-radio-group {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+/* Option Pricing Cards */
+.option-pricing-section {
+    margin-top: 1rem;
+}
+
+.option-pricing-card {
+    background: var(--gray-darkest) !important;
+    border-radius: 8px;
+    border: 1px solid var(--gray-medium-dark);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .service-type-radio-group,
+    .field-type-radio-group,
+    .price-type-radio-group,
+    .item-type-radio-group,
+    .status-radio-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .form-section {
+        padding: 1rem;
+    }
+}

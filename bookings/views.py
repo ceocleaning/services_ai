@@ -208,15 +208,19 @@ def create_booking(request):
         service_items = request.POST.getlist('service_items[]')
         selected_items_data = {}
         
+        print("=== BOOKING CREATION - SERVICE ITEMS ===")
         print("Service items:", service_items)
         
         # Check if we have the JSON data for selected items
         if request.POST.get('selected_items_data'):
             try:
                 selected_items_data = json.loads(request.POST.get('selected_items_data'))
-                print("Selected items data:", selected_items_data)
-            except json.JSONDecodeError:
+                print("Selected items data (parsed):", selected_items_data)
+                for item_id, item_data in selected_items_data.items():
+                    print(f"  Item {item_id}: value='{item_data.get('value')}', quantity={item_data.get('quantity')}")
+            except json.JSONDecodeError as e:
                 # If JSON is invalid, continue with empty dict
+                print(f"ERROR: Failed to parse selected_items_data JSON: {e}")
                 pass
         
         # Combine service_items list with any additional items in selected_items_data
@@ -260,9 +264,17 @@ def create_booking(request):
                     quantity = int(request.POST.get(f'item_quantity_{item_id}', 1))
                 
                 # Calculate price at booking time
-                price_at_booking = service_item.calculate_price(base_price=service_offering.price, quantity=quantity)
+                # For select/boolean fields with option pricing, pass the selected value
+                price_at_booking = service_item.calculate_price(
+                    base_price=service_offering.price, 
+                    quantity=quantity,
+                    selected_value=field_value if service_item.field_type in ['select', 'boolean'] else None
+                )
 
-                print(f"price_at_booking: {price_at_booking}")
+                print(f"  Processing item {item_id} ({service_item.name}):")
+                print(f"    Field type: {service_item.field_type}, Price type: {service_item.price_type}")
+                print(f"    Field value to save: '{field_value}'")
+                print(f"    Quantity: {quantity}, Price at booking: {price_at_booking}")
                 
                 # Create the booking service item
                 booking_service_item = BookingServiceItem.objects.create(
@@ -275,6 +287,9 @@ def create_booking(request):
                 # Set the appropriate field value based on field type
                 booking_service_item.set_response_value(field_value)
                 booking_service_item.save()
+                
+                print(f"    Saved - select_value: '{booking_service_item.select_value}', "
+                      f"boolean_value: {booking_service_item.boolean_value}")
             except (ServiceItem.DoesNotExist, ValueError):
                 # Log this but don't fail the booking
                 pass
@@ -439,11 +454,18 @@ def edit_booking(request, booking_id):
         service_items = request.POST.getlist('service_items[]')
         selected_items_data = {}
         
+        print("=== EDIT BOOKING - SERVICE ITEMS ===")
+        print("Service items:", service_items)
+        
         # Check if we have the JSON data for selected items
         if request.POST.get('selected_items_data'):
             try:
                 selected_items_data = json.loads(request.POST.get('selected_items_data'))
-            except json.JSONDecodeError:
+                print("Selected items data (parsed):", selected_items_data)
+                for item_id, item_data in selected_items_data.items():
+                    print(f"  Item {item_id}: value='{item_data.get('value')}', quantity={item_data.get('quantity')}")
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Failed to parse selected_items_data JSON: {e}")
                 pass
         
         # Combine service_items list with any additional items in selected_items_data
@@ -451,6 +473,8 @@ def edit_booking(request, booking_id):
         for item_id in selected_items_data.keys():
             if item_id not in all_service_items and selected_items_data[item_id].get('value'):
                 all_service_items.add(item_id)
+        
+        print(f"All service items to process: {all_service_items}")
         
         for item_id in all_service_items:
             try:
@@ -478,7 +502,17 @@ def edit_booking(request, booking_id):
                     quantity = int(request.POST.get(f'item_quantity_{item_id}', 1))
                 
                 # Calculate price at booking time
-                price_at_booking = service_item.calculate_price(base_price=service_offering.price, quantity=quantity)
+                # For select/boolean fields with option pricing, pass the selected value
+                price_at_booking = service_item.calculate_price(
+                    base_price=service_offering.price, 
+                    quantity=quantity,
+                    selected_value=field_value if service_item.field_type in ['select', 'boolean'] else None
+                )
+                
+                print(f"  Processing item {item_id} ({service_item.name}):")
+                print(f"    Field type: {service_item.field_type}, Price type: {service_item.price_type}")
+                print(f"    Field value to save: '{field_value}'")
+                print(f"    Quantity: {quantity}, Price at booking: {price_at_booking}")
                 
                 # Create the booking service item
                 booking_service_item = BookingServiceItem.objects.create(
@@ -491,6 +525,9 @@ def edit_booking(request, booking_id):
                 # Set the appropriate field value based on field type
                 booking_service_item.set_response_value(field_value)
                 booking_service_item.save()
+                
+                print(f"    Saved - select_value: '{booking_service_item.select_value}', "
+                      f"boolean_value: {booking_service_item.boolean_value}")
             except (ServiceItem.DoesNotExist, ValueError):
                 pass
 
@@ -573,10 +610,16 @@ def booking_detail(request, booking_id):
         # Get service items
         service_items = booking.service_items.all()
         
+        print(f"=== BOOKING DETAIL - PRICE CALCULATION ===")
+        print(f"Booking ID: {booking_id}")
+        print(f"Base service price: {booking.service_offering.price}")
+        
         # Separate free and paid service items
         paid_service_items = []
         free_service_items = []
         for item in service_items:
+            print(f"Item: {item.service_item.name}, price_at_booking: {item.price_at_booking}, "
+                  f"field_type: {item.service_item.field_type}, boolean_value: {item.boolean_value}")
             if item.service_item.price_type == 'free':
                 free_service_items.append(item)
             else:
@@ -585,11 +628,15 @@ def booking_detail(request, booking_id):
         # Calculate paid service items total
         paid_service_items_total = sum(item.price_at_booking for item in paid_service_items)
         
+        print(f"Paid service items total: {paid_service_items_total}")
+        
         # Check if there are any paid items
         has_paid_items = len(paid_service_items) > 0
         
         # Calculate total price (base price + paid items only)
         total_price = booking.service_offering.price + paid_service_items_total
+        
+        print(f"Total price: {total_price}")
         
         # Create a timeline of booking events
         timeline = [
@@ -672,6 +719,7 @@ def get_service_items(request, service_id):
                 'price_value': float(service_item.price_value),
                 'field_type': service_item.field_type,
                 'field_options': service_item.field_options,
+                'option_pricing': service_item.option_pricing,
                 'is_required': is_required,
                 'is_optional': service_item.is_optional,
                 'max_quantity': service_item.max_quantity,

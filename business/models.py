@@ -297,6 +297,7 @@ class ServiceItem(models.Model):
     field_options = models.JSONField(blank=True, null=True, help_text="Options for select fields, stored as JSON array")
     price_type = models.CharField(max_length=20, choices=PRICE_TYPE_CHOICES, default='fixed')
     price_value = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal('0.00'))
+    option_pricing = models.JSONField(blank=True, null=True, help_text="Pricing configuration for field options (Yes/No, Select). Format: {'option_name': {'price_type': 'paid/free', 'price_value': 0.00}}")
     is_optional = models.BooleanField(default=True, help_text="Whether this item is optional or required by default")
     is_active = models.BooleanField(default=True)
     duration_minutes = models.PositiveIntegerField(default=0, help_text="Additional time required for this item")
@@ -318,19 +319,53 @@ class ServiceItem(models.Model):
             self.identifier = slugify(self.name).replace('-', '_')
         super().save(*args, **kwargs)
     
-    def calculate_price(self, base_price=None, quantity=1):
+    def calculate_price(self, base_price=None, quantity=1, selected_value=None):
         """
         Calculate the price for this service item based on its price type.
         For 'paid' items, price is calculated as price_value * quantity.
         For 'free' items, price is always 0.
+        For boolean/select fields with option_pricing, uses the selected option's price.
+        
+        Args:
+            base_price: Base price for percentage calculations (not used currently)
+            quantity: Quantity multiplier
+            selected_value: The selected option value (for boolean/select fields)
         """
         if quantity <= 0:
             return Decimal('0.00')
+        
+        # For boolean and select fields with option pricing
+        if self.field_type in ['boolean', 'select'] and self.option_pricing and selected_value is not None:
+            # Normalize the selected value to match option_pricing keys
+            option_key = str(selected_value).lower()
             
+            print(f"[calculate_price] Item: {self.name}")
+            print(f"  Field type: {self.field_type}")
+            print(f"  Selected value: '{selected_value}' -> option_key: '{option_key}'")
+            print(f"  Option pricing: {self.option_pricing}")
+            print(f"  Option key in pricing? {option_key in self.option_pricing}")
+            
+            if option_key in self.option_pricing:
+                option_config = self.option_pricing[option_key]
+                print(f"  Option config: {option_config}")
+                if option_config.get('price_type') == 'paid':
+                    price_value = Decimal(str(option_config.get('price_value', 0)))
+                    calculated_price = price_value * quantity
+                    print(f"  Calculated price: {calculated_price}")
+                    return calculated_price
+                else:
+                    print(f"  Price type is free, returning 0.00")
+                    return Decimal('0.00')
+            else:
+                print(f"  Option key '{option_key}' NOT FOUND in option_pricing keys: {list(self.option_pricing.keys())}")
+                print(f"  Falling through to default pricing...")
+        
+        # For number fields and other types, use the standard price_type/price_value
         if self.price_type == 'paid':
             return self.price_value * quantity
         elif self.price_type == 'free':
             return Decimal('0.00')
+        
         return Decimal('0.00')
 
 

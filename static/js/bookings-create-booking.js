@@ -465,27 +465,91 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Helper function to render the appropriate field based on field_type and price_type
         function renderItemField(item) {
-            // For non-free items (fixed, percentage, hourly, per_unit), field type is always forced to be 'number'
-            if (item.price_type !== 'free') {
-                // For number field type when not free, this input represents the quantity
-                // so we don't need a separate quantity control
-                const label = item.field_type === 'number' ? 'Quantity:' : 'Value:';
-                const placeholder = item.field_type === 'number' ? 'Enter quantity' : 'Enter value';
-                
+            // For number field type with paid pricing
+            if (item.field_type === 'number' && item.price_type === 'paid') {
                 return `
                     <div class="form-group">
-                        <label for="field_${item.id}">${label}</label>
+                        <label for="field_${item.id}">Quantity: <span class="text-muted small">(Max: ${item.max_quantity})</span></label>
                         <input type="number" 
-                               class="form-control" 
+                               class="form-control item-number-input" 
                                id="field_${item.id}" 
                                name="item_field_${item.id}" 
-                               placeholder="${placeholder}"
-                               min="1">
+                               data-item-id="${item.id}"
+                               placeholder="Enter quantity"
+                               min="1"
+                               max="${item.max_quantity}"
+                               value="1">
                     </div>
                 `;
             }
             
-            // For free items, users can select any field type
+            // For boolean field type with option pricing
+            if (item.field_type === 'boolean' && item.option_pricing) {
+                const yesConfig = item.option_pricing.yes || { price_type: 'free', price_value: 0 };
+                const noConfig = item.option_pricing.no || { price_type: 'free', price_value: 0 };
+                
+                return `
+                    <div class="form-group">
+                        <label>Select an option:</label>
+                        <div class="form-check">
+                            <input type="radio" 
+                                   class="form-check-input item-boolean-input" 
+                                   id="field_${item.id}_yes" 
+                                   name="item_field_${item.id}" 
+                                   value="yes"
+                                   data-item-id="${item.id}"
+                                   data-price-type="${yesConfig.price_type}"
+                                   data-price-value="${yesConfig.price_value}">
+                            <label class="form-check-label" for="field_${item.id}_yes">
+                                Yes ${yesConfig.price_type === 'paid' ? '<span class="text-success">($' + yesConfig.price_value + ')</span>' : '<span class="text-muted">(Free)</span>'}
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input type="radio" 
+                                   class="form-check-input item-boolean-input" 
+                                   id="field_${item.id}_no" 
+                                   name="item_field_${item.id}" 
+                                   value="no"
+                                   data-item-id="${item.id}"
+                                   data-price-type="${noConfig.price_type}"
+                                   data-price-value="${noConfig.price_value}">
+                            <label class="form-check-label" for="field_${item.id}_no">
+                                No ${noConfig.price_type === 'paid' ? '<span class="text-success">($' + noConfig.price_value + ')</span>' : '<span class="text-muted">(Free)</span>'}
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // For select field type with option pricing
+            if (item.field_type === 'select' && item.option_pricing && item.field_options) {
+                let options = '<option value="">Choose...</option>';
+                item.field_options.forEach(option => {
+                    const optionKey = option.toLowerCase();
+                    const optionConfig = item.option_pricing[optionKey] || { price_type: 'free', price_value: 0 };
+                    const priceText = optionConfig.price_type === 'paid' 
+                        ? ` - $${optionConfig.price_value}` 
+                        : ' - Free';
+                    
+                    options += `<option value="${option}" 
+                                        data-price-type="${optionConfig.price_type}" 
+                                        data-price-value="${optionConfig.price_value}">${option}${priceText}</option>`;
+                });
+                
+                return `
+                    <div class="form-group">
+                        <label for="field_${item.id}">Select an option:</label>
+                        <select class="form-select item-select-input" 
+                                id="field_${item.id}" 
+                                name="item_field_${item.id}"
+                                data-item-id="${item.id}">
+                            ${options}
+                        </select>
+                    </div>
+                `;
+            }
+            
+            // Legacy/fallback rendering for items without option pricing
             switch(item.field_type) {
                 case 'text':
                     return `
@@ -512,12 +576,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 case 'number':
                     return `
                         <div class="form-group">
-                            <label for="field_${item.id}">Value:</label>
+                            <label for="field_${item.id}">Quantity: <span class="text-muted small">(Max: ${item.max_quantity})</span></label>
                             <input type="number" 
-                                   class="form-control" 
+                                   class="form-control item-number-input" 
                                    id="field_${item.id}" 
-                                   name="item_field_${item.id}" 
-                                   placeholder="Enter number">
+                                   name="item_field_${item.id}"
+                                   data-item-id="${item.id}" 
+                                   placeholder="Enter quantity"
+                                   min="1"
+                                   max="${item.max_quantity}"
+                                   value="1">
                         </div>
                     `;
                 case 'boolean':
@@ -529,7 +597,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                        class="form-check-input" 
                                        id="field_${item.id}_yes" 
                                        name="item_field_${item.id}" 
-                                       value="true">
+                                       value="yes">
                                 <label class="form-check-label" for="field_${item.id}_yes">Yes</label>
                             </div>
                             <div class="form-check">
@@ -537,14 +605,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                        class="form-check-input" 
                                        id="field_${item.id}_no" 
                                        name="item_field_${item.id}" 
-                                       value="false">
+                                       value="no">
                                 <label class="form-check-label" for="field_${item.id}_no">No</label>
                             </div>
                         </div>
                     `;
                 case 'select':
-                    // Field options are only shown and required when field type is 'select'
-                    let options = '';
+                    let options = '<option value="">Choose...</option>';
                     if (item.field_options && Array.isArray(item.field_options)) {
                         item.field_options.forEach(option => {
                             options += `<option value="${option}">${option}</option>`;
@@ -556,7 +623,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             <select class="form-select" 
                                     id="field_${item.id}" 
                                     name="item_field_${item.id}">
-                                <option value="">Choose...</option>
                                 ${options}
                             </select>
                         </div>
@@ -579,7 +645,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.service-item-checkbox-input').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const itemId = this.value;
-                const price = parseFloat(this.dataset.price);
                 const item = serviceItems.find(i => i.id === itemId);
                 const fieldContainer = document.getElementById(`field_container_${itemId}`);
                 const isRequired = this.dataset.required === 'true';
@@ -592,12 +657,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (this.checked) {
                     const itemData = serviceItems.find(i => i.id === itemId);
+                    
+                    // Initialize with default price (will be updated by field selection)
+                    let initialPrice = 0;
+                    if (item.field_type === 'number' && item.price_type === 'paid') {
+                        initialPrice = parseFloat(item.price_value);
+                    }
+                    
                     selectedItems[itemId] = {
                         name: itemData ? itemData.name : 'Unknown Item',
-                        price: price,
+                        price: initialPrice,
                         quantity: 1,
                         duration: itemData ? parseInt(itemData.duration_minutes || 0) : 0,
-                        inputValue: null  // Will store user input value
+                        inputValue: null,  // Will store user input value
+                        fieldType: item.field_type,
+                        optionPricing: item.option_pricing
                     };
                     
                     // Show field container
@@ -674,31 +748,120 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
         
-        // Add event listeners to all field inputs to capture values
-        document.querySelectorAll('input[id^="field_"], textarea[id^="field_"], select[id^="field_"]').forEach(input => {
-            const eventType = input.type === 'radio' ? 'change' : 'input';
-            
-            input.addEventListener(eventType, function() {
-                const itemId = this.id.replace('field_', '').replace('_yes', '').replace('_no', '');
+        // Add event listeners to number inputs (for quantity-based pricing)
+        document.querySelectorAll('.item-number-input').forEach(input => {
+            input.addEventListener('input', function() {
+                // Remove validation error when user starts typing
+                this.classList.remove('is-invalid');
+                
+                const itemId = this.dataset.itemId;
                 const item = serviceItems.find(i => i.id === itemId);
+                const quantity = parseInt(this.value) || 0;
                 
                 if (selectedItems[itemId] && item) {
-                    // For number inputs on non-free items, the number represents quantity
-                    if (input.type === 'number' && item.price_type !== 'free') {
-                        const quantity = parseInt(this.value) || 0;
+                    // Enforce max_quantity
+                    if (quantity > item.max_quantity) {
+                        this.value = item.max_quantity;
+                        selectedItems[itemId].quantity = item.max_quantity;
+                    } else {
                         selectedItems[itemId].quantity = quantity;
-                        selectedItems[itemId].inputValue = quantity;
-                    } 
-                    // For boolean (Yes/No radio buttons)
-                    else if (input.type === 'radio' && input.name.includes('field_')) {
-                        selectedItems[itemId].inputValue = this.value;
                     }
-                    // For text, textarea, select, and free number inputs
-                    else {
-                        selectedItems[itemId].inputValue = this.value;
-                    }
+                    selectedItems[itemId].inputValue = selectedItems[itemId].quantity;
+                    
+                    // Calculate price: base price * quantity
+                    selectedItems[itemId].price = parseFloat(item.price_value) * selectedItems[itemId].quantity;
                     
                     updateTotalPrice();
+                }
+            });
+        });
+        
+        // Add event listeners to boolean inputs (Yes/No with option pricing)
+        document.querySelectorAll('.item-boolean-input').forEach(input => {
+            input.addEventListener('change', function() {
+                // Remove validation error when user selects an option
+                const formGroup = this.closest('.form-group');
+                if (formGroup) {
+                    formGroup.classList.remove('is-invalid');
+                }
+                
+                if (this.checked) {
+                    const itemId = this.dataset.itemId;
+                    const priceType = this.dataset.priceType;
+                    const priceValue = parseFloat(this.dataset.priceValue) || 0;
+                    
+                    console.log('Boolean input changed:', {
+                        itemId,
+                        value: this.value,
+                        priceType,
+                        priceValue,
+                        selectedItems: selectedItems[itemId]
+                    });
+                    
+                    if (selectedItems[itemId]) {
+                        selectedItems[itemId].inputValue = this.value;
+                        
+                        // Update price based on selected option
+                        if (priceType === 'paid') {
+                            selectedItems[itemId].price = priceValue;
+                        } else {
+                            selectedItems[itemId].price = 0;
+                        }
+                        
+                        console.log('Updated item price:', selectedItems[itemId].price);
+                        updateTotalPrice();
+                    } else {
+                        console.warn('Item not in selectedItems:', itemId);
+                    }
+                }
+            });
+        });
+        
+        // Add event listeners to select inputs (dropdown with option pricing)
+        document.querySelectorAll('.item-select-input').forEach(input => {
+            input.addEventListener('change', function() {
+                // Remove validation error when user selects an option
+                this.classList.remove('is-invalid');
+                
+                const itemId = this.dataset.itemId;
+                const selectedOption = this.options[this.selectedIndex];
+                
+                console.log('Select input changed:', {
+                    itemId,
+                    value: this.value,
+                    selectedOption,
+                    selectedItems: selectedItems[itemId]
+                });
+                
+                if (selectedItems[itemId] && selectedOption && this.value) {
+                    selectedItems[itemId].inputValue = this.value;
+                    
+                    // Get pricing from selected option
+                    const priceType = selectedOption.dataset.priceType;
+                    const priceValue = parseFloat(selectedOption.dataset.priceValue) || 0;
+                    
+                    console.log('Option pricing:', { priceType, priceValue });
+                    
+                    if (priceType === 'paid') {
+                        selectedItems[itemId].price = priceValue;
+                    } else {
+                        selectedItems[itemId].price = 0;
+                    }
+                    
+                    console.log('Updated item price:', selectedItems[itemId].price);
+                    updateTotalPrice();
+                } else {
+                    console.warn('Item not in selectedItems or no option selected:', itemId);
+                }
+            });
+        });
+        
+        // Add event listeners to other field inputs (text, textarea)
+        document.querySelectorAll('input[id^="field_"]:not(.item-number-input):not(.item-boolean-input), textarea[id^="field_"], select[id^="field_"]:not(.item-select-input)').forEach(input => {
+            input.addEventListener('input', function() {
+                const itemId = this.id.replace('field_', '');
+                if (selectedItems[itemId]) {
+                    selectedItems[itemId].inputValue = this.value;
                 }
             });
         });
@@ -708,12 +871,21 @@ document.addEventListener('DOMContentLoaded', function() {
         items.forEach(item => {
             if (!item.is_optional) {  // Required items (is_optional = false)
                 console.log('Adding required item:', item.id, item.name);
+                
+                // Initialize with default price (0 for items that need user selection)
+                let initialPrice = 0;
+                if (item.field_type === 'number' && item.price_type === 'paid') {
+                    initialPrice = parseFloat(item.price_value);
+                }
+                
                 selectedItems[item.id] = {
                     name: item.name,
-                    price: parseFloat(item.price_value),
+                    price: initialPrice,
                     quantity: 1,
                     duration: parseInt(item.duration_minutes || 0),
-                    inputValue: null  // Will store user input value
+                    inputValue: null,  // Will store user input value
+                    fieldType: item.field_type,
+                    optionPricing: item.option_pricing
                 };
             }
         });
@@ -729,11 +901,23 @@ document.addEventListener('DOMContentLoaded', function() {
         totalPrice = basePrice;
         totalDuration = baseDuration;
         
+        console.log('=== UPDATE TOTAL PRICE ===');
+        console.log('Base price:', basePrice);
+        console.log('Selected items:', selectedItems);
+        
         // Add prices and durations of selected items
-        Object.values(selectedItems).forEach(item => {
-            totalPrice += item.price * item.quantity;
+        Object.entries(selectedItems).forEach(([itemId, item]) => {
+            const itemPrice = item.price * item.quantity;
+            console.log(`Item ${itemId} (${item.name}):`, {
+                price: item.price,
+                quantity: item.quantity,
+                total: itemPrice
+            });
+            totalPrice += itemPrice;
             totalDuration += item.duration * item.quantity;
         });
+        
+        console.log('Total price:', totalPrice);
         
         if (totalPriceSpan) totalPriceSpan.textContent = totalPrice.toFixed(2);
         
@@ -879,11 +1063,34 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         let valid = true;
         form.querySelectorAll('[required]').forEach(function(input) {
-            if (!input.value.trim()) {
-                valid = false;
-                input.classList.add('is-invalid');
-            } else {
-                input.classList.remove('is-invalid');
+            // Handle radio buttons differently
+            if (input.type === 'radio') {
+                const radioGroup = form.querySelectorAll(`input[name="${input.name}"]`);
+                const isAnyChecked = Array.from(radioGroup).some(radio => radio.checked);
+                if (!isAnyChecked) {
+                    valid = false;
+                    radioGroup.forEach(radio => radio.classList.add('is-invalid'));
+                } else {
+                    radioGroup.forEach(radio => radio.classList.remove('is-invalid'));
+                }
+            } 
+            // Handle checkboxes
+            else if (input.type === 'checkbox') {
+                if (!input.checked) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            }
+            // Handle all other input types (text, email, tel, date, time, select, etc.)
+            else {
+                if (!input.value || !input.value.trim()) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
             }
         });
         
@@ -896,7 +1103,8 @@ document.addEventListener('DOMContentLoaded', function() {
             let hasValue = false;
             
             // Check if this item has a value
-            if (fieldType === 'boolean' && priceType === 'free') {
+            if (fieldType === 'boolean') {
+                // For ALL boolean fields (free or with option pricing)
                 const yesRadio = document.getElementById(`field_${itemId}_yes`);
                 const noRadio = document.getElementById(`field_${itemId}_no`);
                 if ((yesRadio && yesRadio.checked) || (noRadio && noRadio.checked)) {
@@ -904,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else {
                 const fieldInput = document.getElementById(`field_${itemId}`);
-                if (fieldInput && fieldInput.value.trim()) {
+                if (fieldInput && fieldInput.value && fieldInput.value.trim()) {
                     hasValue = true;
                 }
             }
@@ -921,31 +1129,33 @@ document.addEventListener('DOMContentLoaded', function() {
             const fieldType = checkbox.dataset.fieldType;
             const priceType = checkbox.dataset.priceType;
             
-            // Handle different field types differently
-            if (fieldType === 'boolean' && priceType === 'free') {
-                // For boolean fields, check if either Yes or No is selected
-                const yesRadio = document.getElementById(`field_${itemId}_yes`);
-                const noRadio = document.getElementById(`field_${itemId}_no`);
-                if (!yesRadio.checked && !noRadio.checked) {
-                    valid = false;
-                    yesRadio.closest('.form-group').classList.add('is-invalid');
-                }
-            } else if (fieldType === 'select' && priceType === 'free') {
-                // For select fields, ensure an option is selected
+            // Handle different field types - prioritize field type over price type
+            if (fieldType === 'select') {
+                // For ALL select fields (free or with option pricing), ensure an option is selected
                 const fieldInput = document.getElementById(`field_${itemId}`);
                 if (fieldInput && !fieldInput.value) {
                     valid = false;
                     fieldInput.classList.add('is-invalid');
                 }
-            } else if (priceType !== 'free') {
-                // For non-free items, ensure a number is entered
+            } else if (fieldType === 'boolean') {
+                // For ALL boolean fields (free or with option pricing), check if either Yes or No is selected
+                const yesRadio = document.getElementById(`field_${itemId}_yes`);
+                const noRadio = document.getElementById(`field_${itemId}_no`);
+                if (!yesRadio || !noRadio || (!yesRadio.checked && !noRadio.checked)) {
+                    valid = false;
+                    if (yesRadio && yesRadio.closest('.form-group')) {
+                        yesRadio.closest('.form-group').classList.add('is-invalid');
+                    }
+                }
+            } else if (fieldType === 'number') {
+                // For number fields, ensure a valid number is entered
                 const fieldInput = document.getElementById(`field_${itemId}`);
-                if (fieldInput && (!fieldInput.value || isNaN(parseFloat(fieldInput.value)))) {
+                if (fieldInput && (!fieldInput.value || isNaN(parseFloat(fieldInput.value)) || parseFloat(fieldInput.value) <= 0)) {
                     valid = false;
                     fieldInput.classList.add('is-invalid');
                 }
-            } else {
-                // For other free items (text, textarea), just check if they're not empty
+            } else if (fieldType === 'text' || fieldType === 'textarea') {
+                // For text/textarea fields, just check if they're not empty
                 const fieldInput = document.getElementById(`field_${itemId}`);
                 if (fieldInput && !fieldInput.value.trim()) {
                     valid = false;
@@ -968,17 +1178,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 let fieldValue = '';
                 
                 // Handle different field types
-                if (fieldType === 'boolean' && priceType === 'free') {
-                    // For boolean fields, check which radio button is selected
+                if (fieldType === 'boolean') {
+                    // For ALL boolean fields (free or with option pricing)
                     const yesRadio = document.getElementById(`field_${itemId}_yes`);
                     const noRadio = document.getElementById(`field_${itemId}_no`);
                     if (yesRadio && yesRadio.checked) {
-                        fieldValue = 'true';
+                        fieldValue = yesRadio.value; // 'yes' or 'true'
                     } else if (noRadio && noRadio.checked) {
-                        fieldValue = 'false';
+                        fieldValue = noRadio.value; // 'no' or 'false'
                     }
                 } else {
-                    // For other field types
+                    // For other field types (text, textarea, number, select)
                     const fieldInput = document.getElementById(`field_${itemId}`);
                     if (fieldInput) {
                         fieldValue = fieldInput.value;
@@ -989,8 +1199,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     value: fieldValue,
                     quantity: quantityInput ? parseInt(quantityInput.value) : 1
                 };
+                
+                console.log(`Item ${itemId} (${fieldType}):`, {
+                    value: fieldValue,
+                    quantity: quantityInput ? parseInt(quantityInput.value) : 1
+                });
             });
             
+            console.log('=== FINAL SELECTED ITEMS DATA ===');
             console.log('Selected items data:', selectedItemsData);
             console.log('Selected items data JSON:', JSON.stringify(selectedItemsData));
             
@@ -1004,20 +1220,65 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (!valid) {
             e.preventDefault();
-            alert('Please fill in all required fields.');
+            
+            // Find which field is missing
             const firstInvalid = form.querySelector('.is-invalid');
+            let fieldName = 'Unknown field';
+            
             if (firstInvalid) {
+                // Check if it's a service item field
+                if (firstInvalid.id && firstInvalid.id.startsWith('field_')) {
+                    // Extract item ID from field_XXX
+                    const itemId = firstInvalid.id.replace('field_', '').split('_')[0];
+                    const itemCheckbox = document.querySelector(`.service-item-checkbox-input[value="${itemId}"]`);
+                    if (itemCheckbox) {
+                        const itemCard = itemCheckbox.nextElementSibling;
+                        const itemTitle = itemCard ? itemCard.querySelector('.service-item-title') : null;
+                        if (itemTitle) {
+                            fieldName = itemTitle.textContent.trim();
+                        } else {
+                            fieldName = 'Service Item';
+                        }
+                    }
+                } else {
+                    // Try to get the field label for regular form fields
+                    const label = form.querySelector(`label[for="${firstInvalid.id}"]`);
+                    if (label) {
+                        fieldName = label.textContent.replace('*', '').trim();
+                    } else if (firstInvalid.name === 'service_type') {
+                        fieldName = 'Service Type';
+                    } else if (firstInvalid.name) {
+                        fieldName = firstInvalid.name.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    }
+                }
+                
+                alert(`Please fill in all required fields. Missing: ${fieldName}`);
                 firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                alert('Please fill in all required fields.');
             }
         }
     });
 
     // Remove highlight on input
     form.querySelectorAll('[required]').forEach(function(input) {
-        input.addEventListener('input', function() {
-            if (input.value) {
-                input.classList.remove('is-invalid');
-            }
-        });
+        if (input.type === 'radio') {
+            input.addEventListener('change', function() {
+                const radioGroup = form.querySelectorAll(`input[name="${input.name}"]`);
+                radioGroup.forEach(radio => radio.classList.remove('is-invalid'));
+            });
+        } else if (input.type === 'checkbox') {
+            input.addEventListener('change', function() {
+                if (input.checked) {
+                    input.classList.remove('is-invalid');
+                }
+            });
+        } else {
+            input.addEventListener('input', function() {
+                if (input.value) {
+                    input.classList.remove('is-invalid');
+                }
+            });
+        }
     });
 });

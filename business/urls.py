@@ -37,6 +37,8 @@ urlpatterns = [
     path('service/<str:service_id>/details/', views.get_service_details, name='get_service_details'),
     
     # Service item management
+    path('service-item/manage/', views.manage_service_item, name='manage_service_item'),
+    path('service-item/manage/<str:item_id>/', views.manage_service_item, name='manage_service_item_edit'),
     path('service-item/add/', views.add_service_item, name='add_service_item'),
     path('service-item/edit/', views.edit_service_item, name='edit_service_item'),
     path('service-item/delete/', views.delete_service_item, name='delete_service_item'),

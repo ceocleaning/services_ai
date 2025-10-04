@@ -147,6 +147,9 @@ class ServiceItemAdmin(admin.ModelAdmin):
             'fields': ('is_optional', 'duration_minutes', 'max_quantity'),
             'classes': ('collapse',)
         }),
+        ('Price Settings', {
+            'fields': ('option_pricing',)
+        }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
             'classes': ('collapse',)

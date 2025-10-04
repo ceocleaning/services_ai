@@ -690,23 +690,24 @@ class BookingServiceItem(models.Model):
     def get_response_value(self):
         """Get the response value based on the service item's field type"""
         field_type = self.service_item.field_type
-        price_type = self.service_item.price_type
         
-        # For non-free items, always use number_value
-        if price_type != 'free':
-            return self.number_value
-            
-        # For free items, use the appropriate field based on field_type
-        if field_type == 'text':
+        # Return value based on field type (not price type)
+        # Boolean and select fields can have option pricing
+        if field_type == 'boolean':
+            # For boolean fields, convert True/False to 'yes'/'no' for consistency
+            if self.boolean_value is True:
+                return 'yes'
+            elif self.boolean_value is False:
+                return 'no'
+            return None
+        elif field_type == 'select':
+            return self.select_value
+        elif field_type == 'text':
             return self.text_value
         elif field_type == 'textarea':
             return self.textarea_value
         elif field_type == 'number':
             return self.number_value
-        elif field_type == 'boolean':
-            return self.boolean_value
-        elif field_type == 'select':
-            return self.select_value
         
         return None
         
@@ -722,35 +723,32 @@ class BookingServiceItem(models.Model):
         self.boolean_value = None
         self.select_value = None
         
-        # For non-free items, always use number_value
-        if price_type != 'free':
-            try:
-                self.number_value = Decimal(str(value)) if value else None
-            except (ValueError, TypeError, InvalidOperation):
-                pass
-            return
-            
-        # For free items, use the appropriate field based on field_type
-        if field_type == 'text':
+        # Handle based on field type (not price type)
+        # Boolean and select fields can have option pricing, so handle them by field type
+        if field_type == 'boolean':
+            # For boolean fields, store the selection (yes/no/true/false)
+            if isinstance(value, str):
+                # Handle both 'yes'/'no' and 'true'/'false' formats
+                self.boolean_value = value.lower() in ['true', 'yes']
+            else:
+                self.boolean_value = bool(value) if value is not None else None
+        elif field_type == 'select':
+            # For select fields, store the selected option text
+            self.select_value = str(value) if value else None
+        elif field_type == 'text':
             self.text_value = str(value) if value else None
         elif field_type == 'textarea':
             self.textarea_value = str(value) if value else None
         elif field_type == 'number':
+            # For number fields, store the numeric value
             try:
                 self.number_value = Decimal(str(value)) if value else None
             except (ValueError, TypeError, InvalidOperation):
                 pass
-        elif field_type == 'boolean':
-            if isinstance(value, str):
-                self.boolean_value = value.lower() == 'true'
-            else:
-                self.boolean_value = bool(value) if value is not None else None
-        elif field_type == 'select':
-            self.select_value = str(value) if value else None
     
     def save(self, *args, **kwargs):
         # If price_at_booking is not set, calculate it based on the service item's pricing rules
-        if not self.price_at_booking and self.service_item:
+        if self.price_at_booking is None and self.service_item:
             # Get base price from service offering if available
             base_price = None
             if self.booking.service_offering:

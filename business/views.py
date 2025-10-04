@@ -392,6 +392,29 @@ def delete_service(request):
 # Service Item Management
 
 @login_required
+def manage_service_item(request, item_id=None):
+    """
+    Render the manage service item page for both add and edit
+    """
+    # Check if user has a business
+    if not hasattr(request.user, 'business'):
+        messages.warning(request, 'Please register your business first.')
+        return redirect('business:register')
+    
+    business = request.user.business
+    
+    # Get all services for the business
+    services = ServiceOffering.objects.filter(business=business, is_active=True)
+    
+    context = {
+        'services': services,
+        'item_id': item_id,
+    }
+    
+    return render(request, 'business/manage_service_item.html', context)
+
+
+@login_required
 @require_http_methods(["POST"])
 def add_service_item(request):
     """
@@ -417,22 +440,86 @@ def add_service_item(request):
         is_optional = 'is_optional' in request.POST
         is_active = 'is_active' in request.POST
         
+        # Get field type
+        field_type = request.POST.get('field_type', 'text')
+        
         # For free items, set price_value to 0 and allow custom field type
         if price_type == 'free':
             price_value = '0'
-            field_type = request.POST.get('field_type', 'text')
         else:
-            # For non-free items, field type must be number
-            field_type = 'number'
+            # For paid items with number field type, field type must be number
+            if field_type == 'number':
+                field_type = 'number'
         
-        # Process field options for select type
+        # Process field options and option pricing
         field_options = None
-        if field_type == 'select' and request.POST.get('field_options'):
-            # Convert comma-separated string to list
-            field_options = [option.strip() for option in request.POST.get('field_options').split(',')]
+        option_pricing = None
+        
+        if field_type == 'boolean':
+            # Process Yes/No option pricing
+            yes_price_type = request.POST.get('yes_price_type', 'free')
+            yes_price_value = float(request.POST.get('yes_price_value', 0) or 0)
+            no_price_type = request.POST.get('no_price_type', 'free')
+            no_price_value = float(request.POST.get('no_price_value', 0) or 0)
+            
+            option_pricing = {
+                'yes': {
+                    'price_type': yes_price_type,
+                    'price_value': yes_price_value
+                },
+                'no': {
+                    'price_type': no_price_type,
+                    'price_value': no_price_value
+                }
+            }
+            
+            # If any option is paid, set overall price_type to paid
+            if yes_price_type == 'paid' or no_price_type == 'paid':
+                price_type = 'paid'
+                # Set price_value to the max of the two options
+                price_value = str(max(yes_price_value, no_price_value))
+            else:
+                price_type = 'free'
+                price_value = '0'
+                
+        elif field_type == 'select':
+            # Process select options with pricing
+            option_pricing = {}
+            option_names = request.POST.getlist('option_name[]')
+            option_price_types = request.POST.getlist('option_price_type[]')
+            option_price_values = request.POST.getlist('option_price_value[]')
+            
+            # Build field_options list and option_pricing dict
+            field_options = []
+            has_paid_option = False
+            max_price = 0
+            
+            for i, option_name in enumerate(option_names):
+                if option_name.strip():
+                    field_options.append(option_name.strip())
+                    opt_price_type = option_price_types[i] if i < len(option_price_types) else 'free'
+                    opt_price_value = float(option_price_values[i] or 0) if i < len(option_price_values) else 0
+                    
+                    option_pricing[option_name.strip().lower()] = {
+                        'price_type': opt_price_type,
+                        'price_value': opt_price_value
+                    }
+                    
+                    # Track if any option is paid
+                    if opt_price_type == 'paid':
+                        has_paid_option = True
+                        max_price = max(max_price, opt_price_value)
+            
+            # If any option is paid, set overall price_type to paid
+            if has_paid_option:
+                price_type = 'paid'
+                price_value = str(max_price)
+            else:
+                price_type = 'free'
+                price_value = '0'
         
         # Validate required fields
-        if not name or not price_type or (price_type != 'free' and not price_value):
+        if not name or not price_type:
             messages.error(request, 'Please fill in all required fields.')
             return redirect('business:pricing')
         
@@ -455,6 +542,7 @@ def add_service_item(request):
             field_options=field_options,
             price_type=price_type,
             price_value=Decimal(price_value),
+            option_pricing=option_pricing,
             duration_minutes=int(duration_minutes),
             max_quantity=int(max_quantity),
             is_optional=is_optional,
@@ -481,6 +569,7 @@ def edit_service_item(request):
         return redirect('business:register')
     
     business = request.user.business
+
     
     try:
         # Get form data
@@ -495,22 +584,86 @@ def edit_service_item(request):
         is_optional = 'is_optional' in request.POST
         is_active = 'is_active' in request.POST
         
+        # Get field type
+        field_type = request.POST.get('field_type', 'text')
+        
         # For free items, set price_value to 0 and allow custom field type
         if price_type == 'free':
             price_value = '0'
-            field_type = request.POST.get('field_type', 'text')
         else:
-            # For non-free items, field type must be number
-            field_type = 'number'
+            # For paid items with number field type, field type must be number
+            if field_type == 'number':
+                field_type = 'number'
         
-        # Process field options for select type
+        # Process field options and option pricing
         field_options = None
-        if field_type == 'select' and request.POST.get('field_options'):
-            # Convert comma-separated string to list
-            field_options = [option.strip() for option in request.POST.get('field_options').split(',')]
+        option_pricing = None
+        
+        if field_type == 'boolean':
+            # Process Yes/No option pricing
+            yes_price_type = request.POST.get('yes_price_type', 'free')
+            yes_price_value = float(request.POST.get('yes_price_value', 0) or 0)
+            no_price_type = request.POST.get('no_price_type', 'free')
+            no_price_value = float(request.POST.get('no_price_value', 0) or 0)
+            
+            option_pricing = {
+                'yes': {
+                    'price_type': yes_price_type,
+                    'price_value': yes_price_value
+                },
+                'no': {
+                    'price_type': no_price_type,
+                    'price_value': no_price_value
+                }
+            }
+            
+            # If any option is paid, set overall price_type to paid
+            if yes_price_type == 'paid' or no_price_type == 'paid':
+                price_type = 'paid'
+                # Set price_value to the max of the two options
+                price_value = str(max(yes_price_value, no_price_value))
+            else:
+                price_type = 'free'
+                price_value = '0'
+                
+        elif field_type == 'select':
+            # Process select options with pricing
+            option_pricing = {}
+            option_names = request.POST.getlist('option_name[]')
+            option_price_types = request.POST.getlist('option_price_type[]')
+            option_price_values = request.POST.getlist('option_price_value[]')
+            
+            # Build field_options list and option_pricing dict
+            field_options = []
+            has_paid_option = False
+            max_price = 0
+            
+            for i, option_name in enumerate(option_names):
+                if option_name.strip():
+                    field_options.append(option_name.strip())
+                    opt_price_type = option_price_types[i] if i < len(option_price_types) else 'free'
+                    opt_price_value = float(option_price_values[i] or 0) if i < len(option_price_values) else 0
+                    
+                    option_pricing[option_name.strip().lower()] = {
+                        'price_type': opt_price_type,
+                        'price_value': opt_price_value
+                    }
+                    
+                    # Track if any option is paid
+                    if opt_price_type == 'paid':
+                        has_paid_option = True
+                        max_price = max(max_price, opt_price_value)
+            
+            # If any option is paid, set overall price_type to paid
+            if has_paid_option:
+                price_type = 'paid'
+                price_value = str(max_price)
+            else:
+                price_type = 'free'
+                price_value = '0'
         
         # Validate required fields
-        if not item_id or not name or not price_type or (price_type != 'free' and not price_value):
+        if not item_id or not name or not price_type:
             messages.error(request, 'Please fill in all required fields.')
             return redirect('business:pricing')
         
@@ -537,10 +690,11 @@ def edit_service_item(request):
         service_item.field_options = field_options
         service_item.price_type = price_type
         service_item.price_value = Decimal(price_value)
+        service_item.option_pricing = option_pricing
         service_item.duration_minutes = int(duration_minutes)
         service_item.max_quantity = int(max_quantity)
-        service_item.is_optional = is_optional
-        service_item.is_active = is_active
+        service_item.is_optional = False if is_optional else True
+        service_item.is_active = True if is_active else False
         service_item.save()
         
         messages.success(request, f'Service item "{name}" updated successfully!')
@@ -621,6 +775,7 @@ def get_service_item_details(request, item_id):
             'field_options': service_item.field_options,
             'price_type': service_item.price_type,
             'price_value': float(service_item.price_value),
+            'option_pricing': service_item.option_pricing,
             'duration_minutes': service_item.duration_minutes,
             'max_quantity': service_item.max_quantity,
             'is_optional': service_item.is_optional,

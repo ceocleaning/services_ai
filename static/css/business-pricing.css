@@ -221,6 +221,7 @@
     padding: 1.5rem;
     border-radius: 0.5rem;
     background-color: rgba(0, 0, 0, 0.02);
+}
 
 .info-section h6 {
     font-weight: 600;
@@ -248,26 +249,26 @@
 .modal-content {
     border: none;
     border-radius: 1rem;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    background-color: var(--gray-dark);
+    box-shadow: 0 20px 60px rgba(58, 58, 58, 0.438);
+    background-color: var(--gray-darkest);
 }
 
 .modal-header {
     border-bottom: 1px solid var(--gray-medium-dark);
     padding: 1.5rem;
-    background-color: var(--gray-dark);
+    background-color: var(--primary-dark) !important;
     border-radius: 1rem 1rem 0 0;
 }
 
 .modal-body {
     padding: 1.5rem;
-    background-color: var(--gray-dark);
+    background-color: var(--gray-darkest) !important;
 }
 
 .modal-footer {
     border-top: 1px solid var(--gray-medium-dark);
     padding: 1.5rem;
-    background-color: var(--gray-dark);
+    background-color: var(--gray-darkest) !important;
     border-radius: 0 0 1rem 1rem;
 }
 
@@ -406,4 +407,25 @@
         height: 40px;
         font-size: 1rem;
     }
+}
+
+
+.option-pricing-card{
+    background: var(--gray-dark) !important;
+    border-radius: 12px;
+}
+
+/* Price input disabled state */
+.option-pricing-card input[type="number"]:disabled,
+.option-pricing-section input[type="number"]:disabled {
+    background-color: rgba(0, 0, 0, 0.1);
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.option-pricing-card .input-group-text,
+.option-pricing-section .input-group-text {
+    background-color: var(--gray-medium-dark);
+    border-color: var(--gray-medium);
+    color: var(--gray-light);
 }

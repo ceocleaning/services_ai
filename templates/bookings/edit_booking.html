@@ -489,13 +489,15 @@
             
             console.log('Pre-populating', bookingServiceItems.length, 'service items');
             
-            // First pass: Check all checkboxes without triggering events
+            // First pass: Check all checkboxes and trigger change events
             bookingServiceItems.forEach(item => {
                 console.log('Pre-populating item:', item);
                 
                 const checkbox = document.getElementById(`item_${item.id}`);
                 if (checkbox) {
                     checkbox.checked = true;
+                    // Trigger change event to update selectedItems and summary
+                    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
                 } else {
                     console.log('Checkbox not found for item:', item.id);
                 }
@@ -504,21 +506,43 @@
             // Second pass: Set all field values after a delay
             setTimeout(() => {
                 bookingServiceItems.forEach(item => {
-                    const fieldInput = document.getElementById(`field_${item.id}`);
-                    if (fieldInput && item.response_value) {
-                        console.log('Setting field value:', item.id, 'to', item.response_value);
-                        
-                        if (fieldInput.type === 'radio') {
-                            // Handle radio buttons
-                            const radioButton = document.querySelector(`input[name="item_field_${item.id}"][value="${item.response_value}"]`);
-                            if (radioButton) {
-                                radioButton.checked = true;
+                    if (!item.response_value) return;
+                    
+                    console.log('Setting field value:', item.id, 'to', item.response_value);
+                    
+                    // Check if this is a boolean field (radio buttons with _yes/_no suffixes)
+                    const yesRadio = document.getElementById(`field_${item.id}_yes`);
+                    const noRadio = document.getElementById(`field_${item.id}_no`);
+                    
+                    if (yesRadio && noRadio) {
+                        // Handle boolean fields with option pricing (yes/no radio buttons)
+                        console.log('Boolean field detected for item:', item.id);
+                        if (item.response_value === 'yes' || item.response_value === 'true') {
+                            yesRadio.checked = true;
+                        } else if (item.response_value === 'no' || item.response_value === 'false') {
+                            noRadio.checked = true;
+                        }
+                    } else {
+                        // Handle other field types (select, number, text, textarea)
+                        const fieldInput = document.getElementById(`field_${item.id}`);
+                        if (fieldInput) {
+                            if (fieldInput.tagName === 'SELECT') {
+                                // Handle select fields
+                                console.log('Select field detected for item:', item.id);
+                                fieldInput.value = item.response_value;
+                            } else if (fieldInput.type === 'number') {
+                                // Handle number fields
+                                console.log('Number field detected for item:', item.id);
+                                fieldInput.value = item.response_value;
+                            } else if (fieldInput.tagName === 'TEXTAREA') {
+                                // Handle textarea fields
+                                console.log('Textarea field detected for item:', item.id);
+                                fieldInput.value = item.response_value;
+                            } else {
+                                // Handle text fields
+                                console.log('Text field detected for item:', item.id);
+                                fieldInput.value = item.response_value;
                             }
-                        } else if (fieldInput.type === 'checkbox') {
-                            fieldInput.checked = item.response_value === 'true';
-                        } else {
-                            // For number and text inputs, just set the value
-                            fieldInput.value = item.response_value;
                         }
                     }
                     
@@ -535,13 +559,29 @@
                     console.log('Triggering change events for all items');
                     
                     bookingServiceItems.forEach(item => {
-                        const fieldInput = document.getElementById(`field_${item.id}`);
-                        if (fieldInput && item.response_value) {
-                            // Trigger input event for number fields (this is what the listener uses)
-                            if (fieldInput.type === 'number') {
-                                fieldInput.dispatchEvent(new Event('input', { bubbles: true }));
-                            } else {
-                                fieldInput.dispatchEvent(new Event('change', { bubbles: true }));
+                        if (!item.response_value) return;
+                        
+                        // Check if this is a boolean field
+                        const yesRadio = document.getElementById(`field_${item.id}_yes`);
+                        const noRadio = document.getElementById(`field_${item.id}_no`);
+                        
+                        if (yesRadio && noRadio) {
+                            // Trigger change event on the checked radio button
+                            if (yesRadio.checked) {
+                                yesRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                            } else if (noRadio.checked) {
+                                noRadio.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        } else {
+                            // Handle other field types
+                            const fieldInput = document.getElementById(`field_${item.id}`);
+                            if (fieldInput) {
+                                // Trigger input event for number fields (this is what the listener uses)
+                                if (fieldInput.type === 'number') {
+                                    fieldInput.dispatchEvent(new Event('input', { bubbles: true }));
+                                } else {
+                                    fieldInput.dispatchEvent(new Event('change', { bubbles: true }));
+                                }
                             }
                         }
                     });

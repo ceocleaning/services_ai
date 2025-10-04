@@ -229,66 +229,118 @@
                         
                         <!-- Additional Service Items -->
                         {% for item in service_items %}
-                            <div class="service-item mb-3 p-3 rounded bg-dark text-white border-start {% if item.service_item.price_type == 'free' %}border-secondary{% else %}border-info{% endif %} border-4">
+                            <div class="service-item mb-3 p-3 rounded bg-dark text-white border-start {% if item.price_at_booking == 0 %}border-secondary{% else %}border-info{% endif %} border-4">
                                 <div class="row align-items-center">
                                     <div class="col-md-6">
                                         <div class="d-flex align-items-center">
-                                            <div class="service-icon me-3 {% if item.service_item.price_type == 'free' %}bg-secondary{% else %}bg-info{% endif %} text-white rounded-circle p-2">
-                                                <i class="fas {% if item.service_item.price_type == 'free' %}fa-info{% else %}fa-plus{% endif %}"></i>
+                                            <div class="service-icon me-3 {% if item.price_at_booking == 0 %}bg-secondary{% else %}bg-info{% endif %} text-white rounded-circle p-2">
+                                                <i class="fas {% if item.price_at_booking == 0 %}fa-info{% else %}fa-plus{% endif %}"></i>
                                             </div>
                                             <div>
                                                 <h6 class="mb-0 fw-bold">{{ item.service_item.name }}</h6>
-                                                {% if item.service_item.price_type == 'free' %}
-                                                    <span class="badge bg-secondary">Information</span>
+                                                {% if item.service_item.description %}
+                                                    <p class="small text-white-50 mb-1 mt-1">{{ item.service_item.description }}</p>
                                                 {% endif %}
-                                                {% if item.service_item.duration_minutes > 0 %}
-                                                    <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
-                                                {% endif %}
+                                                <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
+                                                    {% if item.price_at_booking == 0 %}
+                                                        <span class="badge bg-secondary">Free</span>
+                                                    {% endif %}
+                                                    {% if item.service_item.duration_minutes > 0 %}
+                                                        <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
+                                                    {% endif %}
+                                                    {% if item.service_item.field_type %}
+                                                        <span class="badge bg-dark border border-secondary">
+                                                            {% if item.service_item.field_type == 'text' %}
+                                                                <i class="fas fa-font"></i> Text
+                                                            {% elif item.service_item.field_type == 'textarea' %}
+                                                                <i class="fas fa-align-left"></i> Text Area
+                                                            {% elif item.service_item.field_type == 'number' %}
+                                                                <i class="fas fa-hashtag"></i> Number
+                                                            {% elif item.service_item.field_type == 'boolean' %}
+                                                                <i class="fas fa-toggle-on"></i> Yes/No
+                                                            {% elif item.service_item.field_type == 'select' %}
+                                                                <i class="fas fa-list"></i> Select
+                                                            {% endif %}
+                                                        </span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="col-md-6">
-                                        {% if item.service_item.price_type == 'free' %}
-                                            <!-- Display field value based on field type -->
-                                            <div class="field-value">
-                                                {% if item.service_item.field_type == 'text' %}
-                                                    {% if item.text_value %}
-                                                        <div class="text-white">{{ item.text_value }}</div>
-                                                    {% endif %}
-                                                {% elif item.service_item.field_type == 'textarea' %}
-                                                    {% if item.textarea_value %}
+                                        <!-- Display field value and pricing -->
+                                        <div class="field-value-container">
+                                            {% if item.service_item.field_type == 'text' %}
+                                                {% if item.text_value %}
+                                                    <div class="mb-2">
+                                                        <span class="text-white-50 small">Value:</span>
+                                                        <div class="text-white fw-bold">{{ item.text_value }}</div>
+                                                    </div>
+                                                {% endif %}
+                                            {% elif item.service_item.field_type == 'textarea' %}
+                                                {% if item.textarea_value %}
+                                                    <div class="mb-2">
+                                                        <span class="text-white-50 small">Details:</span>
                                                         <div class="text-white" style="white-space: pre-line;">{{ item.textarea_value }}</div>
-                                                    {% endif %}
-                                                {% elif item.service_item.field_type == 'number' %}
-                                                    {% if item.number_value %}
-                                                        <div class="text-white">{{ item.number_value }}</div>
-                                                    {% endif %}
-                                                {% elif item.service_item.field_type == 'boolean' %}
-                                                    <div class="text-white">
+                                                    </div>
+                                                {% endif %}
+                                            {% elif item.service_item.field_type == 'number' %}
+                                                {% if item.number_value %}
+                                                    <div class="mb-2">
+                                                        <span class="text-white-50 small">Quantity:</span>
+                                                        <div class="text-white fw-bold">{{ item.number_value }}</div>
+                                                    </div>
+                                                {% endif %}
+                                            {% elif item.service_item.field_type == 'boolean' %}
+                                                <div class="mb-2">
+                                                    <span class="text-white-50 small">Selection:</span>
+                                                    <div class="text-white fw-bold">
                                                         {% if item.boolean_value == True %}
                                                             <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
                                                         {% elif item.boolean_value == False %}
-                                                            <span class="text-danger"><i class="fas fa-times-circle"></i> No</span>
+                                                            <span class="text-warning"><i class="fas fa-times-circle"></i> No</span>
+                                                        {% else %}
+                                                            <span class="text-muted">Not specified</span>
                                                         {% endif %}
                                                     </div>
-                                                {% elif item.service_item.field_type == 'select' %}
-                                                    {% if item.select_value %}
-                                                        <div class="text-white">{{ item.select_value }}</div>
-                                                    {% endif %}
-                                                {% endif %}
-                                            </div>
-                                        {% else %}
-                                            <!-- Display pricing information for non-free items -->
-                                            <div class="d-flex justify-content-end align-items-center gap-5">
-                                                <div class="fw-bold text-info">
-                                                    ${{ item.price_at_booking|divide:item.quantity }}
                                                 </div>
-                                                <div class="small text-white-50">Qty: {{ item.quantity }}</div>
-                                                {% if item.quantity >= 1 %}
-                                                    <div class="item-total small fw-bold text-success">Total: ${{ item.price_at_booking|floatformat:2 }}</div>
-                                                {% endif %}
-                                            </div>
-                                        {% endif %}
+                                            {% elif item.service_item.field_type == 'select' %}
+                                                <div class="mb-2">
+                                                    <span class="text-white-50 small">Selected Option:</span>
+                                                    <div class="text-white fw-bold">
+                                                        {% if item.select_value %}
+                                                            {{ item.select_value }}
+                                                        {% else %}
+                                                            <span class="text-muted fst-italic">Not specified</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                            
+                                            <!-- Display pricing information -->
+                                            {% if item.price_at_booking > 0 %}
+                                                <div class="d-flex justify-content-end align-items-center gap-3 mt-2">
+                                                    {% if item.quantity > 1 %}
+                                                        <div class="text-info">
+                                                            <span class="small text-white-50">Unit Price:</span>
+                                                            <span class="fw-bold">${{ item.price_at_booking|divide:item.quantity|floatformat:2 }}</span>
+                                                        </div>
+                                                        <div class="text-white-50">
+                                                            <span class="small">Qty:</span>
+                                                            <span class="fw-bold">{{ item.quantity }}</span>
+                                                        </div>
+                                                    {% endif %}
+                                                    <div class="item-total">
+                                                        <span class="small text-white-50">{% if item.quantity > 1 %}Total:{% else %}Price:{% endif %}</span>
+                                                        <span class="fw-bold text-success">${{ item.price_at_booking|floatformat:2 }}</span>
+                                                    </div>
+                                                </div>
+                                            {% else %}
+                                                <div class="text-end">
+                                                    <span class="badge bg-success">Free</span>
+                                                </div>
+                                            {% endif %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
