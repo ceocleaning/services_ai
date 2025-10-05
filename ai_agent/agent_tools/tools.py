@@ -1,10 +1,11 @@
 from langchain.tools import BaseTool
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Optional, List, Dict, Any, Type, Annotated
 from datetime import datetime, timedelta
 import pytz
 from django.utils import timezone
 from django.db.models import Q
+from .inputs import CheckAvailabilityInput, BookAppointmentInput, RescheduleAppointmentInput, CancelAppointmentInput, GetServiceItemsInput
 
 from bookings.models import Booking, BookingStatus, StaffAvailability, StaffMember, BookingStaffAssignment, BookingServiceItem
 from business.models import Business, ServiceOffering, ServiceItem, ServiceOfferingItem
@@ -12,13 +13,6 @@ from leads.models import Lead
 from bookings.availability import check_timeslot_availability, find_available_slots_on_date, is_staff_available
 from decimal import Decimal
 
-class CheckAvailabilityInput(BaseModel):
-    """Input for checking availability."""
-    date: str = Field(..., description="The date to check availability in format YYYY-MM-DD")
-    time: Optional[str] = Field(None, description="The time to check availability in format HH:MM")
-    service_name: Optional[str] = Field(None, description="Name of the service")
-    business_id: str = Field(..., description="ID of the business")
-    duration_minutes: Optional[int] = Field(None, description="Duration of the appointment in minutes")
 
 class CheckAvailabilityTool(BaseTool):
     name: str = "check_availability"
@@ -141,27 +135,12 @@ class CheckAvailabilityTool(BaseTool):
                         # Find alternative slots
                         print(f"[DEBUG] Finding alternative slots with find_available_slots_on_date")
                         try:
-                            # Check if we need to use the old or new interface
-                            import inspect
-                            params = inspect.signature(find_available_slots_on_date).parameters
-                            
-                            if 'business' in params:
-                                # New interface
-                                alternative_slots = find_available_slots_on_date(
-                                    business=business,
-                                    date=date_obj,
-                                    duration_minutes=duration_minutes,
-                                    service=service
-                                )
-                            else:
-                                # Old interface
-                                alternative_slots = find_available_slots_on_date(
-                                    business_id=str(business.id),
-                                    date=date_obj,
-                                    duration_minutes=duration_minutes,
-                                    service_offering_id=service.id if service else None
-                                )
-                            
+                            alternative_slots = find_available_slots_on_date(
+                                business_id=str(business.id),
+                                date=date_obj,
+                                duration_minutes=duration_minutes,
+                                service_offering_id=str(service.id) if service else None
+                            )
                             print(f"[DEBUG] Found {len(alternative_slots)} alternative slots")
                         except Exception as e:
                             import traceback
@@ -208,10 +187,10 @@ class CheckAvailabilityTool(BaseTool):
                 
                 # Find available slots
                 available_slots = find_available_slots_on_date(
-                    business=business,
+                    business_id=str(business.id),
                     date=date_obj,
                     duration_minutes=duration_minutes,
-                    service=service
+                    service_offering_id=str(service.id) if service else None
                 )
                 
                 if available_slots:
@@ -232,17 +211,6 @@ class CheckAvailabilityTool(BaseTool):
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             return f"An error occurred while checking availability: {str(e)}\n{traceback.format_exc()}"
 
-class BookAppointmentInput(BaseModel):
-    """Input for booking an appointment."""
-    date: str = Field(..., description="The date for the appointment in format YYYY-MM-DD")
-    time: str = Field(..., description="The time for the appointment in format HH:MM")
-    service_name: str = Field(..., description="Name of the service")
-    business_id: str = Field(..., description="ID of the business")
-    customer_name: str = Field(..., description="Name of the customer")
-    customer_phone: str = Field(..., description="Phone number of the customer")
-    customer_email: Optional[str] = Field(None, description="Email of the customer")
-    service_items: Optional[List[Dict[str, Any]]] = Field(None, description="List of service items with identifiers and quantities")
-    notes: Optional[str] = Field(None, description="Additional notes for the appointment")
 
 class BookAppointmentTool(BaseTool):
     name: str = "book_appointment"
@@ -310,13 +278,44 @@ class BookAppointmentTool(BaseTool):
                 print(f"[DEBUG] Service '{service_name}' not found")
                 return f"Service '{service_name}' not found for business '{business.name}'."
             
-            # Check availability
+            # Calculate total duration including service items if provided
+            total_duration = service.duration
+            if service_items:
+                print(f"[DEBUG] Pre-calculating duration with service items for availability check")
+                for item in service_items:
+                    try:
+                        identifier = item.get('identifier')
+                        value = item.get('value')
+                        quantity = int(item.get('quantity', 1))
+                        
+                        # Find service item
+                        service_item = ServiceItem.objects.filter(
+                            business=business,
+                            identifier__iexact=identifier,
+                            is_active=True
+                        ).first()
+                        
+                        if service_item:
+                            # For number fields, use value as quantity
+                            if service_item.field_type == 'number' and value:
+                                quantity = int(value)
+                            
+                            # Add duration
+                            total_duration += service_item.duration_minutes * quantity
+                            print(f"[DEBUG] Added {service_item.duration_minutes * quantity} minutes for {service_item.name}")
+                    except Exception as e:
+                        print(f"[DEBUG] Error calculating duration for item: {str(e)}")
+                        continue
+            
+            print(f"[DEBUG] Total duration for availability check: {total_duration} minutes")
+            
+            # Check availability with total duration
             print(f"[DEBUG] Checking availability with check_timeslot_availability")
             try:
                 is_available, reason, _available_staff = check_timeslot_availability(
                     business=business,
                     start_time=appointment_datetime,
-                    duration_minutes=service.duration,
+                    duration_minutes=total_duration,
                     service=service
                 )
                 print(f"[DEBUG] Availability result: is_available={is_available}, reason={reason}")
@@ -328,13 +327,14 @@ class BookAppointmentTool(BaseTool):
             
             if not is_available:
                 # Find alternative slots
+                print(f"[DEBUG] Time slot not available, finding alternatives")
                 print(f"[DEBUG] Finding alternative slots with find_available_slots_on_date")
                 try:
                     alternative_slots = find_available_slots_on_date(
-                        business=business,
+                        business_id=str(business.id),
                         date=date_obj,
-                        duration_minutes=service.duration,
-                        service=service
+                        duration_minutes=total_duration,
+                        service_offering_id=str(service.id) if service else None
                     )
                     print(f"[DEBUG] Found {len(alternative_slots)} alternative slots")
                 except Exception as e:
@@ -351,9 +351,9 @@ class BookAppointmentTool(BaseTool):
                         alt_slots_formatted = [slot['time'] for slot in alternative_slots[:5]]
                         
                     alt_slots_str = ", ".join(alt_slots_formatted)
-                    return f"Cannot book appointment at {time} on {date}. Reason: {reason}. Alternative available times on this date: {alt_slots_str}."
+                    return f"❌ Cannot book appointment at {time} on {date}. Reason: {reason}\n\nAlternative available times: {alt_slots_str}\n\nPlease choose a different time."
                 else:
-                    return f"Cannot book appointment at {time} on {date}. Reason: {reason}. There are no alternative times available on this date."
+                    return f"❌ Cannot book appointment at {time} on {date}. Reason: {reason}\n\nThere are no alternative times available on this date. Please try a different date."
             
             # Find or create lead
             try:
@@ -402,6 +402,27 @@ class BookAppointmentTool(BaseTool):
                 print(f"[DEBUG] Traceback: {traceback.format_exc()}")
                 return f"Error creating customer record: {str(e)}"
             
+            # Final availability check right before creating booking (to prevent race conditions)
+            print(f"[DEBUG] Final availability check before creating booking")
+            try:
+                is_available_final, reason_final, _available_staff_final = check_timeslot_availability(
+                    business=business,
+                    start_time=appointment_datetime,
+                    duration_minutes=total_duration,
+                    service=service
+                )
+                
+                if not is_available_final:
+                    print(f"[DEBUG] Final check failed - time slot no longer available")
+                    return f"❌ Sorry, this time slot was just booked by someone else. Reason: {reason_final}\n\nPlease select a different time."
+                    
+                print(f"[DEBUG] Final availability check passed")
+            except Exception as e:
+                import traceback
+                print(f"[DEBUG] Error in final availability check: {str(e)}")
+                print(f"[DEBUG] Traceback: {traceback.format_exc()}")
+                # Continue anyway - don't block booking on check error
+            
             # Create the booking
             try:
                 print(f"[DEBUG] Creating booking")
@@ -429,11 +450,10 @@ class BookAppointmentTool(BaseTool):
                     for item in service_items:
                         try:
                             identifier = item.get('identifier')
+                            value = item.get('value')
                             quantity = int(item.get('quantity', 1))
                             
-                            if quantity <= 0:
-                                print(f"[DEBUG] Invalid quantity for service item '{identifier}': {quantity}")
-                                continue
+                            print(f"[DEBUG] Processing item: identifier={identifier}, value={value}, quantity={quantity}")
                             
                             # Find service item by identifier
                             service_item = None
@@ -444,7 +464,7 @@ class BookAppointmentTool(BaseTool):
                                     identifier=identifier,
                                     is_active=True
                                 )
-                                print(f"[DEBUG] Found service item by exact identifier: {service_item.name} (ID: {service_item.id})")
+                                print(f"[DEBUG] Found service item by exact identifier: {service_item.name} (ID: {service_item.id}, field_type: {service_item.field_type})")
                             except ServiceItem.DoesNotExist:
                                 # Try case-insensitive match
                                 service_item = ServiceItem.objects.filter(
@@ -470,16 +490,55 @@ class BookAppointmentTool(BaseTool):
                                         continue
                             
                             if service_item:
-                                # Calculate price based on the service item's pricing rules
-                                item_price = service_item.calculate_price(service.price, quantity)
+                                # Prepare the data for BookingServiceItem
+                                booking_item_data = {
+                                    'booking': booking,
+                                    'service_item': service_item,
+                                    'quantity': quantity
+                                }
                                 
-                                # Create the BookingServiceItem to link the booking with the service item
-                                booking_service_item = BookingServiceItem.objects.create(
-                                    booking=booking,
-                                    service_item=service_item,
-                                    quantity=quantity,
-                                    price_at_booking=item_price
-                                )
+                                # Handle different field types and store values appropriately
+                                selected_value = None
+                                
+                                if service_item.field_type == 'number':
+                                    # For number fields, value is the quantity
+                                    if value is not None:
+                                        booking_item_data['number_value'] = Decimal(str(value))
+                                        quantity = int(value)  # Use the value as quantity for pricing
+                                        booking_item_data['quantity'] = quantity
+                                    selected_value = value
+                                    
+                                elif service_item.field_type == 'boolean':
+                                    # For boolean fields, value is 'yes' or 'no'
+                                    if value:
+                                        value_str = str(value).lower()
+                                        booking_item_data['boolean_value'] = value_str in ['yes', 'true', '1', 'y']
+                                        selected_value = value_str
+                                    
+                                elif service_item.field_type == 'select':
+                                    # For select fields, value is the selected option
+                                    if value:
+                                        booking_item_data['select_value'] = str(value)
+                                        selected_value = str(value)
+                                    
+                                elif service_item.field_type == 'text':
+                                    # For text fields, store the text value
+                                    if value:
+                                        booking_item_data['text_value'] = str(value)
+                                    
+                                elif service_item.field_type == 'textarea':
+                                    # For textarea fields, store the text value
+                                    if value:
+                                        booking_item_data['textarea_value'] = str(value)
+                                
+                                # Calculate price based on the service item's pricing rules
+                                item_price = service_item.calculate_price(service.price, quantity, selected_value)
+                                booking_item_data['price_at_booking'] = item_price
+                                
+                                print(f"[DEBUG] Calculated price for {service_item.name}: ${item_price} (field_type: {service_item.field_type}, selected_value: {selected_value}, quantity: {quantity})")
+                                
+                                # Create the BookingServiceItem
+                                booking_service_item = BookingServiceItem.objects.create(**booking_item_data)
                                 
                                 # Add to total extra duration and price
                                 total_extra_duration += service_item.duration_minutes * quantity
@@ -557,26 +616,42 @@ class BookAppointmentTool(BaseTool):
                     print(f"[DEBUG] Traceback: {traceback.format_exc()}")
                     staff_name = "No staff assigned yet"
             
-                # Create a detailed response with service items information
-                response = f"Appointment booked successfully!\n\nDetails:\n- Date: {date}\n- Time: {time}\n- Service: {service.name}\n- Base Duration: {service.duration} minutes\n- Base Price: ${service.price}"
+                # Create a natural response with booking details
+                # Calculate totals
+                total_price = service.price
+                total_duration = service.duration
                 
-                # Add service items details if any were added
                 booking_service_items = BookingServiceItem.objects.filter(booking=booking)
                 if booking_service_items.exists():
-                    response += "\n\nSelected Service Items:"
-                    total_price = service.price
                     for bsi in booking_service_items:
-                        response += f"\n- {bsi.service_item.name} (x{bsi.quantity}): ${bsi.price_at_booking}"
                         total_price += bsi.price_at_booking
-                    
-                    # Add total duration and price
-                    total_duration = service.duration + total_extra_duration
-                    response += f"\n\nTotal Duration: {total_duration} minutes"
-                    response += f"\nTotal Price: ${total_price}"
+                    total_duration += total_extra_duration
                 
-                response += f"\nStaff: {staff_name}\n\nBooking ID: {booking.id}"
-
-                self.update_chat_summary(booking.id)
+                # Create natural, conversational response
+                response = f"BOOKING_CONFIRMED\n"
+                response += f"Booking ID: {booking.id}\n"
+                response += f"Service: {service.name}\n"
+                response += f"Date: {date}\n"
+                response += f"Time: {time}\n"
+                response += f"Duration: {total_duration} minutes\n"
+                response += f"Total Price: ${total_price}\n"
+                response += f"Staff: {staff_name}\n"
+                
+                if booking_service_items.exists():
+                    response += f"Customizations: "
+                    items_list = []
+                    for bsi in booking_service_items:
+                        if bsi.service_item.field_type == 'number' and bsi.number_value:
+                            items_list.append(f"{int(bsi.number_value)} {bsi.service_item.name}")
+                        elif bsi.service_item.field_type == 'boolean' and bsi.boolean_value:
+                            items_list.append(f"{bsi.service_item.name}")
+                        elif bsi.service_item.field_type == 'select' and bsi.select_value:
+                            items_list.append(f"{bsi.select_value}")
+                        elif bsi.service_item.field_type == 'text' and bsi.text_value:
+                            items_list.append(f"{bsi.service_item.name}: {bsi.text_value}")
+                    response += ", ".join(items_list) + "\n"
+                
+                response += f"\nIMPORTANT: Share the Booking ID {booking.id} with the customer. Tell them their appointment is confirmed and they will receive a confirmation email."
                 
                 return response
             
@@ -592,12 +667,6 @@ class BookAppointmentTool(BaseTool):
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             return f"An error occurred while booking the appointment: {str(e)}"
 
-class RescheduleAppointmentInput(BaseModel):
-    """Input for rescheduling an appointment."""
-    booking_id: str = Field(..., description="ID of the booking to reschedule")
-    new_date: str = Field(..., description="The new date for the appointment in format YYYY-MM-DD")
-    new_time: str = Field(..., description="The new time for the appointment in format HH:MM")
-    business_id: str = Field(..., description="ID of the business")
 
 class RescheduleAppointmentTool(BaseTool):
     name: str = "reschedule_appointment"
@@ -653,10 +722,10 @@ class RescheduleAppointmentTool(BaseTool):
                     # Find alternative slots
                     try:
                         alternative_slots = find_available_slots_on_date(
-                            business_id=business.id,
+                            business_id=str(business.id),
                             date=new_booking_date,
                             duration_minutes=duration_minutes,
-                            service_offering_id=service_offering.id if service_offering else None
+                            service_offering_id=str(service_offering.id) if service_offering else None
                         )
                         
                         if alternative_slots:
@@ -732,11 +801,6 @@ class RescheduleAppointmentTool(BaseTool):
         except Exception as e:
             return f"Error rescheduling appointment: {str(e)}"
 
-class CancelAppointmentInput(BaseModel):
-    """Input for canceling an appointment."""
-    booking_id: str = Field(..., description="ID of the booking to cancel")
-    business_id: str = Field(..., description="ID of the business")
-    reason: Optional[str] = Field(None, description="Reason for cancellation")
 
 class CancelAppointmentTool(BaseTool):
     name: str = "cancel_appointment"
@@ -783,14 +847,9 @@ class CancelAppointmentTool(BaseTool):
             print(f"[DEBUG] Traceback: {traceback.format_exc()}")
             return f"An error occurred while cancelling the appointment: {str(e)}"
 
-class GetServiceItemsInput(BaseModel):
-    """Input for getting available service items."""
-    business_id: str = Field(..., description="ID of the business")
-    service_name: Optional[str] = Field(None, description="Name of the service to filter items by")
-
 class GetServiceItemsTool(BaseTool):
     name: str = "get_service_items"
-    description: str = "Get available service items for a business"
+    description: str = "Get detailed information about available service items for a specific service offering. Use this when customer asks for details about service items or customization options."
     args_schema: Type[BaseModel] = GetServiceItemsInput
     
     def _run(self, business_id: str, service_name: Optional[str] = None) -> str:
@@ -799,9 +858,7 @@ class GetServiceItemsTool(BaseTool):
             
             # Get the business
             try:
-                
                 business = Business.objects.get(id=business_id)
-                 
             except Business.DoesNotExist:
                 print(f"[DEBUG] Business with ID {business_id} not found")
                 return f"Business with ID {business_id} not found."
@@ -812,7 +869,8 @@ class GetServiceItemsTool(BaseTool):
                 is_active=True
             )
             
-            # Filter by service if provided
+            # Filter by service offering if provided
+            service = None
             if service_name:
                 try:
                     service = ServiceOffering.objects.get(
@@ -820,10 +878,8 @@ class GetServiceItemsTool(BaseTool):
                         name__iexact=service_name,
                         is_active=True
                     )
-                    
-                    # We're not filtering by service offering anymore as requested
-                    # Just keeping the service for reference in the response
-                    
+                    # Filter items linked to this service offering
+                    service_items_query = service_items_query.filter(service_offering=service)
                 except ServiceOffering.DoesNotExist:
                     print(f"[DEBUG] Service '{service_name}' not found")
                     return f"Service '{service_name}' not found for business '{business.name}'."
@@ -834,35 +890,54 @@ class GetServiceItemsTool(BaseTool):
                 return f"No service items found for business '{business.name}'" + \
                        (f" and service '{service_name}'" if service_name else "")
             
-            # Format the response
-            items_info = []
-            for item in service_items:
-                price_info = f"${item.price_value}" if item.price_type == 'fixed' else \
-                             f"{item.price_value}% of base price" if item.price_type == 'percentage' else \
-                             f"${item.price_value}/hour" if item.price_type == 'hourly' else \
-                             f"${item.price_value} per unit"
-                
-                items_info.append({
-                    "identifier": item.identifier,
-                    "name": item.name,
-                    "description": item.description or "No description",
-                    "price": price_info,
-                    "duration": f"{item.duration_minutes} minutes" if item.duration_minutes else "No additional time",
-                    "optional": "Optional" if item.is_optional else "Required"
-                })
-            
-            # Create a formatted response
+            # Format the response with detailed field information
             response = f"Available service items for {business.name}"
             if service_name:
-                response += f" and service '{service_name}'"
+                response += f" - {service_name} service"
             response += ":\n\n"
             
-            for i, item in enumerate(items_info, 1):
-                response += f"{i}. {item['name']} (ID: {item['identifier']})\n"
-                response += f"   Description: {item['description']}\n"
-                response += f"   Price: {item['price']}\n"
-                response += f"   Duration: {item['duration']}\n"
-                response += f"   {item['optional']}\n\n"
+            for i, item in enumerate(service_items, 1):
+                response += f"{i}. {item.name} (identifier: {item.identifier})\n"
+                response += f"   Description: {item.description or 'No description'}\n"
+                response += f"   Field Type: {item.get_field_type_display()}\n"
+                
+                # Handle pricing based on field type
+                if item.field_type == 'boolean' and item.option_pricing:
+                    response += f"   Pricing:\n"
+                    for option, config in item.option_pricing.items():
+                        price_type = config.get('price_type', 'free')
+                        if price_type == 'paid':
+                            response += f"     - {option.capitalize()}: ${config.get('price_value', 0)}\n"
+                        else:
+                            response += f"     - {option.capitalize()}: Free\n"
+                elif item.field_type == 'select' and item.option_pricing:
+                    response += f"   Options & Pricing:\n"
+                    for option, config in item.option_pricing.items():
+                        price_type = config.get('price_type', 'free')
+                        if price_type == 'paid':
+                            response += f"     - {option}: ${config.get('price_value', 0)}\n"
+                        else:
+                            response += f"     - {option}: Free\n"
+                elif item.field_type == 'number':
+                    if item.price_type == 'paid':
+                        response += f"   Price: ${item.price_value} per unit\n"
+                    else:
+                        response += f"   Price: Free\n"
+                else:  # text, textarea
+                    if item.price_type == 'paid':
+                        response += f"   Price: ${item.price_value}\n"
+                    else:
+                        response += f"   Price: Free\n"
+                
+                if item.duration_minutes > 0:
+                    response += f"   Additional Duration: {item.duration_minutes} minutes\n"
+                
+                response += f"   {'Required' if not item.is_optional else 'Optional'}\n"
+                
+                if item.field_type == 'number' and item.max_quantity > 1:
+                    response += f"   Max Quantity: {item.max_quantity}\n"
+                
+                response += "\n"
             
             return response
             

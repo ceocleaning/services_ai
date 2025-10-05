@@ -51,33 +51,18 @@ def check_timeslot_availability(business, start_time, duration_minutes, service=
             # Get all valid booking status values
             valid_statuses = []
             for status in BookingStatus:
-                valid_statuses.append(status)
+                if str(status).upper() == 'CONFIRMED' or str(status).upper() == 'PENDING' or str(status).upper() == 'RESCHEDULED':
+                    valid_statuses.append(status)
             
             print(f"[DEBUG] Valid booking statuses: {valid_statuses}")
             
-            # Use 'CONFIRMED' status or whatever is available
-            confirmed_status = None
-            for status in valid_statuses:
-                if str(status).upper() == 'CONFIRMED':
-                    confirmed_status = status
-                    break
-            
-            if confirmed_status:
-                print(f"[DEBUG] Using confirmed status: {confirmed_status}")
-                conflicting_bookings = Booking.objects.filter(
+       
+            conflicting_bookings = Booking.objects.filter(
                     business=business,
                     booking_date=start_time.date(),
-                    start_time__lt=end_time.time(),
-                    end_time__gt=start_time.time(),
-                    status=confirmed_status
-                )
-            else:
-                print(f"[DEBUG] No confirmed status found, checking all bookings")
-                conflicting_bookings = Booking.objects.filter(
-                    business=business,
-                    booking_date=start_time.date(),
-                    start_time__lt=end_time.time(),
-                    end_time__gt=start_time.time()
+                    start_time__lte=end_time.time(),
+                    end_time__gte=start_time.time(),
+                    status__in=valid_statuses
                 )
             
             print(f"[DEBUG] Found {conflicting_bookings.count()} conflicting bookings")

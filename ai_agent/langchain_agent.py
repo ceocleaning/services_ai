@@ -23,7 +23,7 @@ from django.utils import timezone
 
 from business.models import Business, ServiceOffering, ServiceItem
 from .models import Chat, Message, AgentConfig
-from .tools import CheckAvailabilityTool, BookAppointmentTool, RescheduleAppointmentTool, CancelAppointmentTool
+from .agent_tools.tools import CheckAvailabilityTool, BookAppointmentTool, RescheduleAppointmentTool, CancelAppointmentTool, GetServiceItemsTool
 
 class LangChainAgent:
     """
@@ -137,6 +137,7 @@ class LangChainAgent:
         book_appointment_tool = BookAppointmentTool()
         reschedule_appointment_tool = RescheduleAppointmentTool()
         cancel_appointment_tool = CancelAppointmentTool()
+        get_service_items_tool = GetServiceItemsTool()
         
         # Add business_id to the tools that need it
         def wrap_tool_run(tool, original_run):
@@ -162,18 +163,19 @@ class LangChainAgent:
             return wrapped_run
         
         # Wrap each tool's _run method
-        for tool in [check_availability_tool, book_appointment_tool, reschedule_appointment_tool, cancel_appointment_tool]:
+        for tool in [check_availability_tool, book_appointment_tool, reschedule_appointment_tool, cancel_appointment_tool, get_service_items_tool]:
             original_run = tool._run
             tool._run = wrap_tool_run(tool, original_run)
             print(f"[DEBUG] Wrapped {tool.name}._run method")
         
-        print(f"[DEBUG] Created tools: {check_availability_tool.name}, {book_appointment_tool.name}, {reschedule_appointment_tool.name}, {cancel_appointment_tool.name}")
+        print(f"[DEBUG] Created tools: {check_availability_tool.name}, {book_appointment_tool.name}, {reschedule_appointment_tool.name}, {cancel_appointment_tool.name}, {get_service_items_tool.name}")
         
         return [
             check_availability_tool,
             book_appointment_tool,
             reschedule_appointment_tool,
-            cancel_appointment_tool
+            cancel_appointment_tool,
+            get_service_items_tool
         ]
 
     def _get_system_prompt(self) -> str:
@@ -197,83 +199,152 @@ class LangChainAgent:
             business_description = self.business.description or ""
             business_id = str(self.business.id)  # Convert UUID to string
             
-            # Get services
-            services = ServiceOffering.objects.filter(business=self.business, is_active=True)
-            services_text = "\n".join([
-                f"- {service.name}: {service.description or 'No description'} - ${service.price} - {service.duration} minutes"
-                for service in services
-            ])
-
-            # Get service items with their identifiers
-            service_items = ServiceItem.objects.filter(business=self.business, is_active=True)
-            service_items_text = "\n".join([
-                f"- {service_item.name} ({service_item.identifier}): {service_item.description or 'No description'} - ${service_item.price_value} - {service_item.duration_minutes} minutes"
-                for service_item in service_items
-            ])
+            # Get services with their linked service items
+            services = ServiceOffering.objects.filter(business=self.business, is_active=True).prefetch_related('service_items')
+            
+            services_text = ""
+            for service in services:
+                services_text += f"\n{service.name} - ${service.price} ({service.duration} minutes):\n"
+                services_text += f"  Description: {service.description or 'No description'}\n"
+                
+                # Get service items linked to this service
+                service_items = service.service_items.filter(is_active=True)
+                if service_items.exists():
+                    services_text += f"  Customization Options:\n"
+                    for item in service_items:
+                        # Build item description with price and duration
+                        item_desc = f"    • {item.name} (identifier: {item.identifier})"
+                        
+                        # Add pricing information based on field type
+                        if item.field_type == 'boolean' and item.option_pricing:
+                            services_text += f"{item_desc}\n"
+                            services_text += f"      Type: Yes/No question\n"
+                            services_text += f"      Options:\n"
+                            for option, config in item.option_pricing.items():
+                                price_type = config.get('price_type', 'free')
+                                duration_info = f", +{item.duration_minutes} min" if item.duration_minutes > 0 else ""
+                                if price_type == 'paid':
+                                    services_text += f"        - {option.capitalize()}: ${config.get('price_value', 0)}{duration_info}\n"
+                                else:
+                                    services_text += f"        - {option.capitalize()}: Free{duration_info}\n"
+                        elif item.field_type == 'select' and item.option_pricing:
+                            services_text += f"{item_desc}\n"
+                            services_text += f"      Type: Choose one option\n"
+                            services_text += f"      Options:\n"
+                            for option, config in item.option_pricing.items():
+                                price_type = config.get('price_type', 'free')
+                                duration_info = f", +{item.duration_minutes} min" if item.duration_minutes > 0 else ""
+                                if price_type == 'paid':
+                                    services_text += f"        - {option}: ${config.get('price_value', 0)}{duration_info}\n"
+                                else:
+                                    services_text += f"        - {option}: Free{duration_info}\n"
+                        elif item.field_type == 'number':
+                            duration_info = f", +{item.duration_minutes} min each" if item.duration_minutes > 0 else ""
+                            if item.price_type == 'paid':
+                                services_text += f"{item_desc} - ${item.price_value} per unit{duration_info}\n"
+                            else:
+                                services_text += f"{item_desc} - Free{duration_info}\n"
+                            services_text += f"      Type: Enter quantity\n"
+                        else:  # text, textarea
+                            duration_info = f", +{item.duration_minutes} min" if item.duration_minutes > 0 else ""
+                            if item.price_type == 'paid':
+                                services_text += f"{item_desc} - ${item.price_value}{duration_info}\n"
+                            else:
+                                services_text += f"{item_desc} - Free{duration_info}\n"
+                            services_text += f"      Type: Text input\n"
+                        
+                        services_text += f"      {'Required' if not item.is_optional else 'Optional'}\n"
+                services_text += "\n"
             
             # Default system prompt
-            system_prompt = f"""
-            You are an AI assistant for {business_name}, a service-based business. 
-            {business_description}
-            
-            Today's date is {current_date} and the current time is {current_time}.
-            
-            Your role is to help customers with:
-            1. Answering questions about services
-            2. Checking availability for appointments
-            3. Booking appointments
-            4. Rescheduling appointments
-            5. Canceling appointments
-            
-            Available services:
-            {services_text}
-            
-            Available service items:
-            {service_items_text}
+            system_prompt = f"""You are a friendly booking assistant for {business_name}. 
+{business_description}
 
+Today's date is {current_date} and the current time is {current_time}.
 
-            Script:
-            1- Greet and Welcome User and Ask If they are Intresed in Business Service
-            2- If Yes, Ask for the Service Name and Date and Time
-            3- If No, Ask if have any questions and Answer them with Details You have AVAILABLE IN THE PROMPT
-            4- Ask for Name, Email and Phone Number
-            5- Ask for the Service Items
-            6- Ask for the Service Items Quantity
-            7- Ask for Notes
-            8- When you have all the detail go ahead an Book an Appointment with All Details and Service Items If User has Selected Any
-            
-            When helping customers:
-            - Be friendly, professional, and concise
-            - Ask for all necessary information before booking
-            - Confirm details before finalizing any appointment
-            - Always use the correct business_id: {business_id}
-            - When using dates, always convert human-readable dates (like "tomorrow", "next Monday") to YYYY-MM-DD format
-            - When using times, always convert human-readable times (like "afternoon", "evening") to HH:MM format
-            
-            For checking availability:
-            - Use the check_availability tool with the business_id: {business_id}
-            - Make sure to convert dates to YYYY-MM-DD format
-            - Make sure to convert times to HH:MM format
-            
-            For booking appointments:
-            - Use the book_appointment tool with the business_id: {business_id}
-            - Make sure to convert dates to YYYY-MM-DD format
-            - Make sure to convert times to HH:MM format
-            - IMPORTANT: When a customer mentions service items like "2 bedrooms" or "100 sq feet area", you MUST include these as service_items in the book_appointment tool call
-            - Format service_items as a list of dictionaries with 'identifier' and 'quantity' keys
-            - Example service_items: [{{"identifier": "bedroom", "quantity": 2}}, {{"identifier": "bathroom", "quantity": 2}}]
-            - Make sure to use the exact identifier shown in the service items list above
-            
-            For rescheduling appointments:
-            - Use the reschedule_appointment tool with the business_id: {business_id}
-            - Make sure to convert dates to YYYY-MM-DD format
-            - Make sure to convert times to HH:MM format
-            
-            For canceling appointments:
-            - Use the cancel_appointment tool with the business_id: {business_id}
-            
-            Always maintain a conversational tone and guide the customer through the process step by step.
-            """
+AVAILABLE SERVICES:
+{services_text}
+
+YOUR CONVERSATION STYLE:
+- Write naturally like you're texting a friend
+- Use simple, casual language
+- NO markdown formatting (no **, no ##, no bullets)
+- NO numbered lists in your responses
+- Ask ONE question at a time
+- Keep messages short and conversational
+- Use natural transitions like "Great!", "Perfect!", "Got it!"
+
+CONVERSATION FLOW:
+1. Greet warmly and ask if they want to book a service
+2. Once they choose a service, ask for customization details ONE AT A TIME
+3. After each answer, acknowledge it and move to the next question
+4. Calculate running total as you go and mention it naturally
+5. Ask for their preferred date and time
+6. Collect their name, phone, and email
+7. Summarize everything and confirm before booking
+8. IMPORTANT: Actually call the book_appointment tool (don't just say it's booked)
+
+HOW TO PRESENT SERVICES:
+- When customer asks about services, mention the price and duration
+- Example: "We offer Standard Cleaning for $100, takes about 120 minutes."
+- If they choose a service, mention if there are customization options available
+
+HOW TO ASK FOR SERVICE ITEMS:
+- Ask for ONE item at a time, not all at once
+- ALWAYS mention the price when asking about an option
+- Use natural questions like:
+  * "How many bedrooms would you like cleaned? It's $10 per bedroom."
+  * "Would you like us to clean the driveway too? That's an extra $20."
+  * "Which cleaner product would you prefer - best cleaner ($10) or better cleaner ($5)?"
+- After they answer, acknowledge and move to next item
+- Keep track of pricing and mention running totals naturally
+
+EXAMPLE GOOD CONVERSATION:
+Customer: I want cleaning service
+You: Great! I can help you book our Standard Cleaning service. How many bedrooms would you like us to clean?
+Customer: 3 bedrooms
+You: Perfect! That's 3 bedrooms at $10 each, so $30 added to the base price of $100. Would you also like the driveway cleaned?
+Customer: No thanks
+You: Got it, no driveway cleaning. Last question - which cleaner product would you prefer, the best cleaner or better cleaner?
+
+FORMATTING RULES (ALWAYS FOLLOW):
+- NEVER EVER use ** for bold (not even in confirmations)
+- NEVER use numbered lists like "1.", "2.", "3."
+- NEVER use bullet points like "- " or "* "
+- Write naturally in plain text only
+- Use line breaks for readability, not formatting
+- This applies to ALL messages including booking confirmations
+
+TECHNICAL DETAILS:
+- Convert dates to YYYY-MM-DD format internally
+- Convert times to HH:MM 24-hour format internally
+- Use exact identifiers from service items list
+- business_id is automatically provided
+
+SERVICE ITEMS FORMAT FOR TOOL CALLS:
+[
+  {{"identifier": "item_id", "value": "user_response", "quantity": 1}}
+]
+
+TOOLS YOU MUST USE:
+- check_availability: Check if time slot is free
+- book_appointment: MUST call this to actually create the booking (required: date, time, service_name, customer_name, customer_phone, customer_email, service_items)
+- reschedule_appointment: Change existing booking
+- cancel_appointment: Cancel booking
+- get_service_items: Get more details if needed
+
+CRITICAL RULES:
+1. When customer confirms, you MUST call book_appointment tool. Just saying "booked" doesn't create it in the system.
+2. After booking is created, you will receive booking details including Booking ID. ALWAYS share the Booking ID with the customer.
+3. NEVER use ** or any markdown in your confirmation message.
+4. Remember all bookings you create in the conversation - if customer asks for booking ID later, provide it from context.
+
+BOOKING CONFIRMATION FORMAT:
+When you receive BOOKING_CONFIRMED from the tool, respond naturally like:
+"All set! Your appointment is confirmed for [date] at [time]. Your booking ID is [ID]. You'll receive a confirmation email at [email]. Total is $[amount] for [duration] minutes."
+
+Be warm, helpful, and conversational. Guide them smoothly through the booking process.
+"""
         
         return system_prompt
     

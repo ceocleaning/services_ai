@@ -1,0 +1,177 @@
+:root {
+
+    --primary-light: #1350d4;
+    --primary: #1148bf;
+    --primary-dark: #0b2d78;
+
+
+    --secondary: #1f2937;
+    --secondary-dark: #1f1f1f;
+
+
+    --bg-dark: #111827;
+    --bg-card: #1f2937;
+
+    --border-color: #707070;
+
+
+    --text-dark: #111827;
+    --text-light: #f9fafb;
+    --muted-text: #6B7280;
+
+
+    
+    /* Semantic Colors */
+    --success: #10B981;
+    --success-dark: #059669;
+    --warning: #F59E0B;
+    --warning-dark: #d17d06;
+    --error: #EF4444;
+    --error-dark: #dc2626;
+    --info: #3B82F6;
+    --info-dark: #0ea5e9;
+    
+    /* Industry-Specific Accent Colors */
+    --cleaning-services: #14B8A6;
+    --real-estate: #8B5CF6;
+    --home-services: #F97316;
+    --wellness: #06B6D4;
+    
+    
+    /* Spacing */
+    --space-2xs: 0.25rem;
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+}
+
+
+.bg-success {
+    background-color: var(--success) !important;
+}
+
+.bg-warning {
+    background-color: var(--warning) !important;
+}
+
+.bg-danger {
+    background-color: var(--error) !important;
+}
+
+.bg-info {
+    background-color: var(--info) !important;
+}
+
+.bg-primary{
+    background-color: var(--primary) !important;
+}
+.bg-secondary{
+    background-color: var(--secondary) !important;
+}
+.bg-primary-dark{
+    background-color: var(--primary-dark) !important;
+}
+.bg-secondary-dark{
+    background-color: var(--secondary-dark) !important;
+}
+
+
+/* Typography */
+body {
+    font-family: 'Outfit', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    color: var(--text-light);
+    background-color: var(--bg-dark);
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+h1 {
+    font-size: 2.074rem;
+}
+
+h2 {
+    font-size: 1.728rem;
+}
+
+h3 {
+    font-size: 1.44rem;
+}
+
+h4 {
+    font-size: 1.2rem;
+}
+
+small, .text-small {
+    font-size: 0.833rem;
+    line-height: 1.5;
+}
+
+
+.text-light{
+    color: var(--text-light) !important;
+}
+
+.text-secondary{
+    color: var(--secondary) !important;
+}
+
+.text-primary{
+    color: var(--primary) !important;
+}
+
+.text-success{
+    color: var(--success) !important;
+}
+
+.text-warning{
+    color: var(--warning) !important;
+}
+
+.text-danger{
+    color: var(--error) !important;
+}
+
+.text-info{
+    color: var(--info) !important;
+}
+
+.text-muted{
+    color: var(--muted-text) !important;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+/* TYPOGRAPHY */
+
+@media (max-width: 767.98px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    h2 {
+        font-size: 1.5rem;
+    }
+    
+    .btn {
+        padding: 0.4rem 1rem;
+    }
+}
+

@@ -416,9 +416,11 @@ body.sidebar-collapsed .main-content {
     letter-spacing: 0.5px;
 }
 
+
 .table td {
     vertical-align: middle;
     border-color: var(--color-border);
+    background-color: transparent;
 }
 
 /* Badges */
@@ -479,3 +481,6 @@ body.sidebar-collapsed .main-content {
 .bg-danger-soft {
     background-color: rgba(239, 68, 68, 0.1);
 }
+
+
+

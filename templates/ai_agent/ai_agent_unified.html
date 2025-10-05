@@ -70,7 +70,7 @@
                 </div>
             </div>
             
-            <div class="card">
+            <div class="card mb-4">
                 <div class="card-header text-white">
                     <h5 class="mb-0">How the Agent Works</h5>
                 </div>
@@ -86,6 +86,32 @@
                         <li>Rescheduling or canceling appointments</li>
                         <li>Answering general questions about your business</li>
                     </ul>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Current System Prompt</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-light me-2" type="button" onclick="copySystemPrompt(event)">
+                            <i class="fas fa-copy"></i> Copy
+                        </button>
+                        <button class="btn btn-sm btn-outline-light" type="button" data-bs-toggle="collapse" data-bs-target="#systemPromptCollapse" aria-expanded="false" aria-controls="systemPromptCollapse">
+                            <i class="fas fa-eye"></i> View
+                        </button>
+                    </div>
+                </div>
+                <div class="collapse" id="systemPromptCollapse">
+                    <div class="card-body">
+                        <p class="text-muted small mb-2">
+                            <i class="fas fa-info-circle"></i>
+                            This is the actual system prompt being used by your AI agent. It includes your business information, 
+                            services, and conversation guidelines.
+                        </p>
+                        <div class="p-3 rounded" style="max-height: 500px; overflow-y: auto;">
+                            <pre class="mb-0" id="systemPromptText" style="white-space: pre-wrap; font-size: 0.85rem;">{{ system_prompt }}</pre>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -124,6 +150,31 @@
     // Define variables that will be used in the external JS file
     const processMessageUrl = "{% url 'ai_agent:process_message' %}";
     const businessId = "{{ business.id }}";
+    
+    // Function to copy system prompt to clipboard
+    function copySystemPrompt(event) {
+        const promptText = document.getElementById('systemPromptText').textContent;
+        
+        // Use the Clipboard API
+        navigator.clipboard.writeText(promptText).then(function() {
+            // Show success feedback
+            const copyBtn = event.target.closest('button');
+            const originalHTML = copyBtn.innerHTML;
+            copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            copyBtn.classList.remove('btn-outline-light');
+            copyBtn.classList.add('btn-success');
+            
+            // Reset button after 2 seconds
+            setTimeout(function() {
+                copyBtn.innerHTML = originalHTML;
+                copyBtn.classList.remove('btn-success');
+                copyBtn.classList.add('btn-outline-light');
+            }, 2000);
+        }).catch(function(err) {
+            console.error('Failed to copy text: ', err);
+            alert('Failed to copy to clipboard. Please try selecting and copying manually.');
+        });
+    }
 </script>
 <script src="{% static 'js/ai_agent.js' %}"></script>
 {% endblock %}

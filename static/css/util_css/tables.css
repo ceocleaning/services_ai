@@ -1,0 +1,29 @@
+table td, table tr{
+    background-color: transparent !important;
+}
+
+/* Custom Table Background - Modern alternative to default Bootstrap table styling */
+.table thead tr th {
+    background-color: transparent !important;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    padding: 20px;
+}
+
+thead tr:first-child th:first-child {
+    border-top-left-radius: 10px;
+  }
+  thead tr:first-child th:last-child {
+    border-top-right-radius: 10px;
+  }
+
+
+.table tbody tr {
+    background-color: transparent;
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: var(--primary-indigo-medium-dark);
+}

@@ -9,10 +9,7 @@ import pytz
 
 from .utils import convert_date_str_to_date
 
-from .tools import (
-    CheckAvailabilityTool, BookAppointmentTool,
-    RescheduleAppointmentTool, CancelAppointmentTool
-)
+from .agent_tools.tools import CheckAvailabilityTool, BookAppointmentTool, RescheduleAppointmentTool, CancelAppointmentTool, GetServiceItemsTool
 from bookings.models import Booking
 from business.models import Business
 
@@ -154,10 +151,45 @@ def book_appointment(request):
         service_items = []
         for item in service_items_qs:
             if item.identifier in data:
-                service_items.append({
-                    'identifier': item.identifier,
-                    'quantity': int(data[item.identifier])
-                })
+                value = data[item.identifier]
+                
+                # Handle different field types
+                if item.field_type == 'number':
+                    # For number fields, value is the quantity
+                    service_items.append({
+                        'identifier': item.identifier,
+                        'value': str(value),
+                        'quantity': 1
+                    })
+                elif item.field_type == 'boolean':
+                    # For boolean fields, convert to yes/no
+                    bool_value = 'yes' if str(value).lower() in ['true', '1', 'yes', 'y'] else 'no'
+                    service_items.append({
+                        'identifier': item.identifier,
+                        'value': bool_value,
+                        'quantity': 1
+                    })
+                elif item.field_type == 'select':
+                    # For select fields, use the selected option
+                    service_items.append({
+                        'identifier': item.identifier,
+                        'value': str(value),
+                        'quantity': 1
+                    })
+                elif item.field_type in ['text', 'textarea']:
+                    # For text fields, use the text value
+                    service_items.append({
+                        'identifier': item.identifier,
+                        'value': str(value),
+                        'quantity': 1
+                    })
+                else:
+                    # Fallback for unknown types
+                    service_items.append({
+                        'identifier': item.identifier,
+                        'value': str(value),
+                        'quantity': 1
+                    })
 
         
         # Use the BookAppointmentTool to book the appointment
@@ -175,13 +207,14 @@ def book_appointment(request):
         )
         
         # Check if booking was successful
-        booking_successful = 'booked successfully' in result.lower()
+        booking_successful = 'BOOKING_CONFIRMED' in result or 'booked successfully' in result.lower()
         
         # Extract booking ID if available
         booking_id = None
         if booking_successful:
             import re
-            booking_id_match = re.search(r'Booking ID: ([\w-]+)', result)
+            # Try new format first: "Booking ID: book_xxxxx"
+            booking_id_match = re.search(r'Booking ID:\s*([\w-]+)', result)
             if booking_id_match:
                 booking_id = booking_id_match.group(1)
         

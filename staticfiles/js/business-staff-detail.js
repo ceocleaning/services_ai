@@ -132,6 +132,85 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Add weekday availability buttons
+    const addWeekdayButtons = document.querySelectorAll('.add-weekday-availability');
+    const addAvailabilityModal = document.getElementById('addAvailabilityModal');
+    const addAvailabilityForm = document.getElementById('addAvailabilityForm');
+    const availabilityType = document.getElementById('availabilityType');
+    const weeklyFields = document.getElementById('weeklyFields');
+    const specificFields = document.getElementById('specificFields');
+    const weekdayInput = document.getElementById('weekday');
+    const weekdayDisplayInput = document.getElementById('weekdayDisplay');
+    const specificDateInput = document.getElementById('specificDate');
+    const addModalTitle = document.getElementById('addAvailabilityModalLabel');
+    
+    // Initialize Bootstrap modal instance
+    let addModalInstance = null;
+    if (addAvailabilityModal) {
+        addModalInstance = new bootstrap.Modal(addAvailabilityModal);
+    }
+    
+    if (addWeekdayButtons.length && addModalInstance) {
+        addWeekdayButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const weekdayNum = this.dataset.weekday;
+                const weekdayName = this.dataset.weekdayName;
+                
+                // Set modal title
+                addModalTitle.textContent = `Add Availability for ${weekdayName}`;
+                
+                // Set availability type to weekly
+                availabilityType.value = 'weekly';
+                
+                // Show weekly fields, hide specific fields
+                weeklyFields.style.display = 'block';
+                specificFields.style.display = 'none';
+                
+                // Set weekday values
+                weekdayInput.value = weekdayNum;
+                weekdayDisplayInput.value = weekdayName;
+                
+                // Make specific date not required
+                specificDateInput.required = false;
+                
+                // Reset form
+                addAvailabilityForm.reset();
+                availabilityType.value = 'weekly';
+                weekdayInput.value = weekdayNum;
+                weekdayDisplayInput.value = weekdayName;
+                
+                // Show modal
+                addModalInstance.show();
+            });
+        });
+    }
+    
+    // Reset modal when adding specific date from header button
+    const addSpecificDateBtns = document.querySelectorAll('[data-bs-target="#addAvailabilityModal"]');
+    if (addSpecificDateBtns.length && addModalInstance) {
+        addSpecificDateBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                // Reset modal title
+                addModalTitle.textContent = 'Add Specific Date Availability';
+                
+                // Set availability type to specific
+                availabilityType.value = 'specific';
+                
+                // Show specific fields, hide weekly fields
+                weeklyFields.style.display = 'none';
+                specificFields.style.display = 'block';
+                
+                // Make specific date required
+                specificDateInput.required = true;
+                
+                // Reset form
+                addAvailabilityForm.reset();
+                availabilityType.value = 'specific';
+            });
+        });
+    }
+    
     // Edit availability modal
     const editAvailabilityButtons = document.querySelectorAll('.edit-availability');
     const editAvailabilityModal = document.getElementById('editAvailabilityModal');
@@ -146,9 +225,16 @@ document.addEventListener('DOMContentLoaded', function() {
     const editWeeklyFields = document.getElementById('editWeeklyFields');
     const editSpecificFields = document.getElementById('editSpecificFields');
     
-    if (editAvailabilityButtons.length) {
+    // Initialize Bootstrap modal instance for edit modal
+    let editModalInstance = null;
+    if (editAvailabilityModal) {
+        editModalInstance = new bootstrap.Modal(editAvailabilityModal);
+    }
+    
+    if (editAvailabilityButtons.length && editModalInstance) {
         editAvailabilityButtons.forEach(button => {
-            button.addEventListener('click', function() {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
                 const availId = this.dataset.availId;
                 const availType = this.dataset.availType;
                 
@@ -180,6 +266,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     const event = new Event('change');
                     editOffDay.dispatchEvent(event);
                 }
+                
+                // Show modal using Bootstrap
+                editModalInstance.show();
             });
         });
     }
@@ -200,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (confirm('Are you sure you want to delete this availability?')) {
                     // Send AJAX request to delete availability
-                    fetch('/business/delete_staff_availability/', {
+                    fetch('/business/staff/delete-availability/', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -245,6 +334,80 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         return cookieValue;
+    }
+    
+    // Edit service assignment modal
+    const editServiceAssignmentButtons = document.querySelectorAll('.edit-service-assignment');
+    const editServiceAssignmentModal = document.getElementById('editServiceAssignmentModal');
+    const editServiceAssignmentForm = document.getElementById('editServiceAssignmentForm');
+    const editAssignmentId = document.getElementById('editAssignmentId');
+    const editServiceOffering = document.getElementById('editServiceOffering');
+    const editIsPrimary = document.getElementById('editIsPrimary');
+    
+    // Initialize Bootstrap modal instance for edit service assignment
+    let editServiceAssignmentModalInstance = null;
+    if (editServiceAssignmentModal) {
+        editServiceAssignmentModalInstance = new bootstrap.Modal(editServiceAssignmentModal);
+    }
+    
+    if (editServiceAssignmentButtons.length && editServiceAssignmentModalInstance) {
+        editServiceAssignmentButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const assignmentId = this.dataset.assignmentId;
+                const serviceId = this.dataset.serviceId;
+                const isPrimary = this.dataset.isPrimary === 'true';
+                
+                // Set form values
+                editAssignmentId.value = assignmentId;
+                editServiceOffering.value = serviceId;
+                editIsPrimary.checked = isPrimary;
+                
+                // Show modal
+                editServiceAssignmentModalInstance.show();
+            });
+        });
+    }
+    
+    // Delete service assignment
+    const deleteServiceAssignmentButtons = document.querySelectorAll('.delete-service-assignment');
+    
+    if (deleteServiceAssignmentButtons.length) {
+        deleteServiceAssignmentButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const assignmentId = this.dataset.assignmentId;
+                
+                if (confirm('Are you sure you want to remove this service assignment?')) {
+                    // Send AJAX request to delete service assignment
+                    fetch('/business/staff/delete-service-assignment/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({
+                            assignment_id: assignmentId
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Show success message
+                            showToast('Service assignment removed successfully', 'success');
+                            // Reload page to update assignment list
+                            window.location.reload();
+                        } else {
+                            // Show error message
+                            showToast('Error removing service assignment: ' + data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showToast('An error occurred while removing service assignment', 'error');
+                    });
+                }
+            });
+        });
     }
     
     // Function to show toast notifications

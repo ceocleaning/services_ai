@@ -1,0 +1,34 @@
+
+.dropdown{
+    z-index: 9999 !important;
+}
+.dropdown .dropdown-menu{
+    z-index: 9999 !important;
+    background-color: var(--gray-dark) !important;
+    
+}
+
+
+
+
+
+.form-control{
+    border: 1px solid var(--gray-medium-dark) !important;
+    background: transparent !important;
+    color: var(--gray-light);
+    padding: 10px !important;
+}
+
+.form-select{
+    border: 1px solid var(--gray-medium-dark) !important;
+    background: transparent !important;
+    color: var(--gray-light);
+    padding: 10px !important;
+}
+
+select option{
+    background-color: var(--gray-dark) !important;
+    padding: 10px !important;
+    border: 1px solid var(--gray-medium-dark) !important;
+}
+

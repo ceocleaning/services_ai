@@ -21,7 +21,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: var(--gray-medium-dark);
+    background: var(--bg-dark);
     color: white;
     display: flex;
     align-items: center;
@@ -41,12 +41,12 @@
 }
 
 .step.active .step-number {
-    background: var(--primary-indigo-medium-dark);
+    background: var(--primary);
     box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.2);
 }
 
 .step.active .step-label {
-    color: var(--primary-indigo-medium-dark);
+    color: var(--primary);
     font-weight: 600;
 }
 
@@ -61,7 +61,7 @@
 .step-line {
     flex: 1;
     height: 2px;
-    background: var(--gray-medium);
+    background: var(--border-color);
     margin: 0 0.5rem 1.5rem 0.5rem;
     transition: all 0.3s ease;
 }
@@ -103,12 +103,12 @@
     background: transparent;
     border-radius: 8px;
     height: auto;
-    border: 1px solid var(--gray-medium-dark);
+    border: 1px solid var(--border-color);
 }
 
 .summary-value {
     font-size: 0.95rem;
-    color: var(--color-text-primary);
+    color: var(--text-primary);
     font-weight: 500;
 }
 
@@ -141,38 +141,7 @@ h4 {
     color: var(--color-text-primary);
 }
 
-.form-label {
-    font-weight: 500;
-    color: #e0e7ef;
-}
 
-.form-control, .form-select {
-    background: #23262f;
-    color: #f3f4f6;
-    border-radius: 6px;
-    border: 1px solid #363b47;
-    transition: border-color 0.2s, background 0.2s;
-}
-
-.form-control:focus, .form-select:focus {
-    border-color: #8b5cf6;
-    background: #181a20;
-    color: #fff;
-    box-shadow: 0 0 0 2px #8b5cf644;
-}
-
-.btn-primary {
-    background: #8b5cf6;
-    border: none;
-    border-radius: 6px;
-    font-weight: 600;
-    color: #fff;
-    transition: background 0.2s;
-}
-
-.btn-primary:hover {
-    background: #4f46e5;
-}
 
 .alert-info {
     background: #eef2ff;
@@ -181,9 +150,6 @@ h4 {
     border-radius: 6px;
 }
 
-.text-danger {
-    color: #dc2626 !important;
-}
 
 /* Service Tab Buttons */
 .service-tabs-container {

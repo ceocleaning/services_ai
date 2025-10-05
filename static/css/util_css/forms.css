@@ -1,0 +1,31 @@
+
+.dropdown{
+    z-index: 9999 !important;
+}
+.dropdown .dropdown-menu{
+    z-index: 9999 !important;
+    background-color: var(--secondary-dark)!important;
+    
+}
+
+
+.form-control{
+    border: 1px solid var(--border-color) !important;
+    background: transparent !important;
+    color: var(--text-light);
+    padding: 10px !important;
+}
+
+.form-select{
+    border: 1px solid var(--border-color) !important;
+    background: transparent !important;
+    color: var(--text-light);
+    padding: 10px !important;
+}
+
+select option{
+    background-color: var(--secondary-dark) !important;
+    padding: 10px !important;
+    border: 1px solid var(--secondary-dark) !important;
+}
+

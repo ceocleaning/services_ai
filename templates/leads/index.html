@@ -71,100 +71,199 @@
         </div>
     </div>
 
-    <!-- Leads Table -->
+    <!-- Leads Display -->
     <div class="card">
-        <div class="card-header custom-card-header">
+        <div class="card-header custom-card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">All Leads</h5>
+            <div class="btn-group" role="group" aria-label="View toggle">
+                <button type="button" class="btn btn-sm btn-outline-light active" id="listViewBtn" onclick="toggleView('list')">
+                    <i class="fas fa-list me-1"></i> List
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-light" id="cardViewBtn" onclick="toggleView('card')">
+                    <i class="fas fa-th-large me-1"></i> Cards
+                </button>
+            </div>
         </div>
         <div class="card-body">
             {% if leads %}
-                <div class="table">
-                    <table class="table custom-table-bg table-hover">
-                        <thead class="custom-card-header">
-                            <tr>
-                                <th>Name</th>
-                                <th>Contact</th>
-                                <th>Status</th>
-                                <th>Source</th>
-                                <th>Last Contacted</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for lead in leads %}
+                <!-- List View -->
+                <div id="listView" class="view-container">
+                    <div class="table">
+                        <table class="table custom-table-bg table-hover">
+                            <thead class="custom-card-header">
                                 <tr>
-                                    <td>
-                                        <div class="fw-bold">{{ lead.get_full_name }}</div>
-                                    </td>
-                                    <td>
-                                        <div>{{ lead.email }}</div>
-                                        <div class="small text-muted">{{ lead.phone }}</div>
-                                    </td>
-                                    <td>
-                                        {% if lead.status == 'new' %}
-                                            <span class="badge bg-info">New</span>
-                                        {% elif lead.status == 'contacted' %}
-                                            <span class="badge bg-primary">Contacted</span>
-                                        {% elif lead.status == 'responded' %}
-                                            <span class="badge bg-success">Responded</span>
-                                        {% elif lead.status == 'qualified' %}
-                                            <span class="badge bg-warning text-dark">Qualified</span>
-                                        {% elif lead.status == 'appointment_scheduled' %}
-                                            <span class="badge bg-purple">Appointment Scheduled</span>
-                                        {% elif lead.status == 'appointment_completed' %}
-                                            <span class="badge bg-teal">Appointment Completed</span>
-                                        {% elif lead.status == 'converted' %}
-                                            <span class="badge bg-success">Converted</span>
-                                        {% elif lead.status == 'lost' %}
-                                            <span class="badge bg-danger">Lost</span>
-                                        {% elif lead.status == 'junk' %}
-                                            <span class="badge bg-dark">Junk</span>
-                                        {% else %}
-                                            <span class="badge bg-secondary">{{ lead.get_status_display }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-light text-dark">{{ lead.get_source_display }}</span>
-                                    </td>
-                                    <td>
-                                        {% if lead.last_contacted %}
-                                            <div>{{ lead.last_contacted|date:"M d, Y" }}</div>
-                                            <div class="small text-muted">{{ lead.last_contacted|time:"g:i A" }}</div>
-                                        {% else %}
-                                            <span class="text-muted">Never</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div>{{ lead.created_at|date:"M d, Y" }}</div>
-                                        <div class="small text-muted">{{ lead.created_at|time:"g:i A" }}</div>
-                                    </td>
-                                    <td>
-                                        <div class="dropdown">
-                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ lead.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                                Actions
-                                            </button>
-                                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ lead.id }}">
-                                                <li><a class="dropdown-item" href="{% url 'leads:lead_detail' lead.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
-                                                <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
-                                                <li><hr class="dropdown-divider"></li>
-                                                {% if lead.status == 'new' %}
-                                                    <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-phone me-2"></i> Mark Contacted</a></li>
-                                                {% endif %}
-                                                {% if lead.status != 'converted' and lead.status != 'lost' and lead.status != 'junk' %}
-                                                    <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Mark Converted</a></li>
-                                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Mark Lost</a></li>
-                                                {% endif %}
-                                                {% if lead.status != 'appointment_scheduled' and lead.status != 'appointment_completed' %}
-                                                    <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Schedule Appointment</a></li>
-                                                {% endif %}
-                                            </ul>
-                                        </div>
-                                    </td>
+                                    <th>Name</th>
+                                    <th>Contact</th>
+                                    <th>Status</th>
+                                    <th>Source</th>
+                                    <th>Last Contacted</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
                                 </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {% for lead in leads %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">{{ lead.get_full_name }}</div>
+                                        </td>
+                                        <td>
+                                            <div>{{ lead.email }}</div>
+                                            <div class="small text-muted">{{ lead.phone }}</div>
+                                        </td>
+                                        <td>
+                                            {% if lead.status == 'new' %}
+                                                <span class="badge bg-info">New</span>
+                                            {% elif lead.status == 'contacted' %}
+                                                <span class="badge bg-primary">Contacted</span>
+                                            {% elif lead.status == 'responded' %}
+                                                <span class="badge bg-success">Responded</span>
+                                            {% elif lead.status == 'qualified' %}
+                                                <span class="badge bg-warning text-dark">Qualified</span>
+                                            {% elif lead.status == 'appointment_scheduled' %}
+                                                <span class="badge bg-purple">Appointment Scheduled</span>
+                                            {% elif lead.status == 'appointment_completed' %}
+                                                <span class="badge bg-teal">Appointment Completed</span>
+                                            {% elif lead.status == 'converted' %}
+                                                <span class="badge bg-success">Converted</span>
+                                            {% elif lead.status == 'lost' %}
+                                                <span class="badge bg-danger">Lost</span>
+                                            {% elif lead.status == 'junk' %}
+                                                <span class="badge bg-dark">Junk</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ lead.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-light text-dark">{{ lead.get_source_display }}</span>
+                                        </td>
+                                        <td>
+                                            {% if lead.last_contacted %}
+                                                <div>{{ lead.last_contacted|date:"M d, Y" }}</div>
+                                                <div class="small text-muted">{{ lead.last_contacted|time:"g:i A" }}</div>
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div>{{ lead.created_at|date:"M d, Y" }}</div>
+                                            <div class="small text-muted">{{ lead.created_at|time:"g:i A" }}</div>
+                                        </td>
+                                        <td>
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ lead.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Actions
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton{{ lead.id }}">
+                                                    <li><a class="dropdown-item" href="{% url 'leads:lead_detail' lead.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    {% if lead.status == 'new' %}
+                                                        <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-phone me-2"></i> Mark Contacted</a></li>
+                                                    {% endif %}
+                                                    {% if lead.status != 'converted' and lead.status != 'lost' and lead.status != 'junk' %}
+                                                        <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Mark Converted</a></li>
+                                                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Mark Lost</a></li>
+                                                    {% endif %}
+                                                    {% if lead.status != 'appointment_scheduled' and lead.status != 'appointment_completed' %}
+                                                        <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Schedule Appointment</a></li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Card View -->
+                <div id="cardView" class="view-container" style="display: none;">
+                    <div class="row g-3">
+                        {% for lead in leads %}
+                            <div class="col-md-6 col-lg-4">
+                                <div class="card lead-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-3">
+                                            <div>
+                                                <h6 class="card-title text-white mb-1">{{ lead.get_full_name }}</h6>
+                                                <p class="text-muted small mb-0">{{ lead.email }}</p>
+                                                <p class="text-muted small mb-0">{{ lead.phone }}</p>
+                                            </div>
+                                            <div>
+                                                {% if lead.status == 'new' %}
+                                                    <span class="badge bg-info">New</span>
+                                                {% elif lead.status == 'contacted' %}
+                                                    <span class="badge bg-primary">Contacted</span>
+                                                {% elif lead.status == 'responded' %}
+                                                    <span class="badge bg-success">Responded</span>
+                                                {% elif lead.status == 'qualified' %}
+                                                    <span class="badge bg-warning text-dark">Qualified</span>
+                                                {% elif lead.status == 'appointment_scheduled' %}
+                                                    <span class="badge bg-purple">Appointment Scheduled</span>
+                                                {% elif lead.status == 'appointment_completed' %}
+                                                    <span class="badge bg-teal">Appointment Completed</span>
+                                                {% elif lead.status == 'converted' %}
+                                                    <span class="badge bg-success">Converted</span>
+                                                {% elif lead.status == 'lost' %}
+                                                    <span class="badge bg-danger">Lost</span>
+                                                {% elif lead.status == 'junk' %}
+                                                    <span class="badge bg-dark">Junk</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary">{{ lead.get_status_display }}</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <i class="fas fa-tag text-primary me-2"></i>
+                                            <span class="badge bg-light text-dark">{{ lead.get_source_display }}</span>
+                                        </div>
+                                        
+                                        <div class="mb-2">
+                                            <i class="fas fa-phone-alt text-primary me-2"></i>
+                                            <span class="small">
+                                                {% if lead.last_contacted %}
+                                                    Last contacted: {{ lead.last_contacted|date:"M d, Y" }}
+                                                {% else %}
+                                                    <span class="text-muted">Never contacted</span>
+                                                {% endif %}
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <i class="fas fa-calendar-plus text-primary me-2"></i>
+                                            <span class="small">Created: {{ lead.created_at|date:"M d, Y" }}</span>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-end">
+                                            <div class="dropdown">
+                                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="cardDropdown{{ lead.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                                    Actions
+                                                </button>
+                                                <ul class="dropdown-menu" aria-labelledby="cardDropdown{{ lead.id }}">
+                                                    <li><a class="dropdown-item" href="{% url 'leads:lead_detail' lead.id %}"><i class="fas fa-eye me-2"></i> View Details</a></li>
+                                                    <li><a class="dropdown-item" href="#"><i class="fas fa-edit me-2"></i> Edit</a></li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    {% if lead.status == 'new' %}
+                                                        <li><a class="dropdown-item text-primary" href="#"><i class="fas fa-phone me-2"></i> Mark Contacted</a></li>
+                                                    {% endif %}
+                                                    {% if lead.status != 'converted' and lead.status != 'lost' and lead.status != 'junk' %}
+                                                        <li><a class="dropdown-item text-success" href="#"><i class="fas fa-check me-2"></i> Mark Converted</a></li>
+                                                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-times me-2"></i> Mark Lost</a></li>
+                                                    {% endif %}
+                                                    {% if lead.status != 'appointment_scheduled' and lead.status != 'appointment_completed' %}
+                                                        <li><a class="dropdown-item text-info" href="#"><i class="fas fa-calendar-alt me-2"></i> Schedule Appointment</a></li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
                 </div>
             {% else %}
                 <div class="alert alert-info">

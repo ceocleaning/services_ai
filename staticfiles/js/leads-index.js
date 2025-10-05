@@ -41,4 +41,32 @@ document.addEventListener('DOMContentLoaded', function() {
             // Form will submit normally with only non-empty parameters
         });
     }
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('leadsViewPreference') || 'list';
+    if (savedView === 'card') {
+        toggleView('card');
+    }
 });
+
+// Toggle between list and card view
+function toggleView(viewType) {
+    const listView = document.getElementById('listView');
+    const cardView = document.getElementById('cardView');
+    const listViewBtn = document.getElementById('listViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    
+    if (viewType === 'list') {
+        listView.style.display = 'block';
+        cardView.style.display = 'none';
+        listViewBtn.classList.add('active');
+        cardViewBtn.classList.remove('active');
+        localStorage.setItem('leadsViewPreference', 'list');
+    } else {
+        listView.style.display = 'none';
+        cardView.style.display = 'block';
+        listViewBtn.classList.remove('active');
+        cardViewBtn.classList.add('active');
+        localStorage.setItem('leadsViewPreference', 'card');
+    }
+}

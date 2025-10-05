@@ -32,6 +32,14 @@ def agent_dashboard(request):
     # Get recent chats
     chats = Chat.objects.filter(business=business).order_by('-updated_at')[:10]
     
+    # Generate the system prompt to display
+    from .langchain_agent import LangChainAgent
+    try:
+        agent = LangChainAgent(business_id=str(business.id))
+        system_prompt = agent._get_system_prompt()
+    except Exception as e:
+        system_prompt = f"Error generating system prompt: {str(e)}"
+    
     if request.method == 'POST':
         # Handle agent config update
         agent_config.name = request.POST.get('name', agent_config.name)
@@ -44,6 +52,7 @@ def agent_dashboard(request):
         'business': business,
         'agent_config': agent_config,
         'chats': chats,
+        'system_prompt': system_prompt,
     }
     
     return render(request, 'ai_agent/ai_agent_unified.html', context)

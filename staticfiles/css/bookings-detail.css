@@ -72,8 +72,13 @@
     margin-right: 0.1rem;
 }
 
+.service-summary {
+    background-color: var(--gray-darkest) !important;
+    border-left: 3px solid #0d6efd;
+}
+
 .service-item {
-    background-color: #f8f9fa;
+    background-color: var(--gray-darkest) !important;
     transition: all 0.2s ease;
     border-left: 3px solid #0d6efd;
 }
@@ -103,7 +108,7 @@
 }
 
 .price-summary {
-    background-color: #f8f9fa;
+    background-color: var(--gray-darkest) !important;
     border-left: 3px solid #198754;
 }
 

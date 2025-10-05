@@ -1,50 +1,69 @@
 
 [{
     "type": "object",
-    "description": "Book Appointment JSON",
+    "description": "Book an appointment for cleaning services. Available services: Deep Cleaning ($150, 100 min), Standard Cleaning ($100, 60 min with customization options). Service items use their 'identifier' field as keys.",
     "properties": {
       "name": {
         "type": "string",
-        "description": "Full Name of the Client"
+        "description": "Full name of the customer"
       },
       "email": {
         "type": "string",
-        "description": "Email Address of the Client"
+        "description": "Email address of the customer (optional)"
       },
       "phone": {
         "type": "string",
-        "description": "Phone Number of the Client"
+        "description": "Phone number of the customer"
       },
       "type_of_service": {
         "type": "string",
-        "description": "Type of Service"
-      },
-      "bedrooms": {
-        "type": "number",
-        "description": "Count of bedrooms"
-      },
-      "bathroom": {
-        "type": "number",
-        "description": "Count of bathrooms"
-      },
-      "square_feet": {
-        "type": "number",
-        "description": "Area in Square Feet that Needs Cleaning"
+        "description": "Service name: 'Standard Cleaning' or 'Deep Cleaning'",
+        "enum": ["Standard Cleaning", "Deep Cleaning"]
       },
       "appointment_date_time": {
         "type": "string",
-        "description": "Appointment Date and Time Given by the User"
-      },
-      "city": {
-        "type": "string",
-        "description": "City of the Service Location"
+        "description": "Appointment date and time in human-readable format (e.g., '2025-10-15 14:00', 'tomorrow at 2pm', 'next Monday at 3pm')"
       },
       "business_id": {
         "type": "string",
-        "description": "Business ID"
+        "description": "Business ID (automatically provided)"
+      },
+      "bedroom": {
+        "type": "number",
+        "description": "Number of bedrooms to clean (identifier: bedroom). $10 per bedroom, adds 30 minutes each. Required for Standard Cleaning."
+      },
+      "do_you_want_driveway_cleaned": {
+        "type": "boolean",
+        "description": "Whether to clean the driveway (identifier: do_you_want_driveway_cleaned). Yes = $10, No = Free. Optional."
+      },
+      "select_cleaner_product": {
+        "type": "string",
+        "description": "Cleaner product choice (identifier: select_cleaner_product). Options: 'best cleaner' ($10) or 'better cleaner' ($20). Required for Standard Cleaning.",
+        "enum": ["best cleaner", "better cleaner"]
       }
     },
-    "required": ["name", "email", "phone", "type_of_service", "bedrooms", "bathroom", "square_feet", "appointment_date_time", "city", "business_id"]
+    "required": ["name", "phone", "type_of_service", "appointment_date_time", "business_id"],
+    "additionalProperties": false,
+    "examples": [
+      {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "+1234567890",
+        "type_of_service": "Standard Cleaning",
+        "bedroom": 3,
+        "do_you_want_driveway_cleaned": true,
+        "select_cleaner_product": "best cleaner",
+        "appointment_date_time": "2025-10-15 14:00",
+        "business_id": "bus_430967"
+      },
+      {
+        "name": "Jane Smith",
+        "phone": "+1987654321",
+        "type_of_service": "Deep Cleaning",
+        "appointment_date_time": "tomorrow at 2pm",
+        "business_id": "bus_430967"
+      }
+    ]
   },
   
 
