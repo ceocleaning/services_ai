@@ -62,38 +62,16 @@ def index(request):
 
 @login_required
 def invoice_detail(request, invoice_id):
+    """Redirect to booking detail page since invoice info is now shown there"""
     business = getattr(request.user, 'business', None)
     if not business:
         messages.error(request, 'Please register your business first.')
         return redirect('business:register')
     
     invoice = get_object_or_404(Invoice, id=invoice_id, booking__business=business)
-    payments = Payment.objects.filter(invoice=invoice).order_by('-payment_date')
     
-    # Get service items from the booking
-    service_items = BookingServiceItem.objects.filter(booking=invoice.booking)
-    
-    services_total = 0
-    if service_items.exists():
-        services_total = sum(item.price_at_booking for item in service_items)
-    
-    total = invoice.booking.service_offering.price + services_total
-
-    
-    # Calculate payment totals
-    total_paid = sum(payment.amount for payment in payments if not payment.is_refunded)
-    balance_due = total - total_paid
-
-
-    return render(request, 'invoices/invoice_detail.html', {
-        'title': f'Invoice #{invoice.invoice_number}',
-        'invoice': invoice,
-        'payments': payments,
-        'service_items': service_items,
-        'total_price': total,
-        'total_paid': total_paid,
-        'balance_due': balance_due
-    })
+    # Redirect to the booking detail page
+    return redirect('bookings:booking_detail', booking_id=invoice.booking.id)
 
 
 

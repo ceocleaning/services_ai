@@ -279,7 +279,7 @@
             <i class="fas fa-check-circle me-1"></i>Paid
         </div>
         {% elif invoice.payment_details and invoice.payment_details.status == 'AUTHORIZED' %}
-        <div class="payment-badge bg-info text-white">
+        <div class="payment-badge text-white">
             <i class="fas fa-clock me-1"></i>Payment Authorized
         </div>
         {% endif %}
@@ -459,7 +459,7 @@
     <div class="text-center mt-4">
         <div class="row">
             <div class="col-sm-6 mb-2 mb-sm-0">
-                <a href="{% url 'invoices:invoice_detail' invoice.id %}" class="btn btn-primary w-100">
+                <a href="{% url 'bookings:booking_detail' invoice.booking.id %}" class="btn btn-primary w-100">
                     <i class="fas fa-download me-2"></i>Save as PDF
                 </a>
             </div>

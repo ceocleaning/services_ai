@@ -5,7 +5,6 @@
     background-color: var(--bg-card);
     border-radius: 0.75rem;
     padding: 1.5rem;
-    border-left: 4px solid var(--primary-indigo);
     margin-bottom: 1.5rem;
 }
 
@@ -13,11 +12,10 @@
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 0.5rem;
-    color: var(--color-text-primary);
 }
 
 .welcome-subtitle {
-    color: var(--color-text-secondary);
+    color: var(--text-secondary);
     margin-bottom: 0;
 }
 
@@ -96,19 +94,7 @@
     margin-right: 0.25rem;
 }
 
-/* Appointment Table */
-.appointment-table th {
-    padding: 1rem 1.5rem;
-    background-color: rgba(0, 0, 0, 0.1);
-}
 
-.appointment-table td {
-    padding: 0.75rem 1.5rem;
-}
-
-.appointment-table tr:hover {
-    background-color: rgba(0, 0, 0, 0.05);
-}
 
 /* Lead List */
 .lead-list {

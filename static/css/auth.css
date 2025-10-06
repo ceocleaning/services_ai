@@ -145,24 +145,8 @@
     border-color: var(--primary-indigo);
 }
 
-/* Auth Button */
-.auth-btn {
-    width: 100%;
-    padding: 0.75rem;
-    font-weight: 500;
-    margin-top: 0.5rem;
-}
 
-.auth-btn.btn-primary {
-    background-color: var(--primary-indigo);
-    border-color: var(--primary-indigo);
-}
 
-.auth-btn.btn-primary:hover, .auth-btn.btn-primary:focus {
-    background-color: var(--primary-indigo-medium-dark);
-    border-color: var(--primary-indigo-dark);
-    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
-}
 
 /* Auth Divider */
 .auth-divider {

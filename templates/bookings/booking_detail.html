@@ -51,39 +51,39 @@
                 <div class="card-header text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Booking Status</h5>
                     {% if booking.status == 'pending' %}
-                        <span class="badge bg-warning text-dark">Pending</span>
+                        <span class="badge text-dark">Pending</span>
                     {% elif booking.status == 'confirmed' %}
                         <span class="badge bg-success">Confirmed</span>
                     {% elif booking.status == 'completed' %}
-                        <span class="badge bg-info">Completed</span>
+                        <span class="badge">Completed</span>
                     {% elif booking.status == 'cancelled' %}
-                        <span class="badge bg-danger">Cancelled</span>
+                        <span class="badge">Cancelled</span>
                     {% elif booking.status == 'rescheduled' %}
-                        <span class="badge bg-primary">Rescheduled</span>
+                        <span class="badge">Rescheduled</span>
                     {% elif booking.status == 'no_show' %}
                         <span class="badge bg-dark">No Show</span>
                     {% else %}
-                        <span class="badge bg-secondary">{{ booking.status }}</span>
+                        <span class="badge">{{ booking.status }}</span>
                     {% endif %}
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="fw-bold">Service</h6>
-                            <p>{{ booking.service_offering.name }}</p>
+                            <span class="text-muted">Service</span>
+                            <p class="fw-bold">{{ booking.service_offering.name }}</p>
                             
-                            <h6 class="fw-bold mt-3">Date & Time</h6>
-                            <p>{{ booking.booking_date|date:"l, F j, Y" }}<br>
+                            <span class="text-muted mt-3">Date & Time</span>
+                            <p class="fw-bold">{{ booking.booking_date|date:"l, F j, Y" }}<br>
                             {{ booking.start_time|time:"g:i A" }} - {{ booking.end_time|time:"g:i A" }}</p>
                             
-                            <h6 class="fw-bold mt-3">Location</h6>
-                            <p>
+                            <span class="text-muted mt-3">Location</span>
+                            <p class="fw-bold">
                                 {% if booking.location_type == 'business' %}
-                                    <span class="text-primary">Business Location</span>
+                                    <span class="">Business Location</span>
                                 {% elif booking.location_type == 'onsite' %}
-                                    <span class="text-success">On-site (Client Location)</span>
+                                    <span class="">On-site (Client Location)</span>
                                 {% elif booking.location_type == 'virtual' %}
-                                    <span class="text-info">Virtual Meeting</span>
+                                    <span class="">Virtual Meeting</span>
                                 {% endif %}
                                 {% if booking.location_details %}
                                     <br>{{ booking.location_details }}
@@ -91,23 +91,23 @@
                             </p>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="fw-bold">Created</h6>
-                            <p>{{ booking.created_at|date:"M d, Y" }} at {{ booking.created_at|time:"g:i A" }}</p>
+                            <span class="text-muted">Created:</span>
+                            <p class="fw-bold">{{ booking.created_at|date:"M d, Y" }} at {{ booking.created_at|time:"g:i A" }}</p>
                             
-                            <h6 class="fw-bold mt-3">Last Updated</h6>
-                            <p>{{ booking.updated_at|date:"M d, Y" }} at {{ booking.updated_at|time:"g:i A" }}</p>
+                            <span class="mt-3 text-muted">Last Updated</span>
+                            <p class="fw-bold">{{ booking.updated_at|date:"M d, Y" }} at {{ booking.updated_at|time:"g:i A" }}</p>
                             
                             {% if booking.cancellation_reason %}
-                                <h6 class="fw-bold mt-3 text-danger">Cancellation Reason</h6>
-                                <p>{{ booking.cancellation_reason }}</p>
+                                <span class="mt-3 text-muted">Cancellation Reason</span>
+                                <p class="fw-bold">{{ booking.cancellation_reason }}</p>
                             {% endif %}
                         </div>
                     </div>
                     
                     {% if booking.notes %}
                         <div class="mt-3">
-                            <h6 class="fw-bold">Notes</h6>
-                            <p>{{ booking.notes }}</p>
+                            <span class="text-muted">Notes</span>
+                            <p class="fw-bold">{{ booking.notes }}</p>
                         </div>
                     {% endif %}
                 </div>
@@ -121,20 +121,20 @@
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-6">
-                            <h6 class="fw-bold">Name</h6>
-                            <p>{{ booking.name }}</p>
+                            <span class="text-muted">Name</span>
+                            <p class="fw-bold">{{ booking.name }}</p>
                             
-                            <h6 class="fw-bold mt-3">Email</h6>
-                            <p><a href="mailto:{{ booking.email }}">{{ booking.email }}</a></p>
+                            <span class="text-muted mt-3">Email</span>
+                            <p class="fw-bold"><a class="text-light" href="mailto:{{ booking.email }}">{{ booking.email }}</a></p>
                         </div>
                         <div class="col-md-6">
-                            <h6 class="fw-bold">Phone</h6>
-                            <p><a href="tel:{{ booking.phone_number }}">{{ booking.phone_number }}</a></p>
+                            <span class="text-muted">Phone</span>
+                            <p class="fw-bold"><a class="text-light" href="tel:{{ booking.phone_number }}">{{ booking.phone_number }}</a></p>
                             
                             {% if booking.lead %}
-                                <h6 class="fw-bold mt-3">Lead Source</h6>
+                                <span class="text-muted mt-3">Lead Source</span>
                                 <p>
-                                    <a href="{% url 'leads:lead_detail' booking.lead.id %}" class="text-primary">
+                                    <a href="{% url 'leads:lead_detail' booking.lead.id %}" class="text-light">
                                         <i class="fas fa-external-link-alt me-1"></i> View Lead Details
                                     </a>
                                 </p>
@@ -178,21 +178,21 @@
             <div class="card mb-4 service-details-card">
                 <div class="card-header text-white d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Service Details</h5>
-                    <span class="badge bg-primary">Duration: {{ booking.service_offering.duration }} minutes</span>
+                    <span class="badge p-3 h3">Duration: {{ booking.service_offering.duration }} minutes</span>
                 </div>
                 <div class="card-body">
                     <!-- Service Summary -->
-                    <div class="service-summary mb-4 p-3 rounded text-white">
+                    <div class="service-summary card mb-4 p-3 rounded">
                         <div class="row align-items-center">
                             <div class="col-md-6">
-                                <h4 class="service-title fw-bold text-primary">{{ booking.service_offering.name }}</h4>
+                                <h4 class="fw-bold">{{ booking.service_offering.name }}</h4>
                                 {% if booking.service_offering.description %}
-                                    <p class="text-white-50 mb-0">{{ booking.service_offering.description }}</p>
+                                    <p class="mb-0 text-muted">{{ booking.service_offering.description }}</p>
                                 {% endif %}
                             </div>
                             <div class="col-md-6 text-md-end">
-                                <div class="price-tag">
-                                    <span class="fs-4 fw-bold text-success">${{ total_price }}</span>
+                                <div class="">
+                                    <span class="fs-4 fw-bold text-light">${{ total_price }}</span>
                                 </div>
                                 <div class="small text-white-50">Total Price</div>
                             </div>
@@ -204,16 +204,14 @@
                         <h6 class="fw-bold mb-3 border-bottom pb-2 text-white">Service Breakdown</h6>
                         
                         <!-- Base Service -->
-                        <div class="service-item mb-3 p-3 rounded text-white border-start border-primary border-4">
+                        <div class="service-item card mb-3 p-3 rounded">
                             <div class="row align-items-center">
                                 <div class="col-md-6">
                                     <div class="d-flex align-items-center">
-                                        <div class="service-icon me-3 bg-primary text-white rounded-circle p-2">
-                                            <i class="fas fa-concierge-bell"></i>
-                                        </div>
+                                        
                                         <div>
                                             <h6 class="mb-0 fw-bold">{{ booking.service_offering.name }}</h6>
-                                            <span class="badge bg-primary">Base Service</span>
+                                            <span class="badge">Base Service</span>
                                             {% if booking.service_offering.description %}
                                                 <p class="small text-white-50 mb-0 mt-1">{{ booking.service_offering.description }}</p>
                                             {% endif %}
@@ -221,7 +219,7 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 text-md-end">
-                                    <div class="fw-bold text-primary">${{ booking.service_offering.price }}</div>
+                                    <div class="fw-bold">${{ booking.service_offering.price }}</div>
                                     <div class="small text-white-50">Qty: 1</div>
                                 </div>
                             </div>
@@ -229,13 +227,11 @@
                         
                         <!-- Additional Service Items -->
                         {% for item in service_items %}
-                            <div class="service-item mb-3 p-3 rounded text-white border-start {% if item.price_at_booking == 0 %}border-secondary{% else %}border-info{% endif %} border-4">
+                            <div class="service-item card mb-3 p-3 rounded">
                                 <div class="row align-items-center">
                                     <div class="col-md-6">
                                         <div class="d-flex align-items-center">
-                                            <div class="service-icon me-3 {% if item.price_at_booking == 0 %}bg-secondary{% else %}bg-info{% endif %} text-white rounded-circle p-2">
-                                                <i class="fas {% if item.price_at_booking == 0 %}fa-info{% else %}fa-plus{% endif %}"></i>
-                                            </div>
+                                           
                                             <div>
                                                 <h6 class="mb-0 fw-bold">{{ item.service_item.name }}</h6>
                                                 {% if item.service_item.description %}
@@ -243,7 +239,7 @@
                                                 {% endif %}
                                                 <div class="d-flex gap-2 align-items-center flex-wrap mt-1">
                                                     {% if item.price_at_booking == 0 %}
-                                                        <span class="badge bg-secondary">Free</span>
+                                                        <span class="badge">Free</span>
                                                     {% endif %}
                                                     {% if item.service_item.duration_minutes > 0 %}
                                                         <span class="small text-white-50"><i class="far fa-clock me-1"></i> +{{ item.service_item.duration_minutes }} min</span>
@@ -273,32 +269,32 @@
                                             {% if item.service_item.field_type == 'text' %}
                                                 {% if item.text_value %}
                                                     <div class="mb-2">
-                                                        <span class="text-white-50 small">Value:</span>
-                                                        <div class="text-white fw-bold">{{ item.text_value }}</div>
+                                                        <span class="text-muted small">Value:</span>
+                                                        <div class="text-light fw-bold">{{ item.text_value }}</div>
                                                     </div>
                                                 {% endif %}
                                             {% elif item.service_item.field_type == 'textarea' %}
                                                 {% if item.textarea_value %}
                                                     <div class="mb-2">
-                                                        <span class="text-white-50 small">Details:</span>
-                                                        <div class="text-white" style="white-space: pre-line;">{{ item.textarea_value }}</div>
+                                                        <span class="text-muted small">Details:</span>
+                                                        <div class="text-light" style="white-space: pre-line;">{{ item.textarea_value }}</div>
                                                     </div>
                                                 {% endif %}
                                             {% elif item.service_item.field_type == 'number' %}
                                                 {% if item.number_value %}
                                                     <div class="mb-2">
-                                                        <span class="text-white-50 small">Quantity:</span>
-                                                        <div class="text-white fw-bold">{{ item.number_value }}</div>
+                                                        <span class="text-muted small">Quantity:</span>
+                                                        <div class="text-light fw-bold">{{ item.number_value }}</div>
                                                     </div>
                                                 {% endif %}
                                             {% elif item.service_item.field_type == 'boolean' %}
                                                 <div class="mb-2">
-                                                    <span class="text-white-50 small">Selection:</span>
-                                                    <div class="text-white fw-bold">
+                                                    <span class="text-muted small">Selection:</span>
+                                                    <div class="text-light fw-bold">
                                                         {% if item.boolean_value == True %}
-                                                            <span class="text-success"><i class="fas fa-check-circle"></i> Yes</span>
+                                                            <span class="text-light"><i class="fas fa-check-circle"></i> Yes</span>
                                                         {% elif item.boolean_value == False %}
-                                                            <span class="text-warning"><i class="fas fa-times-circle"></i> No</span>
+                                                            <span class="text-light"><i class="fas fa-times-circle"></i> No</span>
                                                         {% else %}
                                                             <span class="text-muted">Not specified</span>
                                                         {% endif %}
@@ -306,8 +302,8 @@
                                                 </div>
                                             {% elif item.service_item.field_type == 'select' %}
                                                 <div class="mb-2">
-                                                    <span class="text-white-50 small">Selected Option:</span>
-                                                    <div class="text-white fw-bold">
+                                                    <span class="text-muted small">Selected Option:</span>
+                                                    <div class="text-light fw-bold">
                                                         {% if item.select_value %}
                                                             {{ item.select_value }}
                                                         {% else %}
@@ -321,23 +317,23 @@
                                             {% if item.price_at_booking > 0 %}
                                                 <div class="d-flex justify-content-end align-items-center gap-3 mt-2">
                                                     {% if item.quantity > 1 %}
-                                                        <div class="text-info">
-                                                            <span class="small text-white-50">Unit Price:</span>
-                                                            <span class="fw-bold">${{ item.price_at_booking|divide:item.quantity|floatformat:2 }}</span>
+                                                        <div class="">
+                                                            <span class="small text-muted">Unit Price:</span>
+                                                            <span class="fw-bold text-light">${{ item.price_at_booking|divide:item.quantity|floatformat:2 }}</span>
                                                         </div>
-                                                        <div class="text-white-50">
+                                                        <div class="text-muted">
                                                             <span class="small">Qty:</span>
-                                                            <span class="fw-bold">{{ item.quantity }}</span>
+                                                            <span class="fw-bold text-light">{{ item.quantity }}</span>
                                                         </div>
                                                     {% endif %}
                                                     <div class="item-total">
-                                                        <span class="small text-white-50">{% if item.quantity > 1 %}Total:{% else %}Price:{% endif %}</span>
-                                                        <span class="fw-bold text-success">${{ item.price_at_booking|floatformat:2 }}</span>
+                                                        <span class="small text-muted">{% if item.quantity > 1 %}Total:{% else %}Price:{% endif %}</span>
+                                                        <span class="fw-bold text-light">${{ item.price_at_booking|floatformat:2 }}</span>
                                                     </div>
                                                 </div>
                                             {% else %}
                                                 <div class="text-end">
-                                                    <span class="badge bg-success">Free</span>
+                                                    <span class="badge">Free</span>
                                                 </div>
                                             {% endif %}
                                         </div>
@@ -348,7 +344,7 @@
                         
                         <!-- Price Summary -->
                         {% if booking.service_offering.price > 0 or has_paid_items %}
-                        <div class="price-summary mt-4 p-3 rounded text-white">
+                        <div class="price-summary card mt-4">
                             <div class="row">
                                 <div class="col-md-12">
                                     <div class="d-flex justify-content-between mb-2">
@@ -416,6 +412,122 @@
                 </div>
             {% endif %}
             
+            <!-- Invoice & Payment Information -->
+            {% if invoice %}
+                <div class="card mb-4">
+                    <div class="card-header text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Invoice & Payment</h5>
+                        {% if invoice.status == 'draft' %}
+                            <span class="badge">Draft</span>
+                        {% elif invoice.status == 'pending' %}
+                            <span class="badge text-dark">Pending</span>
+                        {% elif invoice.status == 'paid' %}
+                            <span class="badge bg-success">Paid</span>
+                        {% elif invoice.status == 'partially_paid' %}
+                            <span class="badge">Partially Paid</span>
+                        {% elif invoice.status == 'overdue' %}
+                            <span class="badge">Overdue</span>
+                        {% elif invoice.status == 'cancelled' %}
+                            <span class="badge bg-dark">Cancelled</span>
+                        {% elif invoice.status == 'refunded' %}
+                            <span class="badge">Refunded</span>
+                        {% else %}
+                            <span class="badge">{{ invoice.status }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Invoice Info -->
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <span class="text-muted small">Invoice #</span>
+                                        <p class="mb-0 fw-bold">{{ invoice.invoice_number }}</p>
+                                    </div>
+                                    <div class="col-6">
+                                        <span class="text-muted small">Due Date</span>
+                                        <p class="mb-0 fw-bold">{{ invoice.due_date|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment History -->
+                        {% if payments %}
+                            <div class="list-group list-group-flush border-top">
+                                <div class="list-group-item bg-dark">
+                                    <h6 class="mb-0 small text-white-50">Payment History</h6>
+                                </div>
+                                {% for payment in payments %}
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1 small">
+                                                    {% if payment.payment_method == 'cash' %}
+                                                        <i class="fas fa-money-bill-wave me-1 text-success"></i> Cash
+                                                    {% elif payment.payment_method == 'credit_card' %}
+                                                        <i class="fas fa-credit-card me-1 text-primary"></i> Credit Card
+                                                    {% elif payment.payment_method == 'debit_card' %}
+                                                        <i class="fas fa-credit-card me-1 text-info"></i> Debit Card
+                                                    {% elif payment.payment_method == 'bank_transfer' %}
+                                                        <i class="fas fa-university me-1 text-primary"></i> Bank Transfer
+                                                    {% elif payment.payment_method == 'paypal' %}
+                                                        <i class="fab fa-paypal me-1 text-primary"></i> PayPal
+                                                    {% elif payment.payment_method == 'stripe' %}
+                                                        <i class="fab fa-stripe me-1 text-primary"></i> Stripe
+                                                    {% else %}
+                                                        <i class="fas fa-dollar-sign me-1"></i> {{ payment.payment_method|title }}
+                                                    {% endif %}
+                                                </h6>
+                                                <p class="text-muted mb-0 small">
+                                                    {{ payment.payment_date|date:"M d, Y" }}
+                                                </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="fw-bold">${{ payment.amount }}</div>
+                                                {% if payment.is_refunded %}
+                                                    <span class="badge text-dark small">Refunded</span>
+                                                {% else %}
+                                                    <span class="badge bg-success small">Paid</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- Payment Summary -->
+                        <div class="card-body">
+                            <div class="p-3 bg-dark rounded">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Amount:</span>
+                                    <span class="fw-bold">${{ total_price }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Total Paid:</span>
+                                    <span class="fw-bold text-success">${{ total_paid }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between pt-2 border-top border-secondary">
+                                    <span class="fw-bold">Balance Due:</span>
+                                    <span class="fw-bold {% if balance_due > 0 %}text-danger{% else %}text-success{% endif %}">
+                                        ${{ balance_due }}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            {% if balance_due > 0 %}
+                                <div class="mt-3">
+                                    <a href="#" class="btn btn-success w-100 btn-sm">
+                                        <i class="fas fa-plus-circle me-2"></i> Add Payment
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
             <!-- Timeline -->
             <div class="card mb-4">
                 <div class="card-header text-white">
@@ -423,7 +535,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="list-group list-group-flush">
-                        {% for event in timeline_events %}
+                        {% for event in timeline %}
                             <div class="list-group-item">
                                 <div class="d-flex">
                                     <div class="timeline-icon me-3">
@@ -505,16 +617,16 @@
                 </div>
                 <div class="card-body">
                     <div class="d-grid gap-2">
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="#" class="btn btn-outline-secondary">
                             <i class="fas fa-envelope me-2"></i> Send Email to Client
                         </a>
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="#" class="btn btn-outline-secondary">
                             <i class="fas fa-sms me-2"></i> Send SMS to Client
                         </a>
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="#" class="btn btn-outline-secondary">
                             <i class="fas fa-calendar-plus me-2"></i> Schedule Follow-up
                         </a>
-                        <a href="#" class="btn btn-outline-primary">
+                        <a href="#" class="btn btn-outline-secondary">
                             <i class="fas fa-sticky-note me-2"></i> Add Note
                         </a>
                     </div>
@@ -533,7 +645,7 @@
                     
                     {% if booking.business.address %}
                         <hr>
-                        <h6 class="fw-bold">Address</h6>
+                        <span class="text-muted">Address</span>
                         <p class="mb-0">{{ booking.business.address }}</p>
                         <p class="mb-0">
                             {% if booking.business.city %}{{ booking.business.city }}{% endif %}
@@ -544,7 +656,7 @@
                     
                     {% if booking.business.website %}
                         <hr>
-                        <h6 class="fw-bold">Website</h6>
+                        <span class="text-muted">Website</span>
                         <p class="mb-0"><a href="{{ booking.business.website }}" target="_blank">{{ booking.business.website }}</a></p>
                     {% endif %}
                 </div>

@@ -8,13 +8,16 @@
     <!-- Back button and header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <a href="{% url 'leads:index' %}" class="btn btn-outline-secondary mb-2">
-                <i class="fas fa-arrow-left me-2"></i> Back to Leads
-            </a>
-            <h2 class="mb-0">Lead Details</h2>
+           
+            <h2 class="mb-0">
+                <a href="{% url 'leads:index' %}" class="btn">
+                    <i class="fas fa-arrow-left me-2"></i>
+                </a>
+                Lead Details
+            </h2>
         </div>
         <div class="d-flex">
-            <a href="{% url 'leads:edit_lead' lead.id %}" class="btn btn-outline-primary me-2">
+            <a href="{% url 'leads:edit_lead' lead.id %}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-edit me-2"></i> Edit Lead
             </a>
             <div class="dropdown">
@@ -42,60 +45,60 @@
     <div class="row">
         <!-- Lead Information -->
         <div class="col-lg-6 mb-4">
-            <div class="card h-100 bg-dark text-white">
-                <div class="card-header bg-gradient-dark border-bottom border-secondary">
+            <div class="card h-100">
+                <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-user-circle me-2"></i>Lead Information</h5>
                 </div>
                 <div class="card-body p-0">
                     <!-- Lead Header with Avatar -->
-                    <div class="p-4 bg-gradient-navy">
+                    <div class="p-4">
                         <div class="d-flex align-items-center">
-                            <div class="lead-avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
+                            <div class="lead-avatar bg-dark text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 80px; height: 80px;">
                                 <i class="fas fa-user fa-2x"></i>
                             </div>
                             <div>
-                                <h3 class="mb-1 text-white">{{ lead.get_full_name }}</h3>
+                                <h3 class="mb-1">{{ lead.get_full_name }}</h3>
                                 <div class="d-flex align-items-center mb-2">
                                     {% if lead.status == 'new' %}
-                                        <span class="badge bg-info px-3 py-2">New</span>
+                                        <span class="badge px-3 py-2">New</span>
                                     {% elif lead.status == 'contacted' %}
-                                        <span class="badge bg-primary px-3 py-2">Contacted</span>
+                                        <span class="badge px-3 py-2">Contacted</span>
                                     {% elif lead.status == 'qualified' %}
-                                        <span class="badge bg-warning text-dark px-3 py-2">Qualified</span>
+                                        <span class="badge px-3 py-2">Qualified</span>
                                     {% elif lead.status == 'appointment_scheduled' %}
-                                        <span class="badge bg-purple px-3 py-2">Appointment Scheduled</span>
+                                        <span class="badge px-3 py-2">Appointment Scheduled</span>
                                     {% elif lead.status == 'converted' %}
-                                        <span class="badge bg-success px-3 py-2">Converted</span>
+                                        <span class="badge px-3 py-2">Converted</span>
                                     {% elif lead.status == 'lost' %}
-                                        <span class="badge bg-danger px-3 py-2">Lost</span>
+                                        <span class="badge px-3 py-2">Lost</span>
                                     {% else %}
-                                        <span class="badge bg-secondary px-3 py-2">{{ lead.get_status_display }}</span>
+                                        <span class="badge px-3 py-2">{{ lead.get_status_display }}</span>
                                     {% endif %}
-                                    <span class="badge bg-light text-dark ms-2 px-3 py-2">{{ lead.get_source_display }}</span>
+                                    <span class="badge ms-2 px-3 py-2">{{ lead.get_source_display }}</span>
                                 </div>
-                                <div class="text-light">Created: {{ lead.created_at|date:"M d, Y" }}</div>
+                                <div>Created: {{ lead.created_at|date:"M d, Y" }}</div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Contact Information -->
                     <div class="p-4 border-top border-secondary">
-                        <h5 class="fw-bold mb-3 text-info"><i class="fas fa-address-card me-2"></i>Contact Information</h5>
+                        <h5 class="fw-bold mb-3"><i class="fas fa-address-card me-2"></i>Contact Information</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center bg-dark-light p-3 rounded h-100">
-                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <div class="d-flex align-items-center bg-secondary p-3 rounded h-100">
+                                    <div class="rounded-circle bg-dark d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
                                         <i class="fas fa-envelope"></i>
                                     </div>
                                     <div>
                                         <div class="text-muted small">Email</div>
-                                        <a href="mailto:{{ lead.email }}" class="text-white text-decoration-none fw-bold">{{ lead.email }}</a>
+                                        <a href="mailto:{{ lead.email }}" class="text-decoration-none fw-bold">{{ lead.email }}</a>
                                     </div>
                                 </div>
                             </div>
                             <div class="col-md-6">
-                                <div class="d-flex align-items-center bg-dark-light p-3 rounded h-100">
-                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <div class="d-flex align-items-center bg-secondary p-3 rounded h-100">
+                                    <div class="rounded-circle bg-dark d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
                                         <i class="fas fa-phone"></i>
                                     </div>
                                     <div>
@@ -109,15 +112,14 @@
 
                     <!-- Status Information -->
                     <div class="p-4 border-top border-secondary">
-                        <h5 class="fw-bold mb-3 text-warning"><i class="fas fa-chart-line me-2"></i>Status Information</h5>
+                        <h5 class="fw-bold mb-3"><i class="fas fa-chart-line me-2"></i>Status Information</h5>
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="bg-dark-light p-3 rounded h-100">
                                     <div class="text-muted mb-1">Current Status</div>
                                     <div class="d-flex align-items-center">
-                                        <div class="status-indicator me-2 rounded-circle" style="width: 12px; height: 12px; background-color: 
-                                            {% if lead.status == 'new' %}var(--bs-info){% elif lead.status == 'contacted' %}var(--bs-primary){% elif lead.status == 'qualified' %}var(--bs-warning){% elif lead.status == 'appointment_scheduled' %}var(--bs-purple, purple){% elif lead.status == 'converted' %}var(--bs-success){% elif lead.status == 'lost' %}var(--bs-danger){% else %}var(--bs-secondary){% endif %}"></div>
-                                        <span class="fw-bold fs-5">{{ lead.get_status_display }}</span>
+                                      
+                                        <span class="fs-6 fw-bold">{{ lead.get_status_display }}</span>
                                     </div>
                                 </div>
                             </div>
@@ -139,7 +141,7 @@
                     <!-- Notes Section -->
                     {% if lead.notes %}
                     <div class="p-4 border-top border-secondary">
-                        <h5 class="fw-bold mb-3 text-success"><i class="fas fa-sticky-note me-2"></i>Notes</h5>
+                        <h5 class="fw-bold mb-3"><i class="fas fa-sticky-note me-2"></i>Notes</h5>
                         <div class="bg-dark-light p-3 rounded">
                             <p class="mb-0">{{ lead.notes }}</p>
                         </div>
@@ -148,18 +150,18 @@
 
                     <!-- Quick Actions -->
                     <div class="p-4 border-top border-secondary">
-                        <h5 class="fw-bold mb-3 text-primary"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                        <h5 class="fw-bold mb-3"><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
                         <div class="d-flex flex-wrap gap-2">
-                            <a href="#" class="btn btn-info">
+                            <a href="#" class="btn btn-secondary">
                                 <i class="fas fa-sms me-2"></i> Send SMS
                             </a>
-                            <a href="#" class="btn btn-primary">
+                            <a href="#" class="btn btn-secondary">
                                 <i class="fas fa-phone me-2"></i> Call
                             </a>
                             <a href="#" class="btn btn-secondary">
                                 <i class="fas fa-envelope me-2"></i> Email
                             </a>
-                            <a href="#" class="btn btn-success">
+                            <a href="#" class="btn btn-primary">
                                 <i class="fas fa-calendar-plus me-2"></i> Book
                             </a>
                         </div>
@@ -216,7 +218,7 @@
                             {% endfor %}
                         </div>
                     {% else %}
-                        <div class="alert alert-info m-3">
+                        <div class="alert alert-secondary m-3">
                             <i class="fas fa-info-circle me-2"></i> No communication history found.
                         </div>
                     {% endif %}
@@ -259,28 +261,28 @@
                                     </td>
                                     <td>
                                         {% if booking.status == 'pending' %}
-                                            <span class="badge bg-warning text-dark">Pending</span>
+                                            <span class="badge text-dark">Pending</span>
                                         {% elif booking.status == 'confirmed' %}
                                             <span class="badge bg-success">Confirmed</span>
                                         {% elif booking.status == 'completed' %}
-                                            <span class="badge bg-info">Completed</span>
+                                            <span class="badge">Completed</span>
                                         {% elif booking.status == 'cancelled' %}
-                                            <span class="badge bg-danger">Cancelled</span>
+                                            <span class="badge">Cancelled</span>
                                         {% elif booking.status == 'rescheduled' %}
-                                            <span class="badge bg-primary">Rescheduled</span>
+                                            <span class="badge">Rescheduled</span>
                                         {% elif booking.status == 'no_show' %}
                                             <span class="badge bg-dark">No Show</span>
                                         {% else %}
-                                            <span class="badge bg-secondary">{{ booking.status }}</span>
+                                            <span class="badge">{{ booking.status }}</span>
                                         {% endif %}
                                     </td>
                                     <td>
                                         {% if booking.location_type == 'business' %}
-                                            <span class="text-primary">Business Location</span>
+                                            <span class="badge">Business Location</span>
                                         {% elif booking.location_type == 'onsite' %}
-                                            <span class="text-success">On-site</span>
+                                            <span class="badge">On-site</span>
                                         {% elif booking.location_type == 'virtual' %}
-                                            <span class="text-info">Virtual</span>
+                                            <span class="badge">Virtual</span>
                                         {% endif %}
                                     </td>
                                     <td>

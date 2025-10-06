@@ -45,11 +45,12 @@
                                             <i class="fas fa-bolt text-warning me-1"></i> Quick Filters
                                         </label>
                                         <div class="d-flex flex-wrap gap-2">
-                                            <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn" data-filter="status" data-value="">
+                                            <button type="button" class="btn btn-sm btn-secondary quick-filter-btn" data-filter="status" data-value="">
                                                 <i class="fas fa-list me-1"></i> All
                                             </button>
                                             {% for status_code, status_label in booking_statuses %}
-                                                <button type="button" class="btn btn-sm btn-outline-primary quick-filter-btn {% if current_status == status_code %}active{% endif %}" data-filter="status" data-value="{{ status_code }}">
+          
+                                                <button type="button" class="btn btn-sm quick-filter-btn {% if current_status == status_code %}active{% endif %} btn-secondary" data-filter="status" data-value="{{ status_code }}">
                                                     {% if status_code == 'pending' %}
                                                         <i class="fas fa-clock me-1"></i>
                                                     {% elif status_code == 'confirmed' %}
@@ -121,7 +122,7 @@
                                     <div class="d-flex justify-content-between align-items-center pt-2 border-top">
                                         <div class="filter-info">
                                             {% if current_status or date_from or date_to or search_query %}
-                                                <span class="badge bg-primary">
+                                                <span class="badge">
                                                     <i class="fas fa-filter me-1"></i> Filters Active
                                                 </span>
                                             {% endif %}
@@ -193,19 +194,19 @@
                                                 </td>
                                                 <td>
                                                     {% if booking.status == 'pending' %}
-                                                        <span class="badge bg-warning text-dark">Pending</span>
+                                                        <span class="badge text-dark">Pending</span>
                                                     {% elif booking.status == 'confirmed' %}
                                                         <span class="badge bg-success">Confirmed</span>
                                                     {% elif booking.status == 'completed' %}
-                                                        <span class="badge bg-info">Completed</span>
+                                                        <span class="badge">Completed</span>
                                                     {% elif booking.status == 'cancelled' %}
-                                                        <span class="badge bg-danger">Cancelled</span>
+                                                        <span class="badge">Cancelled</span>
                                                     {% elif booking.status == 'rescheduled' %}
-                                                        <span class="badge bg-primary">Rescheduled</span>
+                                                        <span class="badge">Rescheduled</span>
                                                     {% elif booking.status == 'no_show' %}
                                                         <span class="badge bg-dark">No Show</span>
                                                     {% else %}
-                                                        <span class="badge bg-secondary">{{ booking.status }}</span>
+                                                        <span class="badge">{{ booking.status }}</span>
                                                     {% endif %}
                                                 </td>
                  
@@ -214,7 +215,7 @@
                                                     <div class="small text-muted">{{ booking.created_at|time:"g:i A" }}</div>
                                                 </td>
                                                 <td>
-                                                  <a class="btn btn-sm btn-primary" href="{% url 'bookings:booking_detail' booking.id %}"><i class="fas fa-eye"></i></a>
+                                                  <a class="btn btn-sm btn-outline-primary" href="{% url 'bookings:booking_detail' booking.id %}"><i class="fas fa-eye"></i></a>
                                                  
                                                 </td>
                                             </tr>
@@ -239,19 +240,19 @@
                                                     </div>
                                                     <div>
                                                         {% if booking.status == 'pending' %}
-                                                            <span class="badge bg-warning text-dark">Pending</span>
+                                                            <span class="badge text-dark">Pending</span>
                                                         {% elif booking.status == 'confirmed' %}
                                                             <span class="badge bg-success">Confirmed</span>
                                                         {% elif booking.status == 'completed' %}
-                                                            <span class="badge bg-info">Completed</span>
+                                                            <span class="badge">Completed</span>
                                                         {% elif booking.status == 'cancelled' %}
-                                                            <span class="badge bg-danger">Cancelled</span>
+                                                            <span class="badge">Cancelled</span>
                                                         {% elif booking.status == 'rescheduled' %}
-                                                            <span class="badge bg-primary">Rescheduled</span>
+                                                            <span class="badge">Rescheduled</span>
                                                         {% elif booking.status == 'no_show' %}
                                                             <span class="badge bg-dark">No Show</span>
                                                         {% else %}
-                                                            <span class="badge bg-secondary">{{ booking.status }}</span>
+                                                            <span class="badge">{{ booking.status }}</span>
                                                         {% endif %}
                                                     </div>
                                                 </div>

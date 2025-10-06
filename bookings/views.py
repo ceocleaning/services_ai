@@ -641,8 +641,8 @@ def booking_detail(request, booking_id):
         # Create a timeline of booking events
         timeline = [
             {
-                'date': booking.created_at,
-                'status': 'created',
+                'timestamp': booking.created_at,
+                'type': 'primary',
                 'icon': 'fa-plus-circle',
                 'description': 'Booking created'
             }
@@ -650,9 +650,16 @@ def booking_detail(request, booking_id):
         
         # Add status changes to timeline if applicable
         if booking.status != 'pending':
+            status_type_map = {
+                'confirmed': 'success',
+                'cancelled': 'danger',
+                'completed': 'success',
+                'rescheduled': 'warning',
+                'no_show': 'dark'
+            }
             timeline.append({
-                'date': booking.updated_at,
-                'status': booking.status,
+                'timestamp': booking.updated_at,
+                'type': status_type_map.get(booking.status, 'secondary'),
                 'icon': {
                     'confirmed': 'fa-check',
                     'cancelled': 'fa-times',
@@ -664,7 +671,19 @@ def booking_detail(request, booking_id):
             })
         
         # Sort timeline by date
-        timeline = sorted(timeline, key=lambda x: x['date'], reverse=True)
+        timeline = sorted(timeline, key=lambda x: x['timestamp'], reverse=True)
+        
+        # Get invoice and payment information
+        from invoices.models import Invoice, Payment
+        invoice = Invoice.objects.filter(booking=booking).first()
+        payments = []
+        total_paid = 0
+        balance_due = total_price
+        
+        if invoice:
+            payments = Payment.objects.filter(invoice=invoice).order_by('-payment_date')
+            total_paid = sum(payment.amount for payment in payments if not payment.is_refunded)
+            balance_due = total_price - total_paid
         
         return render(request, 'bookings/booking_detail.html', {
             'title': f'Booking: {booking.name}',
@@ -677,7 +696,11 @@ def booking_detail(request, booking_id):
             'paid_service_items_total': paid_service_items_total,
             'has_paid_items': has_paid_items,
             'total_price': total_price,
-            'timeline': timeline
+            'timeline': timeline,
+            'invoice': invoice,
+            'payments': payments,
+            'total_paid': total_paid,
+            'balance_due': balance_due
         })
        
     except Booking.DoesNotExist:

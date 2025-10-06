@@ -74,41 +74,7 @@
     opacity: 1;
 }
 
-/* Text styling */
-.text-danger {
-    color: #dc3545 !important;
-}
 
-/* Button styling */
-.btn {
-    padding: 0.6rem 1.5rem;
-    border-radius: 0.5rem;
-    transition: all 0.3s ease;
-    font-weight: 500;
-}
-
-.btn-primary {
-    background-color: #6366f1;
-    border-color: #6366f1;
-}
-
-.btn-primary:hover {
-    background-color: #4f46e5;
-    border-color: #4f46e5;
-    transform: translateY(-2px);
-    box-shadow: 0 0.5rem 1rem rgba(99, 102, 241, 0.15);
-}
-
-.btn-outline-secondary {
-    color: #64748b;
-    border-color: #e2e8f0;
-}
-
-.btn-outline-secondary:hover {
-    background-color: #f8fafc;
-    color: #334155;
-    border-color: #cbd5e1;
-}
 
 /* Progress bar */
 .progress {

@@ -164,7 +164,7 @@
         <!-- Main Content -->
         <main class="main-content">
             <!-- Top Navbar -->
-            <nav class="navbar bg-secondary-dark navbar-expand top-navbar">
+            <nav class="navbar bg-secondary navbar-expand top-navbar">
                 <div class="container-fluid">
                     <button class="btn sidebar-toggle d-none d-lg-block" id="sidebarCollapse">
                         <i class="fas fa-bars"></i>
@@ -184,14 +184,14 @@
                         {% else %}
                         <li class="nav-item me-3">
                             <a href="{% url 'licence:purchase_licence' %}" class="nav-link">
-                                <span class="badge bg-warning text-dark"><i class="fas fa-star me-1"></i> Upgrade to Premium</span>
+                                <span class="badge text-dark"><i class="fas fa-star me-1"></i> Upgrade to Premium</span>
                             </a>
                         </li>
                         {% endif %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="notificationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                                 <i class="fas fa-bell"></i>
-                                <span class="badge bg-danger rounded-pill notification-badge">0</span>
+                                <span class="badge rounded-pill notification-badge">0</span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-end notification-dropdown" aria-labelledby="notificationsDropdown" id="notificationDropdownContent" style="width: 400px; max-height: 500px; overflow-y: auto;">
                                 <!-- Notification content will be loaded here via AJAX -->

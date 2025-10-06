@@ -105,7 +105,7 @@
                                                 {% if service.is_active %}
                                                 <span class="badge bg-success">Active</span>
                                                 {% else %}
-                                                <span class="badge bg-secondary">Inactive</span>
+                                                <span class="badge">Inactive</span>
                                                 {% endif %}
                                             </td>
                                             <td class="text-end pe-4">
@@ -170,9 +170,9 @@
                                             </td>
                                             <td>
                                                 {% if item.service_offering %}
-                                                    <span class="badge bg-info">{{ item.service_offering.name }}</span>
+                                                    <span class="badge">{{ item.service_offering.name }}</span>
                                                 {% else %}
-                                                    <span class="badge bg-secondary">Not Linked</span>
+                                                    <span class="badge">Not Linked</span>
                                                 {% endif %}
                                             </td>
                                           
@@ -188,7 +188,7 @@
                                                 {% if item.is_optional %}
                                                     <span class="badge bg-success">Optional</span>
                                                 {% else %}
-                                                    <span class="badge bg-danger">Required</span>
+                                                    <span class="badge">Required</span>
                                                 {% endif %}
                                             </td>
                                             <td class="text-end">

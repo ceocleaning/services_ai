@@ -1,18 +1,22 @@
 :root {
 
-    --primary-light: #1350d4;
-    --primary: #1148bf;
-    --primary-dark: #0b2d78;
+    --primary-light: rgb(19, 80, 212);
+    --primary: rgb(17, 72, 191);      
+    --primary-dark: rgb(11, 45, 120);  
+
+    --primary-light-rgb: 19, 80, 212;
+    --primary-rgb: 17, 72, 191;      
+    --primary-dark-rgb: 11, 45, 120;  
 
 
-    --secondary: #1f2937;
-    --secondary-dark: #091527;
+    --secondary: oklch(22% 0 0);
+    --secondary-dark: oklch(18% 0 0);
 
 
-    --bg-dark: #111827;
-    --bg-card: #1f2937;
+    --bg-dark: oklch(18.5% 0 0);
+    --bg-card: var(--bg-dark);
 
-    --border-color: #464646;
+    --border-color: #2c2c2c;
 
 
     --text-dark: #111827;
@@ -51,35 +55,6 @@
 }
 
 
-.bg-success {
-    background-color: var(--success) !important;
-}
-
-.bg-warning {
-    background-color: var(--warning) !important;
-}
-
-.bg-danger {
-    background-color: var(--error) !important;
-}
-
-.bg-info {
-    background-color: var(--info) !important;
-}
-
-.bg-primary{
-    background-color: var(--primary) !important;
-}
-.bg-secondary{
-    background-color: var(--secondary) !important;
-}
-.bg-primary-dark{
-    background-color: var(--primary-dark) !important;
-}
-.bg-secondary-dark{
-    background-color: var(--secondary-dark) !important;
-}
-
 
 /* Typography */
 body {
@@ -97,18 +72,26 @@ h1, h2, h3, h4, h5, h6 {
 
 h1 {
     font-size: 2.074rem;
+    color: var(--text-light) !important;
 }
 
 h2 {
     font-size: 1.728rem;
+    color: var(--text-light) !important;
 }
 
 h3 {
     font-size: 1.44rem;
+    color: var(--text-light) !important;
 }
 
 h4 {
     font-size: 1.2rem;
+    color: var(--text-light) !important;
+}
+
+p{
+    color: var(--text-light) !important;
 }
 
 small, .text-small {
@@ -150,6 +133,38 @@ small, .text-small {
 }
 
 
+
+/* BADGES */
+
+.badge{
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0.375rem !important;
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    display: inline-block;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: middle;
+    color: var(--muted-text) !important;
+
+}
+
+
+.bg-primary{
+    background-color: var(--primary) !important;
+    color: var(--text-light) !important;
+}
+
+.bg-secondary{
+    background-color: var(--secondary) !important;
+    color: var(--text-light) !important;
+}
+
+.bg-light{
+    background-color: var(--muted-text) !important;
+    color: var(--text-light) !important;
+}
 
 
 

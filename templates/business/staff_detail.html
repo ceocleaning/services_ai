@@ -227,7 +227,7 @@
                                             <td>{{ avail.end_time|time:"g:i A" }}</td>
                                             <td>
                                                 {% if avail.off_day %}
-                                                <span class="badge bg-danger">Off</span>
+                                                <span class="badge">Off</span>
                                                 {% else %}
                                                 <span class="badge bg-success">Available</span>
                                                 {% endif %}
@@ -291,7 +291,7 @@
                                             <td>{{ avail.end_time|time:"g:i A" }}</td>
                                             <td>
                                                 {% if avail.off_day %}
-                                                <span class="badge bg-danger">Off</span>
+                                                <span class="badge">Off</span>
                                                 {% else %}
                                                 <span class="badge bg-success">Available</span>
                                                 {% endif %}
@@ -359,7 +359,7 @@
                                         {% if assignment.is_primary %}
                                         <span class="badge bg-success">Primary</span>
                                         {% else %}
-                                        <span class="badge bg-secondary">Secondary</span>
+                                        <span class="badge">Secondary</span>
                                         {% endif %}
                                     </td>
                                     <td>
