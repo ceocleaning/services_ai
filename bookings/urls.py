@@ -18,4 +18,5 @@ urlpatterns = [
     path('<str:booking_id>/cancel/', views.cancel_booking, name='cancel_booking'),
     path('<str:booking_id>/reschedule/', views.reschedule_booking, name='reschedule_booking'),
     path('<str:booking_id>/available-timeslots/', views.get_available_timeslots, name='get_available_timeslots'),
+    path('<str:booking_id>/trigger-event/', views.trigger_booking_event, name='trigger_booking_event'),
 ]

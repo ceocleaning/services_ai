@@ -1173,3 +1173,56 @@ def reschedule_booking(request, booking_id):
         return JsonResponse({'success': False, 'message': 'Booking not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def trigger_booking_event(request, booking_id):
+    """
+    Generic handler for all booking events
+    Routes to specific processors based on event_key
+    """
+    business = get_user_business(request.user)
+    if not business:
+        return JsonResponse({'success': False, 'message': 'Business not found'}, status=404)
+    
+    try:
+        booking = Booking.objects.get(id=booking_id, business=business)
+        data = json.loads(request.body)
+        
+        event_type_id = data.get('event_type_id')
+        event_key = data.get('event_key')
+        event_data = data.get('data', {})
+        
+        # Get event type configuration
+        from .models import BookingEventType
+        event_type = BookingEventType.objects.get(
+            id=event_type_id,
+            business=business,
+            is_enabled=True
+        )
+        
+        # Route to specific processor
+        from .event_processors import EVENT_PROCESSORS
+        processor = EVENT_PROCESSORS.get(event_key)
+        
+        if not processor:
+            return JsonResponse({
+                'success': False,
+                'message': f'No processor found for event: {event_key}'
+            }, status=400)
+        
+        # Execute processor
+        result = processor(booking, event_type, event_data, request.user)
+        
+        if result['success']:
+            return JsonResponse(result)
+        else:
+            return JsonResponse(result, status=400)
+            
+    except Booking.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Booking not found'}, status=404)
+    except BookingEventType.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Event type not found or disabled'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)

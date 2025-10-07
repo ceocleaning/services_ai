@@ -12,6 +12,100 @@ document.addEventListener('DOMContentLoaded', function() {
     const cancelModal = new bootstrap.Modal(document.getElementById('cancelBookingModal'));
     const rescheduleModal = new bootstrap.Modal(document.getElementById('rescheduleBookingModal'));
     
+    // Handle generic event actions
+    document.querySelectorAll('.event-action').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const eventKey = this.dataset.eventKey;
+            const eventTypeId = this.closest('li').querySelector('[data-event-key]')?.dataset.eventTypeId || 
+                               this.dataset.eventTypeId;
+            
+            // Special handling for cancel and reschedule (use existing modals)
+            if (eventKey === 'cancelled') {
+                cancelModal.show();
+                return;
+            }
+            if (eventKey === 'rescheduled') {
+                rescheduleModal.show();
+                return;
+            }
+            
+            // Use generic modal for other events
+            if (typeof showEventModal === 'function') {
+                showEventModal(eventKey, eventTypeId);
+            }
+        });
+    });
+    
+    // Handle generic event modal submission
+    const eventModalSubmit = document.getElementById('eventModalSubmit');
+    if (eventModalSubmit) {
+        eventModalSubmit.addEventListener('click', async function() {
+            const eventKey = this.dataset.eventKey;
+            const eventTypeId = this.dataset.eventTypeId;
+            const config = JSON.parse(this.dataset.config || '{}');
+            
+            // Collect form data
+            const formData = {};
+            config.fields.forEach(field => {
+                if (field.type === 'alert') return;
+                
+                const element = document.getElementById(field.id);
+                if (!element) return;
+                
+                if (field.type === 'checkbox') {
+                    formData[field.id] = element.checked;
+                } else {
+                    formData[field.id] = element.value;
+                }
+            });
+            
+            // Validate required fields
+            const missingFields = config.fields
+                .filter(f => f.required && !formData[f.id])
+                .map(f => f.label);
+            
+            if (missingFields.length > 0) {
+                showAlert('danger', `Please fill in: ${missingFields.join(', ')}`);
+                return;
+            }
+            
+            // Submit to backend
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+            
+            try {
+                const response = await fetch(`/bookings/${bookingId}/trigger-event/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
+                        event_type_id: eventTypeId,
+                        event_key: eventKey,
+                        data: formData
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('eventModal')).hide();
+                    showAlert('success', config.successMessage || result.message);
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('danger', result.message);
+                }
+            } catch (error) {
+                showAlert('danger', 'An error occurred');
+            } finally {
+                this.disabled = false;
+                this.innerHTML = `<i class="fas fa-check me-2"></i>${config.submitText}`;
+            }
+        });
+    }
+    
     // Cancel Booking Functionality
     const cancelBookingBtn = document.getElementById('cancelBookingBtn');
     const confirmCancelBtn = document.getElementById('confirmCancelBtn');

@@ -431,7 +431,7 @@ class Booking(models.Model):
             self.lead.status = LeadStatus.APPOINTMENT_SCHEDULED
             self.lead.save(update_fields=['status', 'updated_at'])
         elif self.lead and self.status == BookingStatus.COMPLETED:
-            self.lead.status = LeadStatus.APPOINTMENT_COMPLETED
+            self.lead.status = LeadStatus.CONVERTED
             self.lead.save(update_fields=['status', 'updated_at'])
         
         if not self.id:

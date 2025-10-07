@@ -9,6 +9,54 @@ document.addEventListener('DOMContentLoaded', function() {
     const editEventModal = new bootstrap.Modal(document.getElementById('editEventModal'));
     const editReminderModal = new bootstrap.Modal(document.getElementById('editReminderModal'));
     
+    // Initialize drag-and-drop for event types
+    const eventTypesTable = document.getElementById('eventTypesTable');
+    if (eventTypesTable && typeof Sortable !== 'undefined') {
+        new Sortable(eventTypesTable, {
+            handle: '.handle',
+            animation: 150,
+            onEnd: async function(evt) {
+                // Update display_order for all items
+                const rows = eventTypesTable.querySelectorAll('tr');
+                const updates = [];
+                
+                rows.forEach((row, index) => {
+                    const eventId = row.dataset.eventId;
+                    if (eventId) {
+                        updates.push(updateEventType(eventId, { display_order: index }));
+                    }
+                });
+                
+                await Promise.all(updates);
+                showAlert('success', 'Event types reordered successfully');
+            }
+        });
+    }
+    
+    // Initialize drag-and-drop for reminder types
+    const reminderTypesTable = document.getElementById('reminderTypesTable');
+    if (reminderTypesTable && typeof Sortable !== 'undefined') {
+        new Sortable(reminderTypesTable, {
+            handle: '.handle',
+            animation: 150,
+            onEnd: async function(evt) {
+                // Update display_order for all items
+                const rows = reminderTypesTable.querySelectorAll('tr');
+                const updates = [];
+                
+                rows.forEach((row, index) => {
+                    const reminderId = row.dataset.reminderId;
+                    if (reminderId) {
+                        updates.push(updateReminderType(reminderId, { display_order: index }));
+                    }
+                });
+                
+                await Promise.all(updates);
+                showAlert('success', 'Reminder types reordered successfully');
+            }
+        });
+    }
+    
     // Event Type Toggle Handlers
     document.querySelectorAll('.event-enabled-toggle').forEach(toggle => {
         toggle.addEventListener('change', async function() {

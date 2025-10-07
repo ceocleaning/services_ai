@@ -24,21 +24,51 @@
                         <i class="fas fa-cog me-2"></i> Actions
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="bookingActions">
+                        <!-- Regular Actions -->
+                        <li><h6 class="dropdown-header"><i class="fas fa-cog me-2"></i>General Actions</h6></li>
                         <li><a class="dropdown-item" href="{% url 'bookings:edit_booking' booking.id %}"><i class="fas fa-edit me-2"></i> Edit Booking</a></li>
-                        {% if booking.status == 'pending' %}
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-check me-2"></i> Confirm Booking</a></li>
-                        {% endif %}
-                        {% if booking.status != 'cancelled' and booking.status != 'completed' %}
-                            <li><a class="dropdown-item" href="#" id="cancelBookingBtn"><i class="fas fa-times me-2"></i> Cancel Booking</a></li>
-                        {% endif %}
-                        {% if booking.status != 'completed' and booking.status != 'cancelled' %}
-                            <li><a class="dropdown-item" href="#" id="rescheduleBookingBtn"><i class="fas fa-calendar-alt me-2"></i> Reschedule</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-check-double me-2"></i> Mark Completed</a></li>
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user-times me-2"></i> Mark No-Show</a></li>
-                        {% endif %}
-                        <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="#" onclick="window.print(); return false;"><i class="fas fa-print me-2"></i> Print Details</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i> Send Reminder</a></li>
+                        
+                        <!-- Event Actions (Dynamic based on enabled event types) -->
+                        {% if enabled_event_types %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header"><i class="fas fa-bolt me-2"></i>Booking Events</h6></li>
+                        
+                        {% for event_type in enabled_event_types %}
+                            {% if event_type.event_key == 'confirmed' and booking.status == 'pending' %}
+                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                </a></li>
+                            {% elif event_type.event_key == 'cancelled' and booking.status != 'cancelled' and booking.status != 'completed' %}
+                                <li><a class="dropdown-item event-action" href="#" id="cancelBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                </a></li>
+                            {% elif event_type.event_key == 'rescheduled' and booking.status != 'completed' and booking.status != 'cancelled' %}
+                                <li><a class="dropdown-item event-action" href="#" id="rescheduleBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                </a></li>
+                            {% elif event_type.event_key == 'completed' and booking.status != 'completed' and booking.status != 'cancelled' %}
+                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                </a></li>
+                            {% elif event_type.event_key == 'no_show' and booking.status != 'completed' and booking.status != 'cancelled' %}
+                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                </a></li>
+                            {% endif %}
+                        {% endfor %}
+                        {% endif %}
+                        
+                        <!-- Reminder Actions -->
+                        {% if enabled_reminder_types %}
+                        <li><hr class="dropdown-divider"></li>
+                        <li><h6 class="dropdown-header"><i class="fas fa-bell me-2"></i>Send Reminders</h6></li>
+                        {% for reminder_type in enabled_reminder_types %}
+                            <li><a class="dropdown-item reminder-action" href="#" data-reminder-key="{{ reminder_type.reminder_key }}">
+                                <i class="fas {{ reminder_type.icon }} me-2"></i> Send {{ reminder_type.name }}
+                            </a></li>
+                        {% endfor %}
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -731,6 +761,32 @@
     </div>
 </div>
 
+<!-- Generic Event Modal -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas" id="eventModalIcon"></i>
+                    <span id="eventModalTitle"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Dynamic content based on event type -->
+                <div id="eventModalContent"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn" id="eventModalSubmit">
+                    <i class="fas fa-check me-2"></i>
+                    <span id="eventModalSubmitText">Confirm</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Reschedule Booking Modal -->
 <div class="modal fade" id="rescheduleBookingModal" tabindex="-1" aria-labelledby="rescheduleBookingModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -804,5 +860,6 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'js/booking-event-modal.js' %}"></script>
 <script src="{% static 'js/bookings-detail.js' %}"></script>
 {% endblock %}
