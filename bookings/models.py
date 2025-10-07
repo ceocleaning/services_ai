@@ -42,9 +42,15 @@ class BookingEventType(models.Model):
     name = models.CharField(max_length=100, help_text="Display name for this event type")
     icon = models.CharField(max_length=50, default='fa-info-circle', help_text="FontAwesome icon class")
     color = models.CharField(max_length=20, default='secondary', help_text="Bootstrap color class")
+    
+    # Configuration stored as JSON
+    configuration = models.JSONField(default=dict, help_text="Event configuration including fields, settings, etc.")
+    
+    # Legacy fields (kept for backward compatibility, will be migrated to configuration)
     is_enabled = models.BooleanField(default=True, help_text="Whether this event type is active")
     show_in_timeline = models.BooleanField(default=True, help_text="Display in booking timeline")
     requires_reason = models.BooleanField(default=False, help_text="Requires reason/note when triggered")
+    
     display_order = models.IntegerField(default=0, help_text="Order in which to display")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -58,6 +64,96 @@ class BookingEventType(models.Model):
     def __str__(self):
         return f"{self.business.name} - {self.name}"
     
+    def get_config_value(self, key, default=None):
+        """Get a value from configuration JSON"""
+        return self.configuration.get(key, default)
+    
+    def set_config_value(self, key, value):
+        """Set a value in configuration JSON"""
+        if not self.configuration:
+            self.configuration = {}
+        self.configuration[key] = value
+    
+    def get_custom_fields(self):
+        """Get custom fields defined for this event type"""
+        return self.configuration.get('custom_fields', [])
+    
+    def set_custom_fields(self, fields):
+        """Set custom fields for this event type"""
+        self.set_config_value('custom_fields', fields)
+    
+
+    def get_fields_config(self):
+        """
+        Get complete field configuration for this event type.
+        Returns a dictionary with fields, submitText, and successMessage.
+        """
+        config = {}
+        fields = self.get_custom_fields()
+        config["fields"] = fields if fields else []
+        
+        # Define default submit text and success messages for predefined event types
+        event_defaults = {
+            "created": {
+                "submitText": "Create Booking",
+                "successMessage": "Booking created successfully"
+            },
+            "confirmed": {
+                "submitText": "Confirm Booking",
+                "successMessage": "Booking confirmed successfully"
+            },
+            "cancelled": {
+                "submitText": "Cancel Booking",
+                "successMessage": "Booking cancelled successfully"
+            },
+            "rescheduled": {
+                "submitText": "Reschedule Booking",
+                "successMessage": "Booking rescheduled successfully"
+            },
+            "completed": {
+                "submitText": "Complete Booking",
+                "successMessage": "Booking completed successfully"
+            },
+            "no_show": {
+                "submitText": "Mark as No Show",
+                "successMessage": "Booking marked as no show successfully"
+            },
+            "status_changed": {
+                "submitText": "Update Booking Status",
+                "successMessage": "Booking status updated successfully"
+            },
+            "note_added": {
+                "submitText": "Add Note",
+                "successMessage": "Note added successfully"
+            },
+            "payment_received": {
+                "submitText": "Receive Payment",
+                "successMessage": "Payment received successfully"
+            },
+            "reminder_sent": {
+                "submitText": "Send Reminder",
+                "successMessage": "Reminder sent successfully"
+            },
+            "follow_up": {
+                "submitText": "Schedule Follow-up",
+                "successMessage": "Follow-up scheduled successfully"
+            }
+        }
+        
+        # Get defaults for this event key, or use generic defaults
+        defaults = event_defaults.get(self.event_key, {
+            "submitText": f"Submit {self.name}",
+            "successMessage": f"{self.name} completed successfully"
+        })
+        
+        config["submitText"] = defaults["submitText"]
+        config["successMessage"] = defaults["successMessage"]
+        
+        return config
+    
+    
+
+
     @classmethod
     def create_default_types(cls, business):
         """Create default event types for a new business"""
@@ -716,19 +812,26 @@ class BookingField(models.Model):
 class BookingEvent(models.Model):
     """
     Tracks all events in a booking's timeline (creation, confirmation, cancellation, reschedule, etc.)
-    Now uses configurable BookingEventType for flexibility.
+    Now uses configurable BookingEventType for flexibility and stores dynamic field values.
     """
     booking = models.ForeignKey(Booking, on_delete=models.CASCADE, related_name='events')
     event_type = models.ForeignKey('BookingEventType', on_delete=models.PROTECT, related_name='events', help_text="Type of event")
     description = models.TextField(help_text="Description of the event")
     reason = models.TextField(blank=True, null=True, help_text="Reason for cancellation or reschedule")
+    
+    # Legacy fields for reschedule events (kept for backward compatibility)
     old_date = models.DateField(blank=True, null=True, help_text="Previous date for reschedule events")
     old_start_time = models.TimeField(blank=True, null=True, help_text="Previous start time for reschedule events")
     old_end_time = models.TimeField(blank=True, null=True, help_text="Previous end time for reschedule events")
     new_date = models.DateField(blank=True, null=True, help_text="New date for reschedule events")
     new_start_time = models.TimeField(blank=True, null=True, help_text="New start time for reschedule events")
     new_end_time = models.TimeField(blank=True, null=True, help_text="New end time for reschedule events")
+    
+    # Dynamic field values from event type configuration
+    field_values = models.JSONField(default=dict, blank=True, help_text="Stores dynamic field values from event type custom fields")
+    
     created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey('auth.User', on_delete=models.SET_NULL, null=True, blank=True, related_name='created_booking_events', help_text="User who triggered this event")
     
     class Meta:
         verbose_name = "Booking Event"
@@ -737,6 +840,51 @@ class BookingEvent(models.Model):
     
     def __str__(self):
         return f"{self.booking} - {self.event_type.name} - {self.created_at}"
+    
+    def get_field_value(self, field_id):
+        """Get a specific field value from the stored field_values JSON"""
+        return self.field_values.get(field_id)
+    
+    def set_field_value(self, field_id, value):
+        """Set a specific field value in the field_values JSON"""
+        if not self.field_values:
+            self.field_values = {}
+        self.field_values[field_id] = value
+    
+    def get_all_field_values(self):
+        """Get all field values as a dictionary"""
+        return self.field_values or {}
+    
+    def get_formatted_field_values(self):
+        """
+        Get field values formatted with their labels from the event type configuration.
+        Returns a list of dicts with 'label', 'value', and 'type' keys.
+        """
+        if not self.field_values:
+            return []
+        
+        formatted_values = []
+        custom_fields = self.event_type.get_custom_fields()
+        
+        for field in custom_fields:
+            field_id = field.get('id')
+            if field_id and field_id in self.field_values:
+                value = self.field_values[field_id]
+                field_type = field.get('type', 'text')
+                
+                # Format boolean values
+                if field_type == 'boolean' or field_type == 'checkbox':
+                    value = 'Yes' if value else 'No'
+                
+                # Skip alert fields (they don't have values)
+                if field_type != 'alert':
+                    formatted_values.append({
+                        'label': field.get('label', field_id),
+                        'value': value,
+                        'type': field_type
+                    })
+        
+        return formatted_values
 
 
 class BookingReminder(models.Model):

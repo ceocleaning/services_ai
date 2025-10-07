@@ -1,7 +1,8 @@
 // booking-event-modal.js - Dynamic event modal handler
+// All configurations now come from backend via window.DYNAMIC_EVENT_CONFIGS
 
-// Event configurations
-const EVENT_CONFIGS = {
+// Fallback configurations (only used if backend data is missing)
+const FALLBACK_CONFIGS = {
     'confirmed': {
         title: 'Confirm Booking',
         icon: 'fa-check',
@@ -175,6 +176,19 @@ function buildField(field) {
                 </div>
             `;
         
+        case 'text':
+            return `
+                <div class="mb-3">
+                    <label for="${field.id}" class="form-label">
+                        ${field.label}
+                        ${field.required ? '<span class="text-danger">*</span>' : ''}
+                    </label>
+                    <input type="text" class="form-control" id="${field.id}" 
+                           placeholder="${field.placeholder || ''}"
+                           ${field.required ? 'required' : ''}>
+                </div>
+            `;
+        
         case 'textarea':
             return `
                 <div class="mb-3">
@@ -189,12 +203,14 @@ function buildField(field) {
             `;
         
         case 'checkbox':
+        case 'boolean':
             return `
                 <div class="form-check mb-3">
                     <input class="form-check-input" type="checkbox" id="${field.id}" 
                            ${field.checked ? 'checked' : ''}>
                     <label class="form-check-label" for="${field.id}">
                         ${field.label}
+                        ${field.required ? '<span class="text-danger">*</span>' : ''}
                     </label>
                 </div>
             `;
@@ -207,13 +223,16 @@ function buildField(field) {
                         ${field.required ? '<span class="text-danger">*</span>' : ''}
                     </label>
                     <input type="number" class="form-control" id="${field.id}" 
-                           placeholder="${field.placeholder || ''}" step="0.01"
+                           placeholder="${field.placeholder || ''}" 
+                           step="${field.step || '0.01'}"
+                           ${field.min !== undefined ? `min="${field.min}"` : ''}
+                           ${field.max !== undefined ? `max="${field.max}"` : ''}
                            ${field.required ? 'required' : ''}>
                 </div>
             `;
         
         case 'select':
-            const options = field.options.map(opt => 
+            const options = (field.options || []).map(opt => 
                 `<option value="${opt.value}">${opt.label}</option>`
             ).join('');
             return `
@@ -235,13 +254,31 @@ function buildField(field) {
 }
 
 function showEventModal(eventKey, eventTypeId) {
-    const config = EVENT_CONFIGS[eventKey];
-    if (!config) {
-        console.error('Unknown event type:', eventKey);
+    // Get configuration from backend (passed via template)
+    const backendConfig = window.DYNAMIC_EVENT_CONFIGS?.[eventKey];
+
+    console.log(backendConfig);
+    
+    if (!backendConfig) {
+        console.error('Event configuration not found for:', eventKey);
+        console.log('Available configs:', window.DYNAMIC_EVENT_CONFIGS);
         return;
     }
     
-    // Set modal title and icon
+    // Use backend configuration directly (it includes everything)
+    const config = {
+        title: backendConfig.title,
+        icon: backendConfig.icon,
+        color: backendConfig.color,
+        fields: backendConfig.fields || [],
+        submitText: backendConfig.submitText,
+        successMessage: backendConfig.successMessage
+    };
+
+    console.log(config);
+    
+    
+    // Set modal title and icon (using dynamic values)
     document.getElementById('eventModalTitle').textContent = config.title;
     document.getElementById('eventModalIcon').className = `fas ${config.icon} me-2 text-${config.color}`;
     
@@ -249,7 +286,7 @@ function showEventModal(eventKey, eventTypeId) {
     const submitBtn = document.getElementById('eventModalSubmit');
     submitBtn.className = `btn btn-${config.color}`;
     submitBtn.dataset.eventKey = eventKey;
-    submitBtn.dataset.eventTypeId = eventTypeId;
+    submitBtn.dataset.eventTypeId = backendConfig.id || eventTypeId;
     submitBtn.dataset.config = JSON.stringify(config);
     document.getElementById('eventModalSubmitText').textContent = config.submitText;
     
@@ -269,4 +306,3 @@ function showEventModal(eventKey, eventTypeId) {
 
 // Export for use in booking-detail.js
 window.showEventModal = showEventModal;
-window.EVENT_CONFIGS = EVENT_CONFIGS;

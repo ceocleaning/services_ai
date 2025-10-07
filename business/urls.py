@@ -24,6 +24,7 @@ urlpatterns = [
     # Booking preferences
     path('booking-preferences/', views.booking_preferences, name='booking_preferences'),
     path('event-type/<int:event_type_id>/update/', views.update_event_type, name='update_event_type'),
+    path('event-type/<int:event_type_id>/configure-form/', views.configure_event_type_form, name='configure_event_type_form'),
     path('reminder-type/<int:reminder_type_id>/update/', views.update_reminder_type, name='update_reminder_type'),
     
     # Custom fields management

@@ -80,13 +80,21 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <button class="btn btn-sm btn-outline-primary edit-event-btn" 
-                                                data-event-id="{{ event_type.id }}"
-                                                data-event-name="{{ event_type.name }}"
-                                                data-event-icon="{{ event_type.icon }}"
-                                                data-event-color="{{ event_type.color }}">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
+                                        <div class="btn-group" role="group">
+                                            <button class="btn btn-sm btn-outline-primary edit-event-btn" 
+                                                    data-event-id="{{ event_type.id }}"
+                                                    data-event-name="{{ event_type.name }}"
+                                                    data-event-icon="{{ event_type.icon }}"
+                                                    data-event-color="{{ event_type.color }}"
+                                                    title="Edit Basic Settings">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <a href="{% url 'business:configure_event_type_form' event_type.id %}" 
+                                               class="btn btn-sm btn-outline-success"
+                                               title="Configure Form Fields">
+                                                <i class="fas fa-wpforms"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                                 {% endfor %}

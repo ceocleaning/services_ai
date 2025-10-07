@@ -613,17 +613,13 @@ def booking_detail(request, booking_id):
         
         # Get service items
         service_items = booking.service_items.all()
-        
-        print(f"=== BOOKING DETAIL - PRICE CALCULATION ===")
-        print(f"Booking ID: {booking_id}")
-        print(f"Base service price: {booking.service_offering.price}")
+       
         
         # Separate free and paid service items
         paid_service_items = []
         free_service_items = []
         for item in service_items:
-            print(f"Item: {item.service_item.name}, price_at_booking: {item.price_at_booking}, "
-                  f"field_type: {item.service_item.field_type}, boolean_value: {item.boolean_value}")
+           
             if item.service_item.price_type == 'free':
                 free_service_items.append(item)
             else:
@@ -632,7 +628,6 @@ def booking_detail(request, booking_id):
         # Calculate paid service items total
         paid_service_items_total = sum(item.price_at_booking for item in paid_service_items)
         
-        print(f"Paid service items total: {paid_service_items_total}")
         
         # Check if there are any paid items
         has_paid_items = len(paid_service_items) > 0
@@ -640,7 +635,6 @@ def booking_detail(request, booking_id):
         # Calculate total price (base price + paid items only)
         total_price = booking.service_offering.price + paid_service_items_total
         
-        print(f"Total price: {total_price}")
         
         # Get booking events for timeline (only show enabled event types)
         from .models import BookingEvent, BookingEventType
@@ -659,7 +653,9 @@ def booking_detail(request, booking_id):
                 'type': event.event_type.color,
                 'icon': event.event_type.icon,
                 'description': event.description,
-                'reason': event.reason
+                'reason': event.reason,
+                'created_by': event.created_by.get_full_name() if event.created_by else 'System',
+                'field_values': event.get_formatted_field_values()
             }
             
             # Add reschedule details if applicable
@@ -674,6 +670,23 @@ def booking_detail(request, booking_id):
             business=business,
             is_enabled=True
         ).order_by('display_order')
+        
+        # Build event configs for JavaScript (including field configurations)
+        event_configs_dict = {}
+        for event_type in enabled_event_types:
+            field_config = event_type.get_fields_config()
+            event_configs_dict[event_type.event_key] = {
+                'id': event_type.id,
+                'title': event_type.name,
+                'icon': event_type.icon,
+                'color': event_type.color,
+                'requires_reason': event_type.requires_reason,
+                'fields': field_config["fields"],
+                'submitText': field_config["submitText"],
+                'successMessage': field_config["successMessage"],
+            }
+        event_configs = json.dumps(event_configs_dict)
+
         
         # Get enabled reminder types
         from .models import ReminderType
@@ -707,6 +720,7 @@ def booking_detail(request, booking_id):
             'total_price': total_price,
             'timeline': timeline,
             'enabled_event_types': enabled_event_types,
+            'event_configs': event_configs,
             'enabled_reminder_types': enabled_reminder_types,
             'invoice': invoice,
             'payments': payments,

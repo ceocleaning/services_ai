@@ -35,23 +35,44 @@
                         <li><h6 class="dropdown-header"><i class="fas fa-bolt me-2"></i>Booking Events</h6></li>
                         
                         {% for event_type in enabled_event_types %}
-                            {% if event_type.event_key == 'confirmed' and booking.status == 'pending' %}
-                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                </a></li>
-                            {% elif event_type.event_key == 'cancelled' and booking.status != 'cancelled' and booking.status != 'completed' %}
-                                <li><a class="dropdown-item event-action" href="#" id="cancelBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                </a></li>
-                            {% elif event_type.event_key == 'rescheduled' and booking.status != 'completed' and booking.status != 'cancelled' %}
-                                <li><a class="dropdown-item event-action" href="#" id="rescheduleBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                </a></li>
-                            {% elif event_type.event_key == 'completed' and booking.status != 'completed' and booking.status != 'cancelled' %}
-                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                    <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                </a></li>
-                            {% elif event_type.event_key == 'no_show' and booking.status != 'completed' and booking.status != 'cancelled' %}
+                            {% comment %}
+                            Determine if this event should be shown based on current booking status
+                            {% endcomment %}
+                            {% if event_type.event_key == 'confirmed' %}
+                                {% if booking.status == 'pending' %}
+                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                    </a></li>
+                                {% endif %}
+                            {% elif event_type.event_key == 'cancelled' %}
+                                {% if booking.status != 'cancelled' and booking.status != 'completed' %}
+                                    <li><a class="dropdown-item event-action" href="#" id="cancelBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                    </a></li>
+                                {% endif %}
+                            {% elif event_type.event_key == 'rescheduled' %}
+                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
+                                    <li><a class="dropdown-item event-action" href="#" id="rescheduleBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                    </a></li>
+                                {% endif %}
+                            {% elif event_type.event_key == 'completed' %}
+                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
+                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                    </a></li>
+                                {% endif %}
+                            {% elif event_type.event_key == 'no_show' %}
+                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
+                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
+                                    </a></li>
+                                {% endif %}
+                            {% else %}
+                                {% comment %}
+                                For any other event types (note_added, payment_received, etc.)
+                                Show them regardless of booking status
+                                {% endcomment %}
                                 <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
                                     <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
                                 </a></li>
@@ -596,19 +617,50 @@
                                         <h6 class="mb-1">{{ event.event_name }}</h6>
                                         <p class="text-muted mb-0 small">
                                             {{ event.timestamp|date:"M d, Y" }} at {{ event.timestamp|time:"g:i A" }}
+                                            {% if event.created_by %}
+                                                <span class="text-muted">by {{ event.created_by }}</span>
+                                            {% endif %}
                                         </p>
+                                        
                                         {% if event.reason %}
                                             <div class="mt-2 p-2 card">
                                                 <small class="text-white-50">Reason:</small>
                                                 <p class="mb-0 small text-light">{{ event.reason }}</p>
                                             </div>
                                         {% endif %}
+                                        
                                         {% if event.old_datetime and event.new_datetime %}
                                             <div class="mt-2">
                                                 <small class="text-muted">
                                                     <i class="fas fa-arrow-right me-1"></i>
                                                     From: <strong>{{ event.old_datetime }}</strong> → To: <strong>{{ event.new_datetime }}</strong>
                                                 </small>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        {% if event.field_values %}
+                                            <div class="mt-2">
+                                                <div class="card border-0">
+                                                    <div class="card-body p-2">
+                                                        <small class="text-muted d-block mb-1"><strong>Additional Details:</strong></small>
+                                                        {% for field in event.field_values %}
+                                                            <div class="mb-1">
+                                                                <small class="text-muted">{{ field.label }}:</small>
+                                                                <small class="ms-1">
+                                                                    {% if field.type == 'boolean' or field.type == 'checkbox' %}
+                                                                        <span class="badge bg-{{ field.value|yesno:"success,secondary" }}">
+                                                                            {{ field.value }}
+                                                                        </span>
+                                                                    {% elif field.type == 'number' %}
+                                                                        <strong>{{ field.value }}</strong>
+                                                                    {% else %}
+                                                                        {{ field.value }}
+                                                                    {% endif %}
+                                                                </small>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
                                             </div>
                                         {% endif %}
                                     </div>
@@ -860,6 +912,10 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+    // Pass dynamic event configs from backend to JavaScript
+    window.DYNAMIC_EVENT_CONFIGS = {{ event_configs|safe }};
+</script>
 <script src="{% static 'js/booking-event-modal.js' %}"></script>
 <script src="{% static 'js/bookings-detail.js' %}"></script>
 {% endblock %}

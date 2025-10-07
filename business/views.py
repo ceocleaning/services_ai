@@ -1370,6 +1370,47 @@ def update_event_type(request, event_type_id):
 
 
 @login_required
+def configure_event_type_form(request, event_type_id):
+    """
+    Configure custom fields for an event type (form builder)
+    """
+    business = getattr(request.user, 'business', None)
+    if not business:
+        messages.error(request, 'Business not found.')
+        return redirect('business:dashboard')
+    
+    from bookings.models import BookingEventType
+    
+    try:
+        event_type = BookingEventType.objects.get(id=event_type_id, business=business)
+        
+        if request.method == 'POST':
+            data = json.loads(request.body)
+            fields = data.get('fields', [])
+            
+            # Save custom fields to configuration
+            event_type.set_custom_fields(fields)
+            event_type.save()
+            
+            return JsonResponse({
+                'success': True,
+                'message': 'Event form configuration saved successfully'
+            })
+        
+        print(event_type.get_custom_fields())
+        # GET request - return current configuration
+        return render(request, 'business/configure_event_form.html', {
+            'title': f'Configure {event_type.name} Form',
+            'event_type': event_type,
+            'current_fields': json.dumps(event_type.get_custom_fields()),
+        })
+        
+    except BookingEventType.DoesNotExist:
+        messages.error(request, 'Event type not found.')
+        return redirect('business:booking_preferences')
+
+
+@login_required
 @require_http_methods(["POST"])
 def update_reminder_type(request, reminder_type_id):
     """

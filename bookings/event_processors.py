@@ -19,11 +19,13 @@ def process_confirmed_event(booking, event_type, data, user):
     booking.status = BookingStatus.CONFIRMED
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
-        description=f'Booking confirmed by {user.get_full_name() or user.username}'
+        description=f'Booking confirmed by {user.get_full_name() or user.username}',
+        field_values=data,
+        created_by=user
     )
     
     return {
@@ -55,12 +57,14 @@ def process_cancelled_event(booking, event_type, data, user):
     booking.cancellation_reason = reason
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
         description=f'Booking cancelled by {user.get_full_name() or user.username}',
-        reason=reason
+        reason=reason,
+        field_values=data,
+        created_by=user
     )
     
     # TODO: Send notification if requested
@@ -86,7 +90,7 @@ def process_completed_event(booking, event_type, data, user):
         booking.notes = (booking.notes or '') + f'\n\nCompletion Notes: {notes}'
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     description = f'Booking completed by {user.get_full_name() or user.username}'
     if notes:
         description += f'\nNotes: {notes}'
@@ -94,7 +98,9 @@ def process_completed_event(booking, event_type, data, user):
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
-        description=description
+        description=description,
+        field_values=data,
+        created_by=user
     )
     
     # TODO: Send thank you message if requested
@@ -122,12 +128,14 @@ def process_no_show_event(booking, event_type, data, user):
     booking.notes = (booking.notes or '') + f'\n\nNo-Show Notes: {reason}'
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
         description=f'Marked as no-show by {user.get_full_name() or user.username}',
-        reason=reason
+        reason=reason,
+        field_values=data,
+        created_by=user
     )
     
     # TODO: Charge cancellation fee if requested
@@ -151,12 +159,14 @@ def process_note_added_event(booking, event_type, data, user):
     booking.notes = (booking.notes or '') + f'\n\n[{timestamp}] {user.get_full_name() or user.username}: {note}'
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
         description=f'Note added by {user.get_full_name() or user.username}',
-        reason=note
+        reason=note,
+        field_values=data,
+        created_by=user
     )
     
     return {
@@ -212,11 +222,13 @@ def process_payment_received_event(booking, event_type, data, user):
         invoice.status = 'paid'
         invoice.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
-        description=f'Payment of ${amount} received via {payment_method}'
+        description=f'Payment of ${amount} received via {payment_method}',
+        field_values=data,
+        created_by=user
     )
     
     return {
@@ -238,12 +250,14 @@ def process_status_changed_event(booking, event_type, data, user):
     booking.status = new_status
     booking.save()
     
-    # Create event
+    # Create event with dynamic field values
     BookingEvent.objects.create(
         booking=booking,
         event_type=event_type,
         description=f'Status changed from {old_status} to {new_status} by {user.get_full_name() or user.username}',
-        reason=reason
+        reason=reason,
+        field_values=data,
+        created_by=user
     )
     
     return {
