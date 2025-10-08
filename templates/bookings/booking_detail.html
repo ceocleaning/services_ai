@@ -27,7 +27,7 @@
                         <!-- Regular Actions -->
                         <li><h6 class="dropdown-header"><i class="fas fa-cog me-2"></i>General Actions</h6></li>
                         <li><a class="dropdown-item" href="{% url 'bookings:edit_booking' booking.id %}"><i class="fas fa-edit me-2"></i> Edit Booking</a></li>
-                        <li><a class="dropdown-item" href="#" onclick="window.print(); return false;"><i class="fas fa-print me-2"></i> Print Details</a></li>
+                        <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i> Delete</a></li>
                         
                         <!-- Event Actions (Dynamic based on enabled event types) -->
                         {% if enabled_event_types %}
@@ -36,47 +36,19 @@
                         
                         {% for event_type in enabled_event_types %}
                             {% comment %}
-                            Determine if this event should be shown based on current booking status
+                            Display logic is now handled in the backend via should_display_event_button()
+                            Special IDs for cancel and reschedule to maintain existing modal functionality
                             {% endcomment %}
-                            {% if event_type.event_key == 'confirmed' %}
-                                {% if booking.status == 'pending' %}
-                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                    </a></li>
-                                {% endif %}
-                            {% elif event_type.event_key == 'cancelled' %}
-                                {% if booking.status != 'cancelled' and booking.status != 'completed' %}
-                                    <li><a class="dropdown-item event-action" href="#" id="cancelBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                    </a></li>
-                                {% endif %}
-                            {% elif event_type.event_key == 'rescheduled' %}
-                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
-                                    <li><a class="dropdown-item event-action" href="#" id="rescheduleBookingBtn" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                    </a></li>
-                                {% endif %}
-                            {% elif event_type.event_key == 'completed' %}
-                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
-                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                    </a></li>
-                                {% endif %}
-                            {% elif event_type.event_key == 'no_show' %}
-                                {% if booking.status != 'completed' and booking.status != 'cancelled' %}
-                                    <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
-                                        <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                    </a></li>
-                                {% endif %}
-                            {% else %}
-                                {% comment %}
-                                For any other event types (note_added, payment_received, etc.)
-                                Show them regardless of booking status
-                                {% endcomment %}
-                                <li><a class="dropdown-item event-action" href="#" data-event-key="{{ event_type.event_key }}" data-event-type-id="{{ event_type.id }}">
+                            <li>
+                                <a class="dropdown-item event-action" 
+                                   href="#" 
+                                   {% if event_type.event_key == 'cancelled' %}id="cancelBookingBtn"{% endif %}
+                                   {% if event_type.event_key == 'rescheduled' %}id="rescheduleBookingBtn"{% endif %}
+                                   data-event-key="{{ event_type.event_key }}" 
+                                   data-event-type-id="{{ event_type.id }}">
                                     <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i> {{ event_type.name }}
-                                </a></li>
-                            {% endif %}
+                                </a>
+                            </li>
                         {% endfor %}
                         {% endif %}
                         
@@ -640,15 +612,15 @@
                                         
                                         {% if event.field_values %}
                                             <div class="mt-2">
-                                                <div class="card border-0">
+                                                <div class="card">
                                                     <div class="card-body p-2">
                                                         <small class="text-muted d-block mb-1"><strong>Additional Details:</strong></small>
                                                         {% for field in event.field_values %}
                                                             <div class="mb-1">
-                                                                <small class="text-muted">{{ field.label }}:</small>
-                                                                <small class="ms-1">
+                                                                <small class="text-muted">{{ field.label }}:</small> <br>
+                                                                <small class="ms-1 fw-bold h6">
                                                                     {% if field.type == 'boolean' or field.type == 'checkbox' %}
-                                                                        <span class="badge bg-{{ field.value|yesno:"success,secondary" }}">
+                                                                        <span class="">
                                                                             {{ field.value }}
                                                                         </span>
                                                                     {% elif field.type == 'number' %}

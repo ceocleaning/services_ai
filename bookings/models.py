@@ -24,13 +24,10 @@ class BookingEventType(models.Model):
     Allows businesses to customize which actions are available for their bookings.
     """
     PREDEFINED_TYPES = (
-        ('created', 'Booking Created', 'fa-plus-circle', 'primary', True),
-        ('confirmed', 'Booking Confirmed', 'fa-check', 'success', True),
         ('cancelled', 'Booking Cancelled', 'fa-times', 'danger', True),
         ('rescheduled', 'Booking Rescheduled', 'fa-calendar-alt', 'warning', True),
         ('completed', 'Booking Completed', 'fa-check-double', 'success', True),
         ('no_show', 'Marked as No Show', 'fa-user-times', 'dark', True),
-        ('status_changed', 'Status Changed', 'fa-info-circle', 'secondary', False),
         ('note_added', 'Note Added', 'fa-sticky-note', 'info', False),
         ('payment_received', 'Payment Received', 'fa-dollar-sign', 'success', False),
         ('reminder_sent', 'Reminder Sent', 'fa-bell', 'info', False),
@@ -94,14 +91,7 @@ class BookingEventType(models.Model):
         
         # Define default submit text and success messages for predefined event types
         event_defaults = {
-            "created": {
-                "submitText": "Create Booking",
-                "successMessage": "Booking created successfully"
-            },
-            "confirmed": {
-                "submitText": "Confirm Booking",
-                "successMessage": "Booking confirmed successfully"
-            },
+           
             "cancelled": {
                 "submitText": "Cancel Booking",
                 "successMessage": "Booking cancelled successfully"
@@ -118,10 +108,7 @@ class BookingEventType(models.Model):
                 "submitText": "Mark as No Show",
                 "successMessage": "Booking marked as no show successfully"
             },
-            "status_changed": {
-                "submitText": "Update Booking Status",
-                "successMessage": "Booking status updated successfully"
-            },
+           
             "note_added": {
                 "submitText": "Add Note",
                 "successMessage": "Note added successfully"

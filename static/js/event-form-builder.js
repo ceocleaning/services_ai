@@ -228,8 +228,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 label: 'Select Field',
                 required: false,
                 options: [
-                    { value: 'option1', label: 'Option 1' },
-                    { value: 'option2', label: 'Option 2' }
+                    { value: 'Option 1', label: 'Option 1' },
+                    { value: 'Option 2', label: 'Option 2' }
                 ]
             }
         };
@@ -287,8 +287,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div id="optionsContainer">
                         ${(field.options || []).map((opt, i) => `
                             <div class="input-group mb-2">
-                                <input type="text" class="form-control option-value" placeholder="Value" value="${opt.value}">
-                                <input type="text" class="form-control option-label" placeholder="Label" value="${opt.label}">
+                                <input type="text" class="form-control option-value" placeholder="Enter option" value="${opt.value || opt.label}">
                                 <button class="btn btn-outline-danger remove-option-btn" type="button" data-index="${i}">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -359,8 +358,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const newOption = document.createElement('div');
             newOption.className = 'input-group mb-2';
             newOption.innerHTML = `
-                <input type="text" class="form-control option-value" placeholder="Value">
-                <input type="text" class="form-control option-label" placeholder="Label">
+                <input type="text" class="form-control option-value" placeholder="Enter option">
                 <button class="btn btn-outline-danger remove-option-btn" type="button">
                     <i class="fas fa-times"></i>
                 </button>
@@ -390,10 +388,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // Collect options
             const options = [];
             document.querySelectorAll('#optionsContainer .input-group').forEach(group => {
-                const value = group.querySelector('.option-value').value;
-                const label = group.querySelector('.option-label').value;
-                if (value && label) {
-                    options.push({ value, label });
+                const value = group.querySelector('.option-value').value.trim();
+                if (value) {
+                    options.push({ value: value, label: value });
                 }
             });
             field.options = options;

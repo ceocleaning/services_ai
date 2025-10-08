@@ -573,6 +573,81 @@ def edit_booking(request, booking_id):
         'staff_assignment': staff_assignment,
     })
 
+def should_display_event_button(booking, event_key):
+    """
+    Determine if an event button should be displayed based on predefined logic.
+    
+    Args:
+        booking: Booking instance
+        event_key: Event type key (e.g., 'cancelled', 'completed')
+    
+    Returns:
+        bool: True if button should be displayed
+    """
+    from datetime import datetime, timedelta
+    
+    # Calculate hours until booking
+    booking_datetime = timezone.make_aware(
+        datetime.combine(booking.booking_date, booking.start_time)
+    )
+    hours_until = (booking_datetime - timezone.now()).total_seconds() / 3600
+    is_future = hours_until > 0
+    is_past = hours_until < 0
+    
+    # Predefined display logic for each event type
+    display_rules = {
+        # Never show - auto-created
+        'created': False,
+        
+        # Not needed - deleted
+        'confirmed': False,
+        
+        # Show if NOT completed AND 24+ hours before booking
+        'cancelled': (
+            booking.status not in ['completed', 'cancelled'] and 
+            hours_until > 24
+        ),
+        
+        # Show if NOT completed AND 24+ hours before booking
+        'rescheduled': (
+            booking.status not in ['completed', 'cancelled'] and 
+            hours_until > 24
+        ),
+        
+        # Show if confirmed AND (booking is today or past) AND NOT completed/cancelled
+        'completed': (
+            booking.status == 'confirmed' and 
+            not is_future and
+            booking.status not in ['completed', 'cancelled']
+        ),
+        
+        # Show if confirmed AND booking is past AND NOT completed/cancelled
+        'no_show': (
+            booking.status == 'confirmed' and 
+            is_past and
+            booking.status not in ['completed', 'cancelled']
+        ),
+        
+        # Always show unless completed or cancelled
+        'note_added': booking.status not in ['completed', 'cancelled'],
+        
+        # Always show unless cancelled
+        'payment_received': booking.status != 'cancelled',
+        
+        # Always show (admin feature)
+        'status_changed': True,
+        
+        # Show after booking is completed
+        'follow_up': booking.status == 'completed',
+        
+        # Show for reminders only if booking is in future
+        'reminder_sent': is_future,
+    }
+    
+    # Return the rule for this event, default to True for unknown events
+    return display_rules.get(event_key, True)
+
+
 @login_required
 def booking_detail(request, booking_id):
     """View for displaying detailed information about a booking"""
@@ -666,10 +741,16 @@ def booking_detail(request, booking_id):
             timeline.append(timeline_item)
         
         # Get enabled event types for action buttons
-        enabled_event_types = BookingEventType.objects.filter(
+        all_event_types = BookingEventType.objects.filter(
             business=business,
             is_enabled=True
         ).order_by('display_order')
+        
+        # Filter event types based on predefined display logic
+        enabled_event_types = [
+            event_type for event_type in all_event_types
+            if should_display_event_button(booking, event_type.event_key)
+        ]
         
         # Build event configs for JavaScript (including field configurations)
         event_configs_dict = {}

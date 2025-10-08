@@ -29,12 +29,10 @@
                                         <i class="fas fa-sort"></i>
                                     </th>
                                     <th>Event Name</th>
-                                    <th style="width: 100px;">Icon</th>
-                                    <th style="width: 120px;">Color</th>
-                                    <th style="width: 100px;" class="text-center">Enabled</th>
-                                    <th style="width: 120px;" class="text-center">Show in Timeline</th>
-                                    <th style="width: 120px;" class="text-center">Requires Reason</th>
-                                    <th style="width: 100px;">Actions</th>
+                                    <th>Icon</th>
+                                    <th>Color</th>
+                                    <th class="text-center">Enabled</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="eventTypesTable">
@@ -48,7 +46,6 @@
                                             <i class="fas {{ event_type.icon }} me-2 text-{{ event_type.color }}"></i>
                                             <strong>{{ event_type.name }}</strong>
                                         </div>
-                                        <small class="text-muted">Key: {{ event_type.event_key }}</small>
                                     </td>
                                     <td>
                                         <code>{{ event_type.icon }}</code>
@@ -63,25 +60,10 @@
                                                    {% if event_type.is_enabled %}checked{% endif %}>
                                         </div>
                                     </td>
-                                    <td class="text-center">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input event-timeline-toggle" type="checkbox" 
-                                                   data-event-id="{{ event_type.id }}" 
-                                                   {% if event_type.show_in_timeline %}checked{% endif %}
-                                                   {% if not event_type.is_enabled %}disabled{% endif %}>
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="form-check form-switch d-flex justify-content-center">
-                                            <input class="form-check-input event-reason-toggle" type="checkbox" 
-                                                   data-event-id="{{ event_type.id }}" 
-                                                   {% if event_type.requires_reason %}checked{% endif %}
-                                                   {% if not event_type.is_enabled %}disabled{% endif %}>
-                                        </div>
-                                    </td>
+                                 
                                     <td>
-                                        <div class="btn-group" role="group">
-                                            <button class="btn btn-sm btn-outline-primary edit-event-btn" 
+                                        <div class="d-flex align-items-center gap-3" role="group">
+                                            <button class="btn btn-sm btn-outline-secondary edit-event-btn" 
                                                     data-event-id="{{ event_type.id }}"
                                                     data-event-name="{{ event_type.name }}"
                                                     data-event-icon="{{ event_type.icon }}"
@@ -90,9 +72,9 @@
                                                 <i class="fas fa-edit"></i>
                                             </button>
                                             <a href="{% url 'business:configure_event_type_form' event_type.id %}" 
-                                               class="btn btn-sm btn-outline-success"
+                                               class="btn btn-sm btn-primary"
                                                title="Configure Form Fields">
-                                                <i class="fas fa-wpforms"></i>
+                                               <i class="fa-solid fa-sliders"></i>
                                             </a>
                                         </div>
                                     </td>
