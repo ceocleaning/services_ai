@@ -95,7 +95,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Edit Event Type Button
     document.querySelectorAll('.edit-event-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', async function() {
             const eventId = this.dataset.eventId;
             const eventName = this.dataset.eventName;
             const eventIcon = this.dataset.eventIcon;
@@ -105,6 +105,34 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editEventName').value = eventName;
             document.getElementById('editEventIcon').value = eventIcon;
             document.getElementById('editEventColor').value = eventColor;
+            
+            // Fetch current allowed_roles from backend
+            try {
+                const response = await fetch(`/business/event-type/${eventId}/get/`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const allowedRoles = result.event_type.allowed_roles || [];
+                    
+                    // Uncheck all role checkboxes first
+                    document.getElementById('roleBusinessOwner').checked = false;
+                    document.getElementById('roleStaff').checked = false;
+                    document.getElementById('roleCustomer').checked = false;
+                    
+                    // Check the roles that are allowed
+                    if (allowedRoles.includes('business')) {
+                        document.getElementById('roleBusinessOwner').checked = true;
+                    }
+                    if (allowedRoles.includes('staff')) {
+                        document.getElementById('roleStaff').checked = true;
+                    }
+                    if (allowedRoles.includes('customer')) {
+                        document.getElementById('roleCustomer').checked = true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching event type details:', error);
+            }
             
             editEventModal.show();
         });
@@ -117,6 +145,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const icon = document.getElementById('editEventIcon').value;
         const color = document.getElementById('editEventColor').value;
         
+        // Collect selected roles
+        const allowedRoles = [];
+        if (document.getElementById('roleBusinessOwner').checked) {
+            allowedRoles.push('business');
+        }
+        if (document.getElementById('roleStaff').checked) {
+            allowedRoles.push('staff');
+        }
+        if (document.getElementById('roleCustomer').checked) {
+            allowedRoles.push('customer');
+        }
+        
         if (!name || !icon || !color) {
             showAlert('danger', 'Please fill in all fields');
             return;
@@ -125,7 +165,8 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
         this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
         
-        const success = await updateEventType(eventId, { name, icon, color });
+        console.log(allowedRoles)
+        const success = await updateEventType(eventId, { name, icon, color, allowed_roles: allowedRoles });
         
         if (success) {
             editEventModal.hide();

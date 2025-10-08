@@ -43,6 +43,13 @@ class BookingEventType(models.Model):
     # Configuration stored as JSON
     configuration = models.JSONField(default=dict, help_text="Event configuration including fields, settings, etc.")
     
+    # Role-based access control
+    allowed_roles = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="List of user groups/roles that can access this event. Empty = all users"
+    )
+    
     # Legacy fields (kept for backward compatibility, will be migrated to configuration)
     is_enabled = models.BooleanField(default=True, help_text="Whether this event type is active")
     show_in_timeline = models.BooleanField(default=True, help_text="Display in booking timeline")
@@ -78,6 +85,27 @@ class BookingEventType(models.Model):
     def set_custom_fields(self, fields):
         """Set custom fields for this event type"""
         self.set_config_value('custom_fields', fields)
+    
+    def is_accessible_by_user(self, user):
+        """
+        Check if a user has access to this event type based on their role/group.
+        
+        Args:
+            user: Django User instance
+        
+        Returns:
+            bool: True if user has access
+        """
+        # If no roles specified, everyone has access
+        if not self.allowed_roles:
+            return True
+        
+        # Get user's group names
+        group = user.groups.first()
+
+        if group.name in self.allowed_roles:
+            return True
+        return False
     
 
     def get_fields_config(self):

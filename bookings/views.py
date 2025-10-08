@@ -596,12 +596,6 @@ def should_display_event_button(booking, event_key):
     
     # Predefined display logic for each event type
     display_rules = {
-        # Never show - auto-created
-        'created': False,
-        
-        # Not needed - deleted
-        'confirmed': False,
-        
         # Show if NOT completed AND 24+ hours before booking
         'cancelled': (
             booking.status not in ['completed', 'cancelled'] and 
@@ -616,14 +610,14 @@ def should_display_event_button(booking, event_key):
         
         # Show if confirmed AND (booking is today or past) AND NOT completed/cancelled
         'completed': (
-            booking.status == 'confirmed' and 
+            booking.status in ['pending', 'confirmed', 'rescheduled'] and 
             not is_future and
             booking.status not in ['completed', 'cancelled']
         ),
         
         # Show if confirmed AND booking is past AND NOT completed/cancelled
         'no_show': (
-            booking.status == 'confirmed' and 
+            booking.status in ['pending', 'confirmed', 'rescheduled'] and 
             is_past and
             booking.status not in ['completed', 'cancelled']
         ),
@@ -633,9 +627,7 @@ def should_display_event_button(booking, event_key):
         
         # Always show unless cancelled
         'payment_received': booking.status != 'cancelled',
-        
-        # Always show (admin feature)
-        'status_changed': True,
+
         
         # Show after booking is completed
         'follow_up': booking.status == 'completed',
@@ -746,11 +738,21 @@ def booking_detail(request, booking_id):
             is_enabled=True
         ).order_by('display_order')
         
-        # Filter event types based on predefined display logic
-        enabled_event_types = [
-            event_type for event_type in all_event_types
-            if should_display_event_button(booking, event_type.event_key)
-        ]
+        enabled_event_types = []
+
+        for event_type in all_event_types:
+            # Check the first condition
+            display_allowed = should_display_event_button(booking, event_type.event_key)
+            print(display_allowed)
+            
+            # Check the second condition
+            accessible_by_user = event_type.is_accessible_by_user(request.user)
+            
+            # Apply both filters
+            if display_allowed and accessible_by_user:
+                enabled_event_types.append(event_type)
+
+        print(enabled_event_types)
         
         # Build event configs for JavaScript (including field configurations)
         event_configs_dict = {}

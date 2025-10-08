@@ -1356,12 +1356,49 @@ def update_event_type(request, event_type_id):
             event_type.requires_reason = data['requires_reason']
         if 'display_order' in data:
             event_type.display_order = data['display_order']
+        if 'allowed_roles' in data:
+            event_type.allowed_roles = data['allowed_roles']
         
         event_type.save()
         
         return JsonResponse({
             'success': True,
             'message': 'Event type updated successfully'
+        })
+    except BookingEventType.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'Event type not found'}, status=404)
+    except Exception as e:
+        return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def get_event_type(request, event_type_id):
+    """
+    Get a booking event type details
+    """
+    business = getattr(request.user, 'business', None)
+    if not business:
+        return JsonResponse({'success': False, 'message': 'Business not found'}, status=404)
+    
+    from bookings.models import BookingEventType
+    
+    try:
+        event_type = BookingEventType.objects.get(id=event_type_id, business=business)
+        
+        return JsonResponse({
+            'success': True,
+            'event_type': {
+                'id': event_type.id,
+                'name': event_type.name,
+                'icon': event_type.icon,
+                'color': event_type.color,
+                'is_enabled': event_type.is_enabled,
+                'show_in_timeline': event_type.show_in_timeline,
+                'requires_reason': event_type.requires_reason,
+                'allowed_roles': event_type.allowed_roles,
+                'display_order': event_type.display_order,
+            }
         })
     except BookingEventType.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Event type not found'}, status=404)

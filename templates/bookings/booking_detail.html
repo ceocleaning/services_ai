@@ -14,11 +14,16 @@
                 <h5 class="mb-0">Booking Details</h5>
                 <p class="text-white-50 small mb-0">ID: {{ booking.id }}</p>
             </div>
-            {% if not request.user|has_group:"staff" %}
             <div class="d-flex">
+                {% if not request.user|has_group:"staff" %}
                 <a href="{% url 'bookings:index' %}" class="btn btn-outline-light btn-sm me-2">
                     <i class="fas fa-arrow-left me-2"></i> Back to Bookings
                 </a>
+                {% else %}
+                <a href="{% url 'business:staff_detail' request.user.staff_profile.staff_member.id %}#bookings" class="btn btn-outline-secondary me-2">
+                    <i class="fa fa-arrow-left me-1"></i>
+                    Back to Bookings</a>
+                {% endif %}
                 <div class="dropdown">
                     <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="bookingActions" data-bs-toggle="dropdown" aria-expanded="false">
                         <i class="fas fa-cog me-2"></i> Actions
@@ -65,11 +70,7 @@
                     </ul>
                 </div>
             </div>
-            {% else %}
-            <a href="{% url 'business:staff_detail' request.user.staff_profile.staff_member.id %}#bookings" class="btn btn-outline-secondary">
-                <i class="fa fa-arrow-left me-1"></i>
-                Back to Bookings</a>
-            {% endif %}
+           
         </div>
     </div>
 

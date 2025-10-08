@@ -6,6 +6,33 @@ This document outlines the predefined logic for when each booking event button s
 
 The display logic is centralized in the `should_display_event_button()` function in `bookings/views.py`. This function evaluates the booking's current state and determines which event buttons should be shown to the user.
 
+## Role-Based Access Control
+
+In addition to the display logic based on booking state, each event type can be restricted to specific user roles:
+
+- **Business Owner** (`business` group): Full access to all business operations
+- **Staff Members** (`staff` group): Employees assigned to bookings
+- **Customers** (`customer` group): Clients who made bookings
+
+### How It Works
+
+1. **No roles selected** = Everyone can access the event
+2. **One or more roles selected** = Only users in those roles can see the event button
+
+### Configuration
+
+Business owners can configure role access in **Business Settings > Booking Preferences**:
+1. Click the edit button (pencil icon) next to any event type
+2. Select which roles should have access to this event
+3. Save changes
+
+### Example Use Cases
+
+- **Complete Booking**: Only Business Owner and Staff
+- **Add Note**: Business Owner and Staff only
+- **Payment Received**: Business Owner only
+- **Cancel Booking**: All roles (leave unchecked)
+
 ## Display Rules by Event Type
 
 ### 1. **Booking Created** (`created`)
