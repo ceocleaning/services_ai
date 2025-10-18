@@ -2,10 +2,9 @@
 /* Cards */
 .card {
     background-color: var(--bg-card);
-    border-radius: 0.8rem;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     border: 1px solid var(--border-color) !important;
-    box-shadow: 2px 2px 8px rgba(71, 71, 71, 0.3) !important;
+    padding: 1rem !important;
     z-index: 1 !important;
 }
 
@@ -16,3 +15,17 @@
 
 
 
+.card-header {
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--color-border);
+    padding: 1.25rem 1.5rem;
+}
+
+.card-title {
+    color: var(--color-light);
+    font-weight: 600;
+    margin-bottom: 0;
+}
+.card-body {
+    padding: 1.5rem;
+}

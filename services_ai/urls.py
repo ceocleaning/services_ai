@@ -15,9 +15,10 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path, include
+from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
+from plugins import views as plugin_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -36,6 +37,10 @@ urlpatterns = [
     path('licence/', include('licence.urls')),
     path('staff/', include('staff.urls')),
     path('customer/', include('customer.urls')),
+    # SSE for real-time notifications - channel specified in URL path
+    path('events/<channel>/', include('django_eventstream.urls')),
+    # Dynamic plugin routes - catch all plugin/* URLs
+    re_path(r'^plugin/(?P<plugin_slug>[\w-]+)/(?P<path>.*)$', plugin_views.plugin_route_handler),
 ]
 
 # Serve media files in development

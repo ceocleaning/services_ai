@@ -43,6 +43,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_q',
+    "daphne",
+    'django_eventstream',  # For SSE notifications
     # Custom apps
     'ai_agent.apps.AiAgentConfig',
     'bookings.apps.BookingsConfig',
@@ -95,6 +97,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'services_ai.wsgi.application'
+ASGI_APPLICATION = "services_ai.asgi.application"
 
 import dj_database_url
 
@@ -218,3 +221,7 @@ LICENCE_AMOUNT = os.getenv('LICENCE_AMOUNT', 99.99)
 
 RETELL_BASE_URL = os.getenv('RETELL_BASE_URL')
 RETELL_API_KEY = os.getenv('RETELL_API_KEY')
+
+
+# Django EventStream Configuration
+EVENTSTREAM_STORAGE_CLASS = 'django_eventstream.storage.DjangoModelStorage'

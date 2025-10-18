@@ -3,10 +3,15 @@ import sys
 import importlib.util
 import json
 import pluggy
+import hashlib
 
 from django.conf import settings
 from plugins.hookspecs import PluginHooks
 from plugins.models import Plugin
+
+class SecurityError(Exception):
+    """Raised when a plugin violates security policies"""
+    pass
 
 class ServicesAIPluginManager:
     """Plugin manager for the Services AI platform"""
@@ -14,7 +19,8 @@ class ServicesAIPluginManager:
     def __init__(self):
         self.manager = pluggy.PluginManager("services_ai")
         self.manager.add_hookspecs(PluginHooks)
-        self.loaded_plugins = {}
+        self.loaded_plugins = {}  # plugin_id -> module
+        self.registered_instances = {}  # plugin_id -> registered instance
         
     def get_plugin_dir(self):
         """Get the directory where plugins are stored"""
@@ -29,8 +35,14 @@ class ServicesAIPluginManager:
         return plugin_packages_dir
     
     def discover_plugins(self):
-        """Discover and load all enabled plugins"""
-        plugins = Plugin.objects.filter(enabled=True)
+        """Discover and load all approved and enabled plugins"""
+        from plugins.models import PluginStatus
+        
+        # Only load plugins that are approved AND enabled
+        plugins = Plugin.objects.filter(
+            status=PluginStatus.APPROVED,
+            enabled=True
+        )
         
         for plugin in plugins:
             self.load_plugin(plugin)
@@ -39,6 +51,11 @@ class ServicesAIPluginManager:
         """Load a specific plugin"""
         if plugin.id in self.loaded_plugins:
             return self.loaded_plugins[plugin.id]
+        
+        # Security check: Only load approved plugins
+        if not plugin.can_be_loaded():
+            print(f"Plugin {plugin.name} cannot be loaded. Status: {plugin.status}, Enabled: {plugin.enabled}")
+            return None
         
         try:
             # If plugin path doesn't exist, try to find it in standard locations
@@ -57,8 +74,13 @@ class ServicesAIPluginManager:
                             plugin.package_path = sample_plugin_dir
                             plugin.save()
             
-            # Add plugin directory to path
-            plugin_dir = plugin.package_path
+            # Security: Validate plugin directory is within allowed paths
+            plugin_dir = os.path.abspath(plugin.package_path)
+            allowed_base = os.path.abspath(self.get_plugin_dir())
+            
+            if not plugin_dir.startswith(allowed_base):
+                raise SecurityError(f"Plugin path {plugin_dir} is outside allowed directory")
+            
             if not os.path.exists(plugin_dir):
                 raise FileNotFoundError(f"Plugin directory not found: {plugin_dir}")
                 
@@ -93,21 +115,26 @@ class ServicesAIPluginManager:
                         plugin_instance = plugin_class()
                         # Register the plugin instance with Pluggy
                         self.manager.register(plugin_instance)
+                        # Store both module and instance
+                        self.registered_instances[plugin.id] = plugin_instance
                         print(f"Registered plugin class {plugin.plugin_class} from {plugin.name}")
                     else:
                         # If plugin class not found, register the module itself
                         self.manager.register(module)
+                        self.registered_instances[plugin.id] = module
                         print(f"Plugin class {plugin.plugin_class} not found in {plugin.name}, registering module instead")
                 except Exception as e:
                     # If there's an error instantiating the plugin class, register the module itself
                     self.manager.register(module)
+                    self.registered_instances[plugin.id] = module
                     print(f"Error instantiating plugin class {plugin.plugin_class} from {plugin.name}: {str(e)}. Registering module instead.")
             else:
                 # Register the module directly if no plugin class specified
                 self.manager.register(module)
+                self.registered_instances[plugin.id] = module
                 print(f"Registered module for plugin {plugin.name}")
             
-            # Store the loaded plugin
+            # Store the loaded plugin module
             self.loaded_plugins[plugin.id] = module
             
             return module
@@ -117,31 +144,64 @@ class ServicesAIPluginManager:
     
     def unload_plugin(self, plugin_id):
         """Unload a specific plugin"""
+        # Unregister from Pluggy (use the registered instance, not the module)
+        if plugin_id in self.registered_instances:
+            registered_obj = self.registered_instances[plugin_id]
+            try:
+                self.manager.unregister(registered_obj)
+                print(f"Unregistered plugin {plugin_id} from Pluggy")
+            except Exception as e:
+                print(f"Error unregistering plugin {plugin_id}: {str(e)}")
+            del self.registered_instances[plugin_id]
+        
+        # Remove from loaded plugins
         if plugin_id in self.loaded_plugins:
-            plugin_module = self.loaded_plugins[plugin_id]
-            self.manager.unregister(plugin_module)
             del self.loaded_plugins[plugin_id]
     
     def call_hook(self, hook_name, **kwargs):
         """Call a specific hook with the given arguments"""
+        print(f"  [MANAGER] call_hook: {hook_name}")
+        print(f"     Loaded plugins: {len(self.loaded_plugins)}")
+        print(f"     Registered instances: {len(self.registered_instances)}")
+        
         try:
             # Access hook through manager.hook, this is the Pluggy way
             if not hasattr(self.manager, 'hook'):
-                print(f"Error: Plugin manager has no 'hook' attribute. Manager type: {type(self.manager)}")
+                print(f"  [ERROR] Plugin manager has no 'hook' attribute. Manager type: {type(self.manager)}")
                 # Try to see if hookspecs are properly registered
-                print(f"Registered hookspecs: {self.manager.get_hookspecs()}")
+                print(f"     Registered hookspecs: {self.manager.get_hookspecs()}")
                 return []
                 
             # Check if the hook exists
             if not hasattr(self.manager.hook, hook_name):
-                # This is not an error, just means no plugins have implemented this hook
+                print(f"  [WARN] Hook '{hook_name}' not found in manager.hook")
+                print(f"     Available hooks: {[h for h in dir(self.manager.hook) if not h.startswith('_')]}")
                 return []
-                
-            # Get the hook implementation and call it
+            
+            print(f"  [OK] Hook '{hook_name}' exists")
+            
+            # Get hook implementations
             hook = getattr(self.manager.hook, hook_name)
-            return hook(**kwargs)
+            
+            # Check how many implementations exist
+            try:
+                impls = hook.get_hookimpls()
+                print(f"     Hook implementations: {len(impls)}")
+                for impl in impls:
+                    print(f"       - {impl}")
+            except Exception as e:
+                print(f"     Could not get implementations: {e}")
+            
+            # Call the hook
+            print(f"  [CALL] Calling hook with kwargs: {list(kwargs.keys())}")
+            result = hook(**kwargs)
+            print(f"  [RESULT] Hook returned: {result}")
+            
+            return result
         except Exception as e:
-            print(f"Error calling hook {hook_name}: {str(e)}")
+            print(f"  [ERROR] Error calling hook {hook_name}: {str(e)}")
+            import traceback
+            traceback.print_exc()
             # Return empty list on error for safety
             return []
     

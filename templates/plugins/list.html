@@ -7,9 +7,16 @@
 <div class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Installed Plugins</h1>
-        <a href="{% url 'plugins:upload_plugin' %}" class="btn btn-primary">
-            <i class="fas fa-upload"></i> Upload Plugin
-        </a>
+        <div>
+            {% if user.is_staff %}
+            <a href="{% url 'plugins:reload_plugins' %}" class="btn btn-warning me-2">
+                <i class="fas fa-sync-alt"></i> Reload Plugins
+            </a>
+            {% endif %}
+            <a href="{% url 'plugins:upload_plugin' %}" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Upload Plugin
+            </a>
+        </div>
     </div>
 
     {% if messages %}
@@ -32,14 +39,31 @@
             <div class="card h-100">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">{{ plugin.name }}</h5>
-                    <span class="badge {% if plugin.enabled %}bg-success{% else %}bg-danger{% endif %}">
-                        {% if plugin.enabled %}Enabled{% else %}Disabled{% endif %}
-                    </span>
+                    <div>
+                        {% if plugin.status == 'pending' %}
+                        <span class="badge bg-warning text-dark me-1">
+                            <i class="fas fa-clock"></i> Pending
+                        </span>
+                        {% elif plugin.status == 'approved' %}
+                        <span class="badge bg-success me-1">
+                            <i class="fas fa-check"></i> Approved
+                        </span>
+                        {% elif plugin.status == 'rejected' %}
+                        <span class="badge bg-danger me-1">
+                            <i class="fas fa-times"></i> Rejected
+                        </span>
+                        {% endif %}
+                        
+                        <span class="badge {% if plugin.enabled %}bg-primary{% else %}bg-secondary{% endif %}">
+                            {% if plugin.enabled %}Active{% else %}Inactive{% endif %}
+                        </span>
+                    </div>
                 </div>
                 <div class="card-body">
                     <p class="card-text">{{ plugin.description }}</p>
                     <p><small class="text-muted">Version: {{ plugin.version }}</small></p>
                     <p><small class="text-muted">Author: {{ plugin.author }}</small></p>
+                    <p><small class="text-muted">Uploaded by: {{ plugin.uploaded_by.username }}</small></p>
                 </div>
                 <div class="card-footer">
                     <a href="{% url 'plugins:plugin_detail' plugin.id %}" class="btn btn-outline-primary btn-sm">

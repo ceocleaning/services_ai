@@ -16,10 +16,7 @@ class PluginsConfig(AppConfig):
         # Load enabled plugins
         from plugins.plugin_manager import plugin_manager
         try:
-            # Discover plugins from the database
-            plugin_manager.discover_plugins()
-            
-            # Load discovered plugins
+            # Discover and load approved, enabled plugins from the database
             plugin_manager.discover_plugins()
             
             print(f"Successfully loaded {len(plugin_manager.loaded_plugins)} plugins")

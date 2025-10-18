@@ -12,7 +12,12 @@ except ImportError:
     Lead = None
     Booking = None
 
-from plugins.events import notify_lead_created_async, notify_booking_created_async, notify_booking_updated_async
+from plugins.events import (
+    notify_lead_created_async, 
+    notify_lead_created,
+    notify_booking_created_async, 
+    notify_booking_updated_async
+)
 
 # Only register the signals if the models are available
 if Lead is not None:
@@ -31,8 +36,14 @@ if Lead is not None:
             request = getattr(instance, 'request', None)
             user = getattr(request, 'user', None) if request else None
             
+            # Try async first
             notify_lead_created_async(instance, request=request, user=user)
             print("Plugins notified about new lead: ", instance.id)
+            
+            # TEMPORARY: Also call synchronously for immediate testing
+            # Remove this once Django Q is confirmed working
+            print("[DEBUG] Calling synchronously for testing...")
+            notify_lead_created(instance, request=request, user=user)
 
 if Booking is not None:
     @receiver(post_save, sender=Booking)

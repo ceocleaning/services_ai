@@ -36,18 +36,6 @@
     z-index: 1;
 }
 
-.hero-section .btn-primary {
-    padding: 0.75rem 1.5rem;
-    font-weight: 500;
-    background-color: var(--primary-indigo);
-    border-color: var(--primary-indigo);
-}
-
-.hero-section .btn-primary:hover, .hero-section .btn-primary:focus {
-    background-color: var(--primary-indigo);
-    border-color: var(--primary-indigo-dark);
-    box-shadow: 0 0 15px rgba(79, 70, 229, 0.5);
-}
 
 .hero-section h1 {
     font-weight: 700;
