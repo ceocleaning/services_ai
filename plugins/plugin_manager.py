@@ -87,7 +87,16 @@ class ServicesAIPluginManager:
             if plugin_dir not in sys.path:
                 sys.path.insert(0, plugin_dir)
             
-            # Load the entry point module
+            # Add plugin's virtualenv to sys.path
+            from plugins.dependency_manager import DependencyManager
+            dep_manager = DependencyManager(plugin)
+            site_packages = dep_manager.get_site_packages_path()
+            
+            if site_packages and site_packages not in sys.path:
+                sys.path.insert(0, site_packages)
+                print(f"[DEPS] Added {site_packages} to sys.path")
+            
+            # Load the entry point module with sandboxing
             # If entry_point doesn't have .py extension, add it
             entry_point = plugin.entry_point
             if not entry_point.endswith('.py'):
@@ -100,9 +109,17 @@ class ServicesAIPluginManager:
             if spec is None:
                 print(f"Error loading plugin {plugin.name}: Could not find module at {module_path}")
                 return None
-                
-            module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(module)
+            
+            # Load module with sandboxing
+            from plugins.sandbox import PluginSandbox
+            
+            try:
+                with PluginSandbox(plugin):
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+            except ImportError as e:
+                print(f"[SANDBOX] Import blocked while loading {plugin.name}: {e}")
+                raise
             
             # Get the plugin class instance if specified in manifest
             if plugin.plugin_class:
@@ -160,9 +177,15 @@ class ServicesAIPluginManager:
     
     def call_hook(self, hook_name, **kwargs):
         """Call a specific hook with the given arguments"""
+        # Extract plugin_id if provided (for filtering specific plugin)
+        # Don't pop it - keep it in kwargs so hooks can receive it
+        target_plugin_id = kwargs.get('plugin_id', None)
+        
         print(f"  [MANAGER] call_hook: {hook_name}")
         print(f"     Loaded plugins: {len(self.loaded_plugins)}")
         print(f"     Registered instances: {len(self.registered_instances)}")
+        if target_plugin_id:
+            print(f"     Target plugin_id: {target_plugin_id}")
         
         try:
             # Access hook through manager.hook, this is the Pluggy way
@@ -192,12 +215,57 @@ class ServicesAIPluginManager:
             except Exception as e:
                 print(f"     Could not get implementations: {e}")
             
-            # Call the hook
+            # Call the hook with error handling and sandboxing
             print(f"  [CALL] Calling hook with kwargs: {list(kwargs.keys())}")
-            result = hook(**kwargs)
-            print(f"  [RESULT] Hook returned: {result}")
             
-            return result
+            from plugins.error_handler import safe_hook_execution
+            from plugins.sandbox import PluginSandbox
+            from plugins.models import Plugin
+            
+            results = []
+            
+            # Execute each plugin's hook implementation separately with error handling
+            for plugin_id, instance in self.registered_instances.items():
+                try:
+                    # If target_plugin_id is specified, only call that plugin
+                    if target_plugin_id is not None and plugin_id != target_plugin_id:
+                        continue
+                    
+                    plugin = Plugin.objects.get(id=plugin_id)
+                    
+                    # Skip if plugin is disabled
+                    if not plugin.enabled:
+                        continue
+                    
+                    # Check if instance has this hook
+                    if not hasattr(instance, hook_name):
+                        print(f"     Plugin {plugin_id} ({plugin.name}) does not have hook '{hook_name}'")
+                        continue
+                    
+                    print(f"     Calling hook '{hook_name}' on plugin {plugin_id} ({plugin.name})")
+                    hook_method = getattr(instance, hook_name)
+                    
+                    # Execute in sandbox with error handling
+                    with PluginSandbox(plugin):
+                        result = safe_hook_execution(
+                            plugin=plugin,
+                            hook_name=hook_name,
+                            hook_callable=hook_method,
+                            **kwargs
+                        )
+                        
+                        if result is not None:
+                            results.append(result)
+                            print(f"     Hook returned result: {type(result)}")
+                
+                except Exception as e:
+                    print(f"  [ERROR] Critical error in plugin {plugin_id}: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Continue with other plugins
+            
+            print(f"  [RESULT] Hook returned {len(results)} results")
+            return results
         except Exception as e:
             print(f"  [ERROR] Error calling hook {hook_name}: {str(e)}")
             import traceback

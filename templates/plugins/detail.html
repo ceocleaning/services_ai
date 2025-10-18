@@ -138,6 +138,80 @@
                     {% endif %}
                 </div>
             </div>
+            
+            {% if plugin.enabled and plugin.status == 'approved' %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-route"></i> Custom Routes</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Plugin-registered custom URLs:</p>
+                    <ul class="list-group">
+                        <li class="list-group-item">
+                            <strong>Main Page:</strong><br>
+                            <a href="/plugin/{{ plugin.name|lower|slugify }}/" target="_blank">
+                                /plugin/{{ plugin.name|lower|slugify }}/
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>API Endpoint:</strong><br>
+                            <a href="/plugin/{{ plugin.name|lower|slugify }}/api/" target="_blank">
+                                /plugin/{{ plugin.name|lower|slugify }}/api/
+                            </a>
+                        </li>
+                        <li class="list-group-item">
+                            <strong>Dashboard:</strong><br>
+                            <a href="/plugin/{{ plugin.name|lower|slugify }}/dashboard/" target="_blank">
+                                /plugin/{{ plugin.name|lower|slugify }}/dashboard/
+                            </a>
+                        </li>
+                    </ul>
+                    <p class="text-muted mt-3">
+                        <small><i class="fas fa-info-circle"></i> Routes are only available when plugin is enabled and approved.</small>
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if plugin.dependencies.all %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-box"></i> Dependencies</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Package</th>
+                                <th>Version</th>
+                                <th>Status</th>
+                                <th>Installed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for dep in plugin.dependencies.all %}
+                            <tr>
+                                <td><code>{{ dep.package_name }}</code></td>
+                                <td><small>{{ dep.version_spec }}</small></td>
+                                <td>
+                                    {% if dep.install_status == 'installed' %}
+                                    <span class="badge bg-success">Installed</span>
+                                    {% elif dep.install_status == 'installing' %}
+                                    <span class="badge bg-warning">Installing...</span>
+                                    {% elif dep.install_status == 'failed' %}
+                                    <span class="badge bg-danger">Failed</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ dep.installed_version|default:"-" }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
         </div>
         
         <div class="col-md-8">

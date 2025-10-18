@@ -1,10 +1,16 @@
 """
 Comprehensive Test Plugin
 Tests all available hooks in the plugin system
+Tests dependency management with requests and numpy
 """
 
 from plugins.hooks import hookimpl
 from datetime import datetime
+import json
+
+# Test dependencies - these will be installed automatically
+import requests
+import numpy as np
 
 
 class ComprehensiveTestPlugin:
@@ -375,85 +381,177 @@ class ComprehensiveTestPlugin:
         
         # Import Django modules for views
         from django.shortcuts import render
-        from django.http import JsonResponse
-        import os
-        
-        # Get plugin directory path
-        plugin_dir = os.path.dirname(os.path.abspath(__file__))
+        from django.http import JsonResponse, HttpResponse
         
         # Define custom view functions
         def test_page_view(request):
-            """Custom test page view"""
-            template_path = os.path.join(plugin_dir, 'templates', 'test_page.html')
+            """Custom test page view - Tests dependencies"""
+            # Test numpy
+            test_array = np.array([10, 20, 30, 40, 50])
             
-            context = {
-                'plugin_name': 'Comprehensive Test Plugin',
-                'version': '1.0.0',
-                'total_hooks': len(self.hook_call_count),
-                'total_calls': sum(self.hook_call_count.values()),
-                'hook_stats': self.hook_call_count,
-                'user': request.user,
-            }
-            
-            # Read and render the HTML template
-            try:
-                with open(template_path, 'r') as f:
-                    html_content = f.read()
-                
-                # Simple template rendering (replace variables)
-                for key, value in context.items():
-                    html_content = html_content.replace(f'{{{{ {key} }}}}', str(value))
-                
-                from django.http import HttpResponse
-                return HttpResponse(html_content)
-            except Exception as e:
-                return HttpResponse(f"<h1>Error loading template</h1><p>{str(e)}</p>")
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Comprehensive Test Plugin</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>
+                    body {{ background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 40px 0; }}
+                    .card {{ border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }}
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="card">
+                        <div class="card-body p-5">
+                            <h1 class="text-center mb-4">🎉 Comprehensive Test Plugin</h1>
+                            <p class="text-center text-muted">Testing all plugin features including dependencies!</p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-4">
+                                    <div class="card bg-primary text-white">
+                                        <div class="card-body text-center">
+                                            <h3>{len(self.hook_call_count)}</h3>
+                                            <p>Total Hooks</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body text-center">
+                                            <h3>{sum(self.hook_call_count.values())}</h3>
+                                            <p>Total Calls</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-info text-white">
+                                        <div class="card-body text-center">
+                                            <h3>v1.0.0</h3>
+                                            <p>Version</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h4>📦 Dependencies Test</h4>
+                                <div class="alert alert-success">
+                                    <strong>NumPy:</strong> v{np.__version__}<br>
+                                    <strong>Test Array:</strong> {test_array.tolist()}<br>
+                                    <strong>Sum:</strong> {np.sum(test_array)}<br>
+                                    <strong>Mean:</strong> {np.mean(test_array)}<br>
+                                    <strong>Requests:</strong> v{requests.__version__}
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <h4>🔗 Available Routes</h4>
+                                <ul class="list-group">
+                                    <li class="list-group-item">
+                                        <strong>Main Page:</strong> /plugin/comprehensive-test-plugin/
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>API Endpoint:</strong> /plugin/comprehensive-test-plugin/api/
+                                    </li>
+                                    <li class="list-group-item">
+                                        <strong>Dashboard:</strong> /plugin/comprehensive-test-plugin/dashboard/
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            return HttpResponse(html)
         
         def test_api_view(request):
-            """Custom API endpoint"""
+            """Custom API endpoint - Tests dependencies"""
+            # Test numpy
+            test_array = np.array([1, 2, 3, 4, 5])
+            numpy_info = {
+                'version': np.__version__,
+                'array_sum': int(np.sum(test_array)),
+                'array_mean': float(np.mean(test_array))
+            }
+            
+            # Test requests (make a simple API call)
+            requests_info = {
+                'version': requests.__version__,
+                'available': True
+            }
+            
             return JsonResponse({
                 'status': 'success',
                 'plugin': 'Comprehensive Test Plugin',
                 'total_hooks': len(self.hook_call_count),
                 'total_calls': sum(self.hook_call_count.values()),
                 'hook_stats': self.hook_call_count,
-                'message': 'Plugin API is working!'
+                'dependencies': {
+                    'numpy': numpy_info,
+                    'requests': requests_info
+                },
+                'message': 'Plugin API is working! Dependencies loaded successfully!'
             })
         
         def test_dashboard_view(request):
             """Custom dashboard view"""
-            template_path = os.path.join(plugin_dir, 'templates', 'dashboard.html')
+            user_name = request.user.get_full_name() or request.user.username
             
-            context = {
-                'plugin_name': 'Comprehensive Test Plugin',
-                'user_name': request.user.get_full_name() or request.user.username,
-                'total_hooks': len(self.hook_call_count),
-                'total_calls': sum(self.hook_call_count.values()),
-            }
+            # Build hook stats table
+            hook_stats_rows = ""
+            for hook_name, count in sorted(self.hook_call_count.items()):
+                hook_stats_rows += f"""
+                <tr>
+                    <td>{hook_name}</td>
+                    <td><span class="badge bg-primary">{count}</span></td>
+                </tr>
+                """
             
-            try:
-                with open(template_path, 'r') as f:
-                    html_content = f.read()
-                
-                # Replace variables
-                for key, value in context.items():
-                    html_content = html_content.replace(f'{{{{ {key} }}}}', str(value))
-                
-                # Replace hook stats table
-                hook_stats_html = ""
-                for hook_name, count in sorted(self.hook_call_count.items()):
-                    hook_stats_html += f"""
-                    <tr>
-                        <td>{hook_name}</td>
-                        <td><span class="badge bg-primary">{count}</span></td>
-                    </tr>
-                    """
-                html_content = html_content.replace('{{ hook_stats_table }}', hook_stats_html)
-                
-                from django.http import HttpResponse
-                return HttpResponse(html_content)
-            except Exception as e:
-                return HttpResponse(f"<h1>Error loading template</h1><p>{str(e)}</p>")
+            html = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Plugin Dashboard</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+            </head>
+            <body>
+                <div class="container mt-5">
+                    <h1>📊 Plugin Dashboard</h1>
+                    <p class="text-muted">Welcome, {user_name}!</p>
+                    
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5>Total Hooks: {len(self.hook_call_count)}</h5>
+                                    <h5>Total Calls: {sum(self.hook_call_count.values())}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <h4>Hook Execution Stats</h4>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Hook Name</th>
+                                    <th>Call Count</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {hook_stats_rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </body>
+            </html>
+            """
+            return HttpResponse(html)
         
         # Return list of custom routes
         # Format: (url_pattern, view_function, name)

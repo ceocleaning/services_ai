@@ -107,3 +107,84 @@ class PluginSetting(models.Model):
     
     def __str__(self):
         return f"{self.plugin.name} - {self.setting_name}"
+
+
+class PluginDependency(models.Model):
+    """Track plugin dependencies"""
+    plugin = models.ForeignKey(Plugin, on_delete=models.CASCADE, related_name='dependencies')
+    package_name = models.CharField(max_length=100)
+    version_spec = models.CharField(max_length=50)  # >=2.28.0, ^1.5.0, etc.
+    installed_version = models.CharField(max_length=20, blank=True, null=True)
+    install_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Pending'),
+            ('installing', 'Installing'),
+            ('installed', 'Installed'),
+            ('failed', 'Failed'),
+        ],
+        default='pending'
+    )
+    install_error = models.TextField(blank=True, null=True)
+    installed_at = models.DateTimeField(blank=True, null=True)
+    
+    class Meta:
+        unique_together = ('plugin', 'package_name')
+    
+    def __str__(self):
+        return f"{self.plugin.name} - {self.package_name} {self.version_spec}"
+
+
+class PluginError(models.Model):
+    """Track plugin errors"""
+    plugin = models.ForeignKey(Plugin, on_delete=models.CASCADE, related_name='errors')
+    error_type = models.CharField(
+        max_length=50,
+        choices=[
+            ('import_error', 'Import Error'),
+            ('runtime_error', 'Runtime Error'),
+            ('permission_error', 'Permission Error'),
+            ('timeout_error', 'Timeout Error'),
+            ('dependency_error', 'Dependency Error'),
+        ]
+    )
+    hook_name = models.CharField(max_length=100, blank=True, null=True)
+    error_message = models.TextField()
+    stack_trace = models.TextField(blank=True, null=True)
+    context = models.JSONField(blank=True, null=True)
+    occurred_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+    resolved_at = models.DateTimeField(blank=True, null=True)
+    resolved_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='resolved_plugin_errors'
+    )
+    
+    class Meta:
+        ordering = ['-occurred_at']
+    
+    def __str__(self):
+        return f"{self.plugin.name} - {self.error_type} at {self.occurred_at}"
+
+
+class PluginExecutionLog(models.Model):
+    """Log plugin hook executions"""
+    plugin = models.ForeignKey(Plugin, on_delete=models.CASCADE, related_name='execution_logs')
+    hook_name = models.CharField(max_length=100)
+    execution_time = models.FloatField(help_text="Execution time in seconds")
+    success = models.BooleanField(default=True)
+    error_message = models.TextField(blank=True, null=True)
+    executed_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-executed_at']
+        indexes = [
+            models.Index(fields=['plugin', 'hook_name', '-executed_at']),
+        ]
+    
+    def __str__(self):
+        status = "✓" if self.success else "✗"
+        return f"{status} {self.plugin.name}.{self.hook_name} ({self.execution_time:.3f}s)"
