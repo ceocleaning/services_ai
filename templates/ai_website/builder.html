@@ -1,0 +1,223 @@
+{% extends 'common/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}AI Website Builder - Services AI{% endblock %}
+
+{% block page_title %}AI Website Builder{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/ai_website_builder.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="website-builder-container">
+    <!-- Header Section -->
+    <div class="builder-header mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="builder-title">
+                    <i class="fas fa-magic me-2"></i>
+                    AI Website Builder
+                </h2>
+                <p class="builder-subtitle">Generate a stunning business website powered by AI in seconds</p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                {% if existing_website %}
+                <a href="{% url 'ai_website:preview' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-eye me-2"></i>Preview Website
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    {% if existing_website %}
+    <!-- Existing Website Info -->
+    <div class="card existing-website-card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h4 class="mb-2">
+                        <i class="fas fa-globe me-2 text-primary"></i>
+                        {{ existing_website.business_name }}
+                    </h4>
+                    <p class="text-muted mb-2">
+                        <strong>Public URL:</strong> 
+                        <a href="{{ existing_website.get_public_url }}" target="_blank" class="text-decoration-none">
+                            {{ request.scheme }}://{{ request.get_host }}{{ existing_website.get_public_url }}
+                            <i class="fas fa-external-link-alt ms-1"></i>
+                        </a>
+                    </p>
+                    <p class="text-muted mb-2">
+                        <strong>Status:</strong> 
+                        {% if existing_website.is_published %}
+                        <span class="badge bg-success">Published</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Unpublished</span>
+                        {% endif %}
+                    </p>
+                    <p class="text-muted mb-0">
+                        <strong>Views:</strong> {{ existing_website.view_count }}
+                        <i class="fas fa-eye ms-1"></i>
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="btn-group-vertical w-100" role="group">
+                        <a href="{% url 'ai_website:preview' %}" class="btn btn-primary mb-2">
+                            <i class="fas fa-eye me-2"></i>Preview
+                        </a>
+                        <a href="{{ existing_website.get_public_url }}" target="_blank" class="btn btn-outline-primary mb-2">
+                            <i class="fas fa-external-link-alt me-2"></i>Visit Live Site
+                        </a>
+                        <a href="{% url 'ai_website:toggle_publish' existing_website.id %}" class="btn btn-outline-secondary mb-2">
+                            <i class="fas fa-{% if existing_website.is_published %}eye-slash{% else %}eye{% endif %} me-2"></i>
+                            {% if existing_website.is_published %}Unpublish{% else %}Publish{% endif %}
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash me-2"></i>Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Regenerate Section -->
+    <div class="card generator-card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-sync-alt me-2"></i>
+                Regenerate Website
+            </h5>
+        </div>
+        <div class="card-body">
+    {% else %}
+    <!-- New Website Generation -->
+    <div class="card generator-card">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-wand-magic-sparkles me-2"></i>
+                Create Your Website
+            </h5>
+        </div>
+        <div class="card-body">
+    {% endif %}
+            <form method="post" action="{% url 'ai_website:generate' %}" id="websiteGeneratorForm">
+                {% csrf_token %}
+                
+                <div class="mb-4">
+                    <label for="business_name" class="form-label">
+                        <i class="fas fa-building me-2"></i>Business Name
+                    </label>
+                    <input 
+                        type="text" 
+                        class="form-control form-control-lg" 
+                        id="business_name" 
+                        name="business_name" 
+                        placeholder="Enter your business name"
+                        value="{% if existing_website %}{{ existing_website.business_name }}{% else %}{{ business.name }}{% endif %}"
+                        required
+                    >
+                    <div class="form-text">The name that will appear on your website</div>
+                </div>
+
+                <div class="mb-4">
+                    <label for="ai_prompt" class="form-label">
+                        <i class="fas fa-lightbulb me-2"></i>Describe Your Website
+                    </label>
+                    <textarea 
+                        class="form-control" 
+                        id="ai_prompt" 
+                        name="ai_prompt" 
+                        rows="6" 
+                        placeholder="Describe what you want your website to showcase. For example: 'A professional website for my plumbing business that highlights emergency services, customer testimonials, and 24/7 availability. Use blue and white colors with a modern, trustworthy design.'"
+                        required
+                    >{% if existing_website %}{{ existing_website.ai_prompt }}{% endif %}</textarea>
+                    <div class="form-text">Be specific about your services, style preferences, and what makes your business unique</div>
+                </div>
+
+                <div class="ai-tips-card mb-4">
+                    <h6 class="mb-3">
+                        <i class="fas fa-info-circle me-2"></i>Tips for Better Results
+                    </h6>
+                    <ul class="tips-list">
+                        <li><i class="fas fa-check-circle me-2"></i>Mention your industry and main services</li>
+                        <li><i class="fas fa-check-circle me-2"></i>Describe your target audience</li>
+                        <li><i class="fas fa-check-circle me-2"></i>Include color preferences or brand guidelines</li>
+                        <li><i class="fas fa-check-circle me-2"></i>Highlight what makes your business unique</li>
+                    </ul>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg" id="generateBtn">
+                        <i class="fas fa-magic me-2"></i>
+                        {% if existing_website %}Regenerate Website{% else %}Generate Website{% endif %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h5>Lightning Fast</h5>
+                <p>Generate a complete website in seconds with AI-powered technology</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-mobile-alt"></i>
+                </div>
+                <h5>Mobile Responsive</h5>
+                <p>Your website looks perfect on all devices and screen sizes</p>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="feature-box">
+                <div class="feature-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <h5>Beautiful Design</h5>
+                <p>Modern, professional designs that make your business stand out</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if existing_website %}
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2 text-danger"></i>
+                    Delete Website
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete your website? This action cannot be undone.</p>
+                <p class="text-muted mb-0">Your website will no longer be accessible at {{ existing_website.get_public_url }}</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'ai_website:delete' existing_website.id %}" class="btn btn-danger">
+                    <i class="fas fa-trash me-2"></i>Delete Website
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/ai_website_builder.js' %}"></script>
+{% endblock %}

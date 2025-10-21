@@ -1485,3 +1485,42 @@ def update_reminder_type(request, reminder_type_id):
         return JsonResponse({'success': False, 'message': 'Reminder type not found'}, status=404)
     except Exception as e:
         return JsonResponse({'success': False, 'message': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def update_ai_model(request):
+    """
+    Update AI model preference for website generation
+    """
+    try:
+        data = json.loads(request.body)
+        ai_model = data.get('ai_model')
+        
+        if ai_model not in ['openai', 'gemini']:
+            return JsonResponse({
+                'success': False,
+                'message': 'Invalid AI model selection'
+            }, status=400)
+        
+        # Get or create business configuration
+        config, created = BusinessConfiguration.objects.get_or_create(
+            business=request.user.business
+        )
+        
+        config.ai_model_preference = ai_model
+        config.save()
+        
+        model_name = 'OpenAI GPT-4o' if ai_model == 'openai' else 'Google Gemini 2.5 Pro'
+        
+        return JsonResponse({
+            'success': True,
+            'message': f'AI model updated to {model_name}',
+            'model': ai_model
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': str(e)
+        }, status=500)

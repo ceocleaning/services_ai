@@ -63,6 +63,7 @@ INSTALLED_APPS = [
     'analytics.apps.AnalyticsConfig',
     'staff.apps.StaffConfig',
     'customer.apps.CustomerConfig',
+    'ai_website.apps.AiWebsiteConfig',
 ]
 
 MIDDLEWARE = [
@@ -175,13 +176,17 @@ BASE_URL = 'http://127.0.0.1:8000'
 # OPENAI
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 
+# GEMINI
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+
 CSRF_TRUSTED_ORIGINS = [
     'http://localhost:8000',
     'http://127.0.0.1:8000',
     'https://servicesai.up.railway.app',
 ]
 
-
+# Allow iframes from same origin for template preview
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 Q_CLUSTER = {
     'name': 'services_ai',

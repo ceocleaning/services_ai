@@ -19,6 +19,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from plugins import views as plugin_views
+from ai_website import views as ai_website_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,10 +38,14 @@ urlpatterns = [
     path('licence/', include('licence.urls')),
     path('staff/', include('staff.urls')),
     path('customer/', include('customer.urls')),
+    path('ai-website/', include('ai_website.urls')),
     # SSE for real-time notifications - channel specified in URL path
     path('events/<channel>/', include('django_eventstream.urls')),
     # Dynamic plugin routes - catch all plugin/* URLs
     re_path(r'^plugin/(?P<plugin_slug>[\w-]+)/(?P<path>.*)$', plugin_views.plugin_route_handler),
+    # Public AI-generated websites - must be last to avoid conflicts
+    # Matches business slugs like 'kashif-mehmood', 'johns-plumbing', etc.
+    path('<slug:business_slug>/', ai_website_views.public_website, name='public_website'),
 ]
 
 # Serve media files in development

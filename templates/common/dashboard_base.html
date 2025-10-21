@@ -140,6 +140,12 @@
                             <span>Plugins</span>
                         </a>
                     </li>
+                    <li class="nav-item">
+                        <a href="{% url 'ai_website:builder' %}" class="nav-link {% if '/ai-website/' in request.path %}active{% endif %}">
+                            <i class="fas fa-magic"></i>
+                            <span>AI Website Builder</span>
+                        </a>
+                    </li>
                     <li class="nav-header">Settings</li>
                     <li class="nav-item">
                         <a href="/business/profile/" class="nav-link {% if '/business/profile/' in request.path %}active{% endif %}">
@@ -147,6 +153,9 @@
                             <span>Business Profile</span>
                         </a>
                     </li>
+
+      
+
                     <li class="nav-item">
                         <a href="{% url 'business:staff_accounts' %}" class="nav-link {% if '/business/staff_accounts/' in request.path %}active{% endif %}">
                             <i class="fas fa-user"></i>

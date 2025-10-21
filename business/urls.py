@@ -61,6 +61,7 @@ urlpatterns = [
     path('api/industries/', views.get_industries, name='api_industries'),
     path('api/register/', views.register_business, name='api_register_business'),
     path('api/smtp/test/', views.test_smtp_config, name='api_test_smtp'),
+    path('update-ai-model/', views.update_ai_model, name='update_ai_model'),
     
     # Payment gateway management
     path('payment-gateways/', views.payment_gateways, name='payment_gateways'),

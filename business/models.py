@@ -91,6 +91,15 @@ class Business(models.Model):
 
     def get_lead_webhook_url(self):
         return f"{BASE_URL}/leads/webhook/{self.id}/"
+    
+    def get_landing_page_url(self):
+        """Returns the public landing page URL if it exists and is published"""
+        try:
+            if hasattr(self, 'landing_page') and self.landing_page.is_published:
+                return self.landing_page.get_absolute_url()
+        except:
+            pass
+        return None
 
 
 FIELD_TYPES = (
@@ -182,6 +191,11 @@ class BusinessConfiguration(models.Model):
     """
     Business-specific configuration settings.
     """
+    AI_MODEL_CHOICES = (
+        ('openai', 'OpenAI GPT-4o'),
+        ('gemini', 'Google Gemini 2.5 Pro'),
+    )
+    
     business = models.OneToOneField(Business, on_delete=models.CASCADE, related_name='configuration')
 
     # Voice Configuration
@@ -195,6 +209,13 @@ class BusinessConfiguration(models.Model):
     twilio_sid = models.CharField(max_length=255, blank=True, null=True)
     twilio_auth_token = models.CharField(max_length=255, blank=True, null=True)
     
+    # AI Website Builder Configuration
+    ai_model_preference = models.CharField(
+        max_length=20,
+        choices=AI_MODEL_CHOICES,
+        default='openai',
+        help_text="Preferred AI model for website generation"
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
